@@ -1,7 +1,11 @@
 'use client'
 
+import { ReactPreview } from '@/components/challenge/react-preview'
+import { RunTerminal } from '@/components/challenge/run-terminal'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
+import { runCode } from '@/lib/runner/run-code'
+import type { RunResult, RunnerLanguage } from '@/lib/runner/types'
 import { cn } from '@/lib/utils'
 import {
   Brain,
@@ -15,6 +19,7 @@ import {
   PlayCircle,
   Send,
   Sparkles,
+  Terminal,
   X,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -31,16 +36,39 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ),
 })
 
+const language: RunnerLanguage = 'ts'
+
 const initialCode = `// Cliente: Padaria do Zé
-// "Quero ver os produtos que vencem em 3 dias."
+// "Quais produtos vencem em até 3 dias?"
+// Cada produto tem { nome, expiresAt } onde expiresAt é 'YYYY-MM-DD'.
 
-import { db } from './db'
-
-export async function expiringProducts() {
-  const products = await db.products.findAll()
-  // como filtrar por data?
+export function expiringProducts(produtos, hoje) {
+  // devolva apenas os produtos que vencem em até 3 dias a partir de 'hoje'
 
 }
+`
+
+const testsSource = `const TRES_DIAS = 3 * 24 * 60 * 60 * 1000
+const hoje = new Date('2026-05-27').getTime()
+const produtos = [
+  { nome: 'Pão francês', expiresAt: '2026-05-29' },
+  { nome: 'Croissant', expiresAt: '2026-05-30' },
+  { nome: 'Bolo de cenoura', expiresAt: '2026-06-15' },
+  { nome: 'Torta', expiresAt: '2026-05-27' },
+]
+
+test('retorna os 3 que vencem em até 3 dias', () => {
+  expect(exports.expiringProducts(produtos, hoje).length).toBe(3)
+})
+
+test('exclui o que vence depois de 3 dias', () => {
+  const r = exports.expiringProducts(produtos, hoje)
+  expect(r.find((p) => p.nome === 'Bolo de cenoura')).toBe(undefined)
+})
+
+test('lista vazia devolve lista vazia', () => {
+  expect(exports.expiringProducts([], hoje).length).toBe(0)
+})
 `
 
 type ChatMsg = { role: 'user' | 'ai'; text: string; hintLevel?: 1 | 2 | 3 }
@@ -61,6 +89,9 @@ export default function ChallengePage() {
   const [hintsUsed, setHintsUsed] = React.useState(0)
   const [reviewOpen, setReviewOpen] = React.useState(false)
   const [elapsed, setElapsed] = React.useState(0)
+  const [running, setRunning] = React.useState(false)
+  const [result, setResult] = React.useState<RunResult | null>(null)
+  const [showPanel, setShowPanel] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -136,6 +167,20 @@ export default function ChallengePage() {
     setReviewOpen(true)
   }
 
+  async function run() {
+    if (running) return
+    setShowPanel(true)
+    if (language === 'react') return
+    setRunning(true)
+    setResult(null)
+    const r = await runCode(
+      { code, language, testsSource },
+      { timeoutMs: 5000 },
+    )
+    setResult(r)
+    setRunning(false)
+  }
+
   const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0')
   const seconds = String(elapsed % 60).padStart(2, '0')
 
@@ -185,7 +230,7 @@ export default function ChallengePage() {
       </header>
 
       {/* Workspace */}
-      <div className='grid min-h-0 flex-1 lg:grid-cols-[360px_1fr_400px]'>
+      <div className='grid min-h-0 flex-1 lg:grid-cols-[360px_1fr_400px] lg:grid-rows-[minmax(0,1fr)]'>
         {/* Briefing panel */}
         <aside className='overflow-y-auto border-r border-white/[0.06] bg-card/30'>
           <BriefingPanel />
@@ -204,9 +249,28 @@ export default function ChallengePage() {
               <Button
                 size='xs'
                 variant='ghost'
+                onClick={() => setShowPanel((s) => !s)}
+                className={cn(
+                  'gap-1.5 rounded-md hover:text-foreground',
+                  showPanel ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              >
+                <Terminal className='size-3.5' />
+                {language === 'react' ? 'Preview' : 'Terminal'}
+              </Button>
+              <Button
+                size='xs'
+                variant='ghost'
+                onClick={run}
+                disabled={running}
                 className='gap-1.5 rounded-md text-muted-foreground hover:text-foreground'
               >
-                <PlayCircle className='size-3.5' /> Rodar
+                {running ? (
+                  <Loader2 className='size-3.5 animate-spin' />
+                ) : (
+                  <PlayCircle className='size-3.5' />
+                )}
+                Rodar
               </Button>
             </div>
           </div>
@@ -233,6 +297,16 @@ export default function ChallengePage() {
               }}
             />
           </div>
+          {showPanel &&
+            (language === 'react' ? (
+              <ReactPreview code={code} onClose={() => setShowPanel(false)} />
+            ) : (
+              <RunTerminal
+                result={result}
+                running={running}
+                onClose={() => setShowPanel(false)}
+              />
+            ))}
         </section>
 
         {/* Chat */}
@@ -311,7 +385,9 @@ function BriefingPanel() {
             Restrições
           </div>
           <ul className='space-y-1.5 text-[13px] text-foreground/90'>
-            <Constraint>Use SQLite (já configurado no `./db`)</Constraint>
+            <Constraint>
+              Receba a lista de produtos por parâmetro (sem acessar banco)
+            </Constraint>
             <Constraint>
               Função deve ser pura — sem efeitos colaterais
             </Constraint>
