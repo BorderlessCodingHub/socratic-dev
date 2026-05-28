@@ -1,9 +1,9 @@
 'use client'
 
-import type { ExcalidrawApi } from '@/lib/design/scene'
+import '@excalidraw/excalidraw/index.css'
 import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import '@excalidraw/excalidraw/index.css'
+import type { ExcalidrawApi } from '../utils/scene'
 
 const Excalidraw = dynamic(
   () => import('@excalidraw/excalidraw').then((m) => m.Excalidraw),

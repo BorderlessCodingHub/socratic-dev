@@ -1,19 +1,19 @@
 'use client'
 
-import { BriefingPanel } from '@/components/challenge/briefing-panel'
-import { ChatPanel } from '@/components/challenge/chat-panel'
-import { ReviewModal } from '@/components/challenge/review-modal'
-import { DesignCanvas } from '@/components/design/design-canvas'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
-import { type Challenge } from '@/lib/challenge'
+import { BriefingPanel } from '@/features/challenges/components/briefing-panel'
+import { ChatPanel } from '@/features/challenges/components/chat-panel'
+import { ReviewModal } from '@/features/challenges/components/review-modal'
+import { useSocraticSession } from '@/features/challenges/hooks/use-socratic-session'
+import type { Challenge } from '@/features/challenges/types'
+import { DesignCanvas } from '@/features/design/components/design-canvas'
 import {
   buildSceneElements,
-  type ExcalidrawApi,
   exportScenePng,
   summarizeElements,
-} from '@/lib/design/scene'
-import { useSocraticSession } from '@/lib/session/use-socratic-session'
+  type ExcalidrawApi,
+} from '@/features/design/utils/scene'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {

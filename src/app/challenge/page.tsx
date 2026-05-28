@@ -1,23 +1,23 @@
 'use client'
 
-import { BriefingPanel } from '@/components/challenge/briefing-panel'
-import { ChatPanel } from '@/components/challenge/chat-panel'
-import { ReactPreview } from '@/components/challenge/react-preview'
-import { ReviewModal } from '@/components/challenge/review-modal'
-import { RunTerminal } from '@/components/challenge/run-terminal'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { RunnerLanguage } from '@/domain/stacks'
-import { runCode } from '@/features/runner/run-code'
-import type { RunResult } from '@/features/runner/types'
+import { BriefingPanel } from '@/features/challenges/components/briefing-panel'
+import { ChatPanel } from '@/features/challenges/components/chat-panel'
+import { ReactPreview } from '@/features/challenges/components/react-preview'
+import { ReviewModal } from '@/features/challenges/components/review-modal'
+import { RunTerminal } from '@/features/challenges/components/run-terminal'
+import { useSocraticSession } from '@/features/challenges/hooks/use-socratic-session'
+import type { Challenge } from '@/features/challenges/types'
 import {
   challengeIntro,
   challengeLanguage,
   starterCode,
-  type Challenge,
-} from '@/lib/challenge'
-import { useSocraticSession } from '@/lib/session/use-socratic-session'
+} from '@/features/challenges/utils'
+import { runCode } from '@/features/runner/run-code'
+import type { RunResult } from '@/features/runner/types'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
