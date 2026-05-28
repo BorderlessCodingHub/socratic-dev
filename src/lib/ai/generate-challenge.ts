@@ -1,5 +1,5 @@
 import { askClaude } from '@/lib/ai/client'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '../supabase/server'
 
 export type GenLevel = 'beginner' | 'intermediate' | 'advanced'
 

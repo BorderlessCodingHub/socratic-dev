@@ -1,5 +1,5 @@
 import { aiErrorResponse, askClaude, askClaudeVision } from '@/lib/ai/client'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 const SYSTEM = `Você é um staff engineer revisando o diagrama de ARQUITETURA (system design) de um aluno (imagem + resumo).
 Responda em NO MÁXIMO 5 bullets (markdown), direto, sem floreio. NÃO redesenhe por ele.

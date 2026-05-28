@@ -3,7 +3,7 @@
 import { Logo } from '@/components/logo'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/lib/auth/use-user'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
   ArrowLeft,
@@ -313,168 +313,175 @@ export default function OnboardingPage() {
                 <GeneratingChallenge />
               ) : (
                 <>
-              {step === 0 && (
-                <div className='space-y-4'>
-                  <div className='grid gap-3 sm:grid-cols-2'>
-                    {tracks.map((t) => (
-                      <Tile
-                        key={t.id}
-                        selected={track === t.id}
-                        onClick={() => setTrack(t.id)}
-                      >
-                        <div className='grid size-12 place-items-center rounded-2xl bg-[#dad8ea]/55 text-[#1b1916]'>
-                          <t.Icon className='size-6' strokeWidth={1.5} />
-                        </div>
-                        <div className='flex-1'>
-                          <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                            {t.name}
-                          </div>
-                          <div className='text-sm text-[#6b6478]'>{t.desc}</div>
-                        </div>
-                      </Tile>
-                    ))}
-                  </div>
-
-                  {track === 'code' && (
-                    <div>
-                      <div className='mb-2 font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-                        Linguagem
-                      </div>
+                  {step === 0 && (
+                    <div className='space-y-4'>
                       <div className='grid gap-3 sm:grid-cols-2'>
-                        {stacks.map((s) => (
+                        {tracks.map((t) => (
                           <Tile
-                            key={s.id}
-                            selected={stack === s.id}
-                            onClick={() => setStack(s.id)}
+                            key={t.id}
+                            selected={track === t.id}
+                            onClick={() => setTrack(t.id)}
                           >
-                            <div
-                              className={cn(
-                                'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
-                                s.gradient,
-                              )}
-                            >
-                              {s.icon}
+                            <div className='grid size-12 place-items-center rounded-2xl bg-[#dad8ea]/55 text-[#1b1916]'>
+                              <t.Icon className='size-6' strokeWidth={1.5} />
                             </div>
                             <div className='flex-1'>
                               <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                                {s.name}
+                                {t.name}
                               </div>
                               <div className='text-sm text-[#6b6478]'>
-                                {s.desc}
+                                {t.desc}
                               </div>
                             </div>
                           </Tile>
                         ))}
                       </div>
-                    </div>
-                  )}
 
-                  {track === 'design' && (
-                    <div className='rounded-2xl border border-[#DFE5E9] bg-[#F7F9FA] p-4 text-sm text-[#6b6478]'>
-                      System design não tem linguagem — você vai{' '}
-                      <span className='font-medium text-[#1b1916]'>
-                        desenhar a arquitetura do sistema
-                      </span>{' '}
-                      (serviços, dados, fluxo) num canvas e a IA analisa.
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {step === 1 && (
-                <div className='space-y-3'>
-                  {levels.map((l) => (
-                    <Tile
-                      key={l.id}
-                      selected={level === l.id}
-                      onClick={() => setLevel(l.id)}
-                    >
-                      <div className='flex items-center gap-1'>
-                        {Array.from({ length: 4 }).map((_, idx) => (
-                          <span
-                            key={idx}
-                            className={cn(
-                              'h-2 w-5 rounded-full',
-                              idx < l.intensity ? 'bg-iris' : 'bg-[#DFE5E9]',
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <div className='flex-1'>
-                        <div className='flex flex-wrap items-center gap-2'>
-                          <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                            {l.name}
+                      {track === 'code' && (
+                        <div>
+                          <div className='mb-2 font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
+                            Linguagem
                           </div>
-                          <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                            {l.tag}
-                          </span>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            {stacks.map((s) => (
+                              <Tile
+                                key={s.id}
+                                selected={stack === s.id}
+                                onClick={() => setStack(s.id)}
+                              >
+                                <div
+                                  className={cn(
+                                    'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
+                                    s.gradient,
+                                  )}
+                                >
+                                  {s.icon}
+                                </div>
+                                <div className='flex-1'>
+                                  <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                                    {s.name}
+                                  </div>
+                                  <div className='text-sm text-[#6b6478]'>
+                                    {s.desc}
+                                  </div>
+                                </div>
+                              </Tile>
+                            ))}
+                          </div>
                         </div>
-                        <div className='mt-0.5 text-sm text-[#6b6478]'>
-                          {l.desc}
+                      )}
+
+                      {track === 'design' && (
+                        <div className='rounded-2xl border border-[#DFE5E9] bg-[#F7F9FA] p-4 text-sm text-[#6b6478]'>
+                          System design não tem linguagem — você vai{' '}
+                          <span className='font-medium text-[#1b1916]'>
+                            desenhar a arquitetura do sistema
+                          </span>{' '}
+                          (serviços, dados, fluxo) num canvas e a IA analisa.
                         </div>
-                      </div>
-                    </Tile>
-                  ))}
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className='grid gap-3 sm:grid-cols-2'>
-                  <SummaryItem
-                    label='Trilha'
-                    value={
-                      track === 'design'
-                        ? 'Design System'
-                        : (stacks.find((s) => s.id === stack)?.name ?? 'Código')
-                    }
-                  />
-                  <SummaryItem
-                    label='Nível'
-                    value={levels.find((l) => l.id === level)?.name ?? '—'}
-                  />
-                </div>
-              )}
-
-              {error && (
-                <div className='mt-6 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600'>
-                  {error}
-                </div>
-              )}
-
-              <div className='mt-7 flex items-center justify-between'>
-                <button
-                  type='button'
-                  onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#1b1916]/5 hover:text-[#1b1916]',
-                    step === 0 && 'invisible',
+                      )}
+                    </div>
                   )}
-                >
-                  <ArrowLeft className='size-4' /> Voltar
-                </button>
 
-                {step < 2 ? (
-                  <button
-                    type='button'
-                    disabled={!canNext}
-                    onClick={() => setStep((s) => Math.min(2, s + 1) as Step)}
-                    className='group inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40'
-                  >
-                    Continuar
-                    <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                  </button>
-                ) : (
-                  <button
-                    type='button'
-                    onClick={start}
-                    className='group inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90'
-                  >
-                    <Sparkles className='size-4' />
-                    {error ? 'Tentar de novo' : 'Gerar meu desafio'}
-                    <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
-                  </button>
-                )}
-              </div>
+                  {step === 1 && (
+                    <div className='space-y-3'>
+                      {levels.map((l) => (
+                        <Tile
+                          key={l.id}
+                          selected={level === l.id}
+                          onClick={() => setLevel(l.id)}
+                        >
+                          <div className='flex items-center gap-1'>
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                              <span
+                                key={idx}
+                                className={cn(
+                                  'h-2 w-5 rounded-full',
+                                  idx < l.intensity
+                                    ? 'bg-iris'
+                                    : 'bg-[#DFE5E9]',
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <div className='flex-1'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                                {l.name}
+                              </div>
+                              <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                                {l.tag}
+                              </span>
+                            </div>
+                            <div className='mt-0.5 text-sm text-[#6b6478]'>
+                              {l.desc}
+                            </div>
+                          </div>
+                        </Tile>
+                      ))}
+                    </div>
+                  )}
+
+                  {step === 2 && (
+                    <div className='grid gap-3 sm:grid-cols-2'>
+                      <SummaryItem
+                        label='Trilha'
+                        value={
+                          track === 'design'
+                            ? 'Design System'
+                            : (stacks.find((s) => s.id === stack)?.name ??
+                              'Código')
+                        }
+                      />
+                      <SummaryItem
+                        label='Nível'
+                        value={levels.find((l) => l.id === level)?.name ?? '—'}
+                      />
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className='mt-6 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600'>
+                      {error}
+                    </div>
+                  )}
+
+                  <div className='mt-7 flex items-center justify-between'>
+                    <button
+                      type='button'
+                      onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
+                      className={cn(
+                        'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#1b1916]/5 hover:text-[#1b1916]',
+                        step === 0 && 'invisible',
+                      )}
+                    >
+                      <ArrowLeft className='size-4' /> Voltar
+                    </button>
+
+                    {step < 2 ? (
+                      <button
+                        type='button'
+                        disabled={!canNext}
+                        onClick={() =>
+                          setStep((s) => Math.min(2, s + 1) as Step)
+                        }
+                        className='group inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40'
+                      >
+                        Continuar
+                        <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
+                      </button>
+                    ) : (
+                      <button
+                        type='button'
+                        onClick={start}
+                        className='group inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90'
+                      >
+                        <Sparkles className='size-4' />
+                        {error ? 'Tentar de novo' : 'Gerar meu desafio'}
+                        <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
             </div>

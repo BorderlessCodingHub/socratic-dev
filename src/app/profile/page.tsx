@@ -3,7 +3,7 @@
 import { Navbar } from '@/components/navbar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { signOut, useUser } from '@/lib/auth/use-user'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import {
   ArrowRight,
   ChevronDown,
@@ -226,8 +226,8 @@ export default function ProfilePage() {
                       />
                     </div>
                     <p className='mt-4 text-[13px] text-[#6b6478]'>
-                      Os próximos desafios são gerados com base nessas escolhas —
-                      salvam automaticamente.
+                      Os próximos desafios são gerados com base nessas escolhas
+                      — salvam automaticamente.
                     </p>
                   </div>
 
@@ -308,7 +308,7 @@ function Stat({
       <div className='mb-3 grid size-11 place-items-center rounded-xl bg-[#dad8ea]/55 text-[#1b1916]'>
         <Icon className='size-5' strokeWidth={1.5} />
       </div>
-      <div className='font-heading text-3xl font-semibold tracking-tight tabular-nums text-[#1b1916]'>
+      <div className='font-heading text-3xl font-semibold tracking-tight text-[#1b1916] tabular-nums'>
         {value}
       </div>
       <div className='mt-1 text-[12px] text-[#6b6478]'>{label}</div>
@@ -338,7 +338,7 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className='w-full appearance-none rounded-xl border border-[#DFE5E9] bg-white px-4 py-2.5 pr-10 text-[15px] font-medium text-[#1b1916] outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+          className='w-full appearance-none rounded-xl border border-[#DFE5E9] bg-white px-4 py-2.5 pr-10 text-[15px] font-medium text-[#1b1916] transition-colors outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
         >
           <option value='' disabled>
             {placeholder}

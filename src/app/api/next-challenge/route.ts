@@ -1,6 +1,6 @@
 import { aiErrorResponse } from '@/lib/ai/client'
 import { generateChallenge, type GenLevel } from '@/lib/ai/generate-challenge'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 // Returns a challenge FAST: reuses an existing one the user hasn't done yet
 // (instant, no token cost). Only generates a new one when the pool is

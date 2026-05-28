@@ -1,5 +1,5 @@
 import { FREE_DAILY_HINTS, type HintBalance } from '@/lib/hints'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 async function getBalance(userId: string): Promise<HintBalance> {
   const startOfDay = new Date()
@@ -45,7 +45,10 @@ export async function POST(request: Request) {
     )
   }
   if (![1, 2, 3].includes(hint_level)) {
-    return Response.json({ error: 'hint_level must be 1, 2, or 3' }, { status: 400 })
+    return Response.json(
+      { error: 'hint_level must be 1, 2, or 3' },
+      { status: 400 },
+    )
   }
 
   const spend = Math.min(Math.max(Number(cost) || 1, 1), 10)

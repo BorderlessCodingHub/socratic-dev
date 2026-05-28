@@ -1,7 +1,7 @@
 'use client'
 
 import { Logo } from '@/components/logo'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'

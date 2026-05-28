@@ -1,5 +1,5 @@
 import { aiErrorResponse, askClaude } from '@/lib/ai/client'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 const SYSTEM = `Você é um tech lead fazendo um code review socrático CURTO.
 Responda em NO MÁXIMO 5 bullets em markdown — direto, sem floreio. NÃO reescreva o código.

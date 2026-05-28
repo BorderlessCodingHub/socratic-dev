@@ -3,7 +3,7 @@
 import { Navbar } from '@/components/navbar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LEVEL_LABEL, type Challenge } from '@/lib/challenge'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
   ArrowRight,
@@ -31,8 +31,25 @@ function stackLabel(c: Challenge): string {
 }
 
 const STOP = new Set([
-  'de', 'da', 'do', 'dos', 'das', 'a', 'o', 'e', 'que', 'com', 'um', 'uma',
-  'em', 'no', 'na', 'os', 'as', 'para', 'pra',
+  'de',
+  'da',
+  'do',
+  'dos',
+  'das',
+  'a',
+  'o',
+  'e',
+  'que',
+  'com',
+  'um',
+  'uma',
+  'em',
+  'no',
+  'na',
+  'os',
+  'as',
+  'para',
+  'pra',
 ])
 
 function titleSig(t: string): string {
@@ -110,7 +127,8 @@ export default function ChallengesLibraryPage() {
               menos espera, menos custo.{' '}
               {challenges && (
                 <span className='font-medium text-[#1b1916]'>
-                  {unique.length} {unique.length === 1 ? 'desafio' : 'desafios'}.
+                  {unique.length} {unique.length === 1 ? 'desafio' : 'desafios'}
+                  .
                 </span>
               )}
             </p>

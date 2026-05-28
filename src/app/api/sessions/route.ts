@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   const { user_id, challenge_id } = await request.json()

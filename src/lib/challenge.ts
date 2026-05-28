@@ -1,4 +1,4 @@
-import type { RunnerLanguage } from '@/lib/runner/types'
+import { RunnerLanguage } from '@/domain/stacks'
 
 export type Challenge = {
   id: string

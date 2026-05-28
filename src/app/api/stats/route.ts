@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -28,7 +28,10 @@ export async function GET(request: Request) {
   ])
 
   if (sessionsResult.error)
-    return Response.json({ error: sessionsResult.error.message }, { status: 500 })
+    return Response.json(
+      { error: sessionsResult.error.message },
+      { status: 500 },
+    )
   if (hintsResult.error)
     return Response.json({ error: hintsResult.error.message }, { status: 500 })
   if (weekResult.error)
@@ -40,13 +43,17 @@ export async function GET(request: Request) {
 
   const completed = sessions.filter((s) => s.status === 'completed')
   const totalHints = hints.length
-  const avgHintsPerSession = completed.length > 0
-    ? Math.round((totalHints / completed.length) * 10) / 10
-    : 0
+  const avgHintsPerSession =
+    completed.length > 0
+      ? Math.round((totalHints / completed.length) * 10) / 10
+      : 0
 
   // Independence score: starts at 100, loses points per hint level used
   const hintPenalty = hints.reduce((sum, h) => sum + h.hint_level * 4, 0)
-  const independenceScore = Math.max(0, 100 - Math.round(hintPenalty / Math.max(completed.length, 1)))
+  const independenceScore = Math.max(
+    0,
+    100 - Math.round(hintPenalty / Math.max(completed.length, 1)),
+  )
 
   const streak = calcStreak(completed.map((s) => s.started_at))
 

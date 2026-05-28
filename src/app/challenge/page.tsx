@@ -8,6 +8,7 @@ import { RunTerminal } from '@/components/challenge/run-terminal'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import type { RunnerLanguage } from '@/domain/stacks'
 import {
   challengeIntro,
   challengeLanguage,
@@ -15,9 +16,9 @@ import {
   type Challenge,
 } from '@/lib/challenge'
 import { runCode } from '@/lib/runner/run-code'
-import type { RunnerLanguage, RunResult } from '@/lib/runner/types'
+import type { RunResult } from '@/lib/runner/types'
 import { useSocraticSession } from '@/lib/session/use-socratic-session'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
   Brain,

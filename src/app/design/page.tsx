@@ -14,7 +14,7 @@ import {
   summarizeElements,
 } from '@/lib/design/scene'
 import { useSocraticSession } from '@/lib/session/use-socratic-session'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
   Brain,
@@ -139,7 +139,11 @@ export default function DesignPage() {
     try {
       const res = await fetch('/api/tutor', {
         ...POST,
-        body: tutorBody({ mode: 'hint', hintLevel: level, messages: s.messages }),
+        body: tutorBody({
+          mode: 'hint',
+          hintLevel: level,
+          messages: s.messages,
+        }),
       })
       const data = await res.json()
       s.pushMessage({

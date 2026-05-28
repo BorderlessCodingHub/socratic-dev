@@ -1,4 +1,4 @@
-import type { RunnerLanguage } from '@/domain/stacks'
+export type { RunnerLanguage } from '@/domain/stacks'
 
 export type LogLevel = 'log' | 'info' | 'warn' | 'error'
 
@@ -23,6 +23,6 @@ export interface RunResult {
 
 export interface RunRequest {
   code: string
-  language: RunnerLanguage
+  language: import('@/domain/stacks').RunnerLanguage
   testsSource?: string
 }
