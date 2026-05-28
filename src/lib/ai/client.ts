@@ -26,6 +26,45 @@ export async function askClaude(opts: {
     output_config: { effort: opts.effort ?? 'medium' },
   }
   const res = await anthropic.messages.create(params as never)
+  return extractText(res)
+}
+
+export async function askClaudeVision(opts: {
+  system: string
+  userText: string
+  imageBase64: string
+  mediaType?: 'image/png' | 'image/jpeg'
+  maxTokens?: number
+  effort?: Effort
+}): Promise<string> {
+  const params = {
+    model: MODEL,
+    max_tokens: opts.maxTokens ?? 1024,
+    system: opts.system,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: opts.mediaType ?? 'image/png',
+              data: opts.imageBase64,
+            },
+          },
+          { type: 'text', text: opts.userText },
+        ],
+      },
+    ],
+    thinking: { type: 'adaptive' },
+    output_config: { effort: opts.effort ?? 'medium' },
+  }
+  const res = await anthropic.messages.create(params as never)
+  return extractText(res)
+}
+
+function extractText(res: unknown): string {
   const blocks = (res as { content: Array<{ type: string; text?: string }> })
     .content
   return blocks

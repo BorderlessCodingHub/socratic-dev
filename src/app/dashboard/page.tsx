@@ -8,6 +8,8 @@ import {
   Code2,
   Layers,
   Lightbulb,
+  Loader2,
+  Palette,
   Sparkles,
   TrendingUp,
   Trophy,
@@ -36,7 +38,7 @@ type SessionRow = {
   id: string
   status: string
   started_at: string
-  challenges: { title: string; stack: string } | null
+  challenges: { title: string; stack: string; kind?: string } | null
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -64,6 +66,27 @@ export default function DashboardPage() {
   const [stats, setStats] = React.useState<Stats | null>(null)
   const [sessions, setSessions] = React.useState<SessionRow[]>([])
   const [loaded, setLoaded] = React.useState(false)
+  const [genDesign, setGenDesign] = React.useState(false)
+
+  async function startDesign() {
+    if (genDesign) return
+    setGenDesign(true)
+    try {
+      const level =
+        (user?.user_metadata?.preferred_level as string | undefined) ??
+        'intermediate'
+      const res = await fetch('/api/generate-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'design', level }),
+      })
+      const data = await res.json()
+      if (res.ok && data?.id) router.push(`/design?id=${data.id}`)
+      else setGenDesign(false)
+    } catch {
+      setGenDesign(false)
+    }
+  }
 
   React.useEffect(() => {
     if (!loading && !user) router.replace('/login?next=/dashboard')
@@ -135,14 +158,29 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
-            <Link
-              href='/onboarding'
-              className='group inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 md:self-auto'
-            >
-              <Sparkles className='size-4' />
-              Novo desafio
-              <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-            </Link>
+            <div className='flex shrink-0 flex-col gap-2 self-start sm:flex-row md:self-auto'>
+              <button
+                type='button'
+                onClick={startDesign}
+                disabled={genDesign}
+                className='inline-flex items-center justify-center gap-2 rounded-xl border border-[#1b1916]/20 px-5 py-3 text-[15px] font-medium tracking-tight text-[#1b1916] transition-colors hover:bg-[#1b1916]/5 disabled:opacity-60'
+              >
+                {genDesign ? (
+                  <Loader2 className='size-4 animate-spin' />
+                ) : (
+                  <Palette className='size-4' />
+                )}
+                {genDesign ? 'Gerando…' : 'Design System'}
+              </button>
+              <Link
+                href='/onboarding'
+                className='group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90'
+              >
+                <Sparkles className='size-4' />
+                Novo desafio
+                <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
+              </Link>
+            </div>
           </motion.div>
 
           {!loaded ? (
@@ -482,9 +520,14 @@ function RecentChallenges({ items }: { items: SessionRow[] }) {
                   </div>
                   <div className='mt-2 flex items-center gap-3 font-mono text-[11px]'>
                     <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5 text-[#6b6478]'>
-                      {c.challenges?.stack === 'javascript'
-                        ? 'JavaScript'
-                        : 'TypeScript'}
+                      {c.challenges?.kind === 'design'
+                        ? 'Design System'
+                        : c.challenges?.stack === 'javascript'
+                          ? 'JavaScript'
+                          : 'TypeScript'}
+                    </span>
+                    <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5 text-[#6b6478]'>
+                      {c.challenges?.kind === 'design' ? 'Design' : 'Código'}
                     </span>
                     <span className='text-[#6b6478]'>
                       {STATUS_LABEL[c.status] ?? c.status}

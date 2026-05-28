@@ -1,28 +1,45 @@
 import { aiErrorResponse, askClaude } from '@/lib/ai/client'
 import type { ChatMsg } from '@/lib/ai/types'
 
-const SYSTEM = `Você é um tutor socrático de programação, exigente como um tech lead.
+const SYSTEM_CODE = `Você é um tutor socrático de programação, exigente como um tech lead.
 REGRA ABSOLUTA: você NUNCA dá a resposta nem escreve o código da solução.
 Você faz UMA pergunta-guia curta (1 a 3 frases), em português do Brasil, que force o aluno a raciocinar sobre o próximo passo.
 Se o código do aluno está no caminho certo, aprofunde. Se está errado, questione a premissa por trás dele.
 Seja direto e específico ao código e ao briefing. Sem elogios vazios, sem "ótima pergunta".`
 
-const HINT_GUIDE: Record<number, string> = {
+const SYSTEM_DESIGN = `Você é um tutor socrático de DESIGN SYSTEM, exigente como um staff design engineer.
+REGRA ABSOLUTA: você NUNCA entrega a arquitetura pronta nem desenha por ele.
+Você faz UMA pergunta-guia curta (1 a 3 frases), em português do Brasil, que force o aluno a raciocinar sobre: camadas de tokens (primitivo → semântico → componente), consistência, nomenclatura, separação entre variante e estado, e escalabilidade (ex.: dark mode).
+Baseie-se no que está desenhado no canvas (descrito em texto) e no briefing. Sem elogios vazios.`
+
+const HINT_CODE: Record<number, string> = {
   1: 'Dê uma pista NÍVEL 1 (conceitual): aponte a ÁREA em que ele deve pensar, sem citar o método nem a sintaxe.',
   2: 'Dê uma pista NÍVEL 2 (abordagem): aponte o método ou a estrutura a usar (ex.: filter, comparação de datas) sem escrever o código.',
   3: 'Dê uma pista NÍVEL 3 (quase explícita): descreva em palavras a forma da solução, mas ainda assim NÃO escreva o código pronto e peça pro aluno entender o porquê.',
 }
 
+const HINT_DESIGN: Record<number, string> = {
+  1: 'Pista NÍVEL 1 (conceitual): aponte QUAL princípio de design system ele deve revisar (ex.: camadas de token, separação variante/estado), sem dar a estrutura.',
+  2: 'Pista NÍVEL 2 (abordagem): indique a relação a usar (ex.: semântico referencia primitivo; componente só consome semântico) sem desenhar por ele.',
+  3: 'Pista NÍVEL 3 (quase explícita): descreva em palavras a forma da arquitetura, mas ainda assim NÃO entregue o diagrama pronto e peça pro aluno entender o porquê.',
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
+    const domain: 'code' | 'design' =
+      body.domain === 'design' ? 'design' : 'code'
     const mode: 'reply' | 'hint' = body.mode === 'hint' ? 'hint' : 'reply'
     const messages: ChatMsg[] = Array.isArray(body.messages)
       ? body.messages
       : []
-    const code: string = body.code ?? ''
+    const work: string = body.code ?? ''
     const title: string = body.title ?? ''
     const briefing: string = body.briefing ?? ''
+
+    const isDesign = domain === 'design'
+    const system = isDesign ? SYSTEM_DESIGN : SYSTEM_CODE
+    const hintGuide = isDesign ? HINT_DESIGN : HINT_CODE
 
     const transcript = messages
       .map((m) => `${m.role === 'ai' ? 'Tutor' : 'Aluno'}: ${m.text}`)
@@ -30,17 +47,17 @@ export async function POST(req: Request) {
 
     const task =
       mode === 'hint'
-        ? (HINT_GUIDE[Number(body.hintLevel) || 1] ?? HINT_GUIDE[1])
-        : 'Responda com UMA pergunta-guia para o próximo passo do aluno.'
+        ? (hintGuide[Number(body.hintLevel) || 1] ?? hintGuide[1])
+        : isDesign
+          ? 'Responda com UMA pergunta-guia para o próximo passo do design.'
+          : 'Responda com UMA pergunta-guia para o próximo passo do aluno.'
 
     const user = [
       `Desafio: ${title}`,
       `Briefing do cliente: ${briefing}`,
       '',
-      'Código atual do aluno:',
-      '```',
-      code || '(vazio)',
-      '```',
+      isDesign ? 'Estado atual do diagrama (resumo):' : 'Código atual do aluno:',
+      isDesign ? work || '(canvas vazio)' : `\`\`\`\n${work || '(vazio)'}\n\`\`\``,
       '',
       'Conversa até agora:',
       transcript || '(início — primeira interação)',
@@ -49,7 +66,7 @@ export async function POST(req: Request) {
     ].join('\n')
 
     const text = await askClaude({
-      system: SYSTEM,
+      system,
       user,
       maxTokens: 800,
       effort: 'medium',

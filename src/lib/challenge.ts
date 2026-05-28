@@ -10,6 +10,7 @@ export type Challenge = {
   initial_code: string
   tests_source: string
   intro: string
+  kind: 'code' | 'design'
 }
 
 export const LEVEL_LABEL: Record<string, string> = {

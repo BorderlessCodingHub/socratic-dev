@@ -47,6 +47,7 @@ export type Database = {
           id: string
           initial_code: string
           intro: string
+          kind: string
           level: string
           stack: string
           tests_source: string
@@ -59,6 +60,7 @@ export type Database = {
           id?: string
           initial_code?: string
           intro?: string
+          kind?: string
           level: string
           stack: string
           tests_source?: string
@@ -71,6 +73,7 @@ export type Database = {
           id?: string
           initial_code?: string
           intro?: string
+          kind?: string
           level?: string
           stack?: string
           tests_source?: string
