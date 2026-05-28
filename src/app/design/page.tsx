@@ -260,7 +260,7 @@ export default function DesignPage() {
       </header>
 
       <div className='grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[360px_1fr_400px] lg:grid-rows-[minmax(0,1fr)]'>
-        <aside className='min-h-0 overflow-y-auto border-r border-[#DFE5E9] bg-card/30'>
+        <aside className='min-h-0 overflow-y-auto border-r border-[#DFE5E9] bg-[#F7F9FA]'>
           <BriefingPanel challenge={challenge} />
         </aside>
 
@@ -301,7 +301,7 @@ export default function DesignPage() {
           </div>
         </section>
 
-        <aside className='flex min-h-0 flex-col border-l border-[#DFE5E9] bg-card/30'>
+        <aside className='flex min-h-0 flex-col border-l border-[#DFE5E9] bg-[#F7F9FA]'>
           <ChatPanel
             messages={s.messages}
             scrollRef={s.scrollRef}

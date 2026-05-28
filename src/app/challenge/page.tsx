@@ -270,13 +270,13 @@ export default function ChallengePage() {
       </header>
 
       <div className='grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[360px_1fr_400px] lg:grid-rows-[minmax(0,1fr)]'>
-        <aside className='min-h-0 overflow-y-auto border-r border-white/[0.06] bg-card/30'>
+        <aside className='min-h-0 overflow-y-auto border-r border-[#DFE5E9] bg-[#F7F9FA]'>
           <BriefingPanel challenge={challenge} />
         </aside>
 
         <section className='relative flex min-h-0 flex-col'>
-          <div className='flex h-10 items-center justify-between border-b border-white/[0.06] bg-white/[0.015] px-4'>
-            <div className='flex items-center gap-2 font-mono text-[12px] text-muted-foreground/80'>
+          <div className='flex h-10 items-center justify-between border-b border-[#DFE5E9] bg-[#F7F9FA] px-4'>
+            <div className='flex items-center gap-2 font-mono text-[12px] text-[#6b6478]'>
               <Code2Tag language={language} />
               <span>solucao.{language === 'js' ? 'js' : 'ts'}</span>
               <span className='ml-1 size-1 rounded-full bg-amber-400/70' />
@@ -346,7 +346,7 @@ export default function ChallengePage() {
             ))}
         </section>
 
-        <aside className='flex min-h-0 flex-col border-l border-white/[0.06] bg-card/30'>
+        <aside className='flex min-h-0 flex-col border-l border-[#DFE5E9] bg-[#F7F9FA]'>
           <ChatPanel
             messages={s.messages}
             scrollRef={s.scrollRef}

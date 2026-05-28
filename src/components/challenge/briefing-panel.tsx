@@ -1,33 +1,35 @@
 import { LEVEL_LABEL, type Challenge } from '@/lib/challenge'
 import { Building, Sparkles } from 'lucide-react'
 
+function stackLabel(c: Challenge): string {
+  if (c.kind === 'design') return 'System Design'
+  if (c.stack === 'javascript') return 'JavaScript'
+  return 'TypeScript'
+}
+
 export function BriefingPanel({ challenge }: { challenge: Challenge }) {
   return (
     <div className='p-6'>
-      <div className='glass mb-5 inline-flex items-center gap-2 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase'>
+      <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2.5 py-1 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
         <Building className='size-3' />
         Briefing do cliente
       </div>
 
-      <h2 className='mb-3 font-heading text-2xl leading-tight font-semibold tracking-tight'>
+      <h2 className='mb-3 font-heading text-2xl leading-tight font-semibold tracking-tight text-[#1b1916]'>
         {challenge.title}
       </h2>
 
-      <div className='mb-6 flex items-center gap-2 font-mono text-[11px] text-muted-foreground/70'>
-        <span className='rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5'>
-          {challenge.stack === 'design'
-            ? 'System Design'
-            : challenge.stack === 'javascript'
-              ? 'JavaScript'
-              : 'TypeScript'}
+      <div className='mb-6 flex items-center gap-2 font-mono text-[11px] text-[#6b6478]'>
+        <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5'>
+          {stackLabel(challenge)}
         </span>
-        <span className='rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5'>
+        <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5'>
           {LEVEL_LABEL[challenge.level] ?? challenge.level}
         </span>
       </div>
 
       <div className='space-y-4 text-sm leading-relaxed'>
-        <p className='whitespace-pre-line text-foreground/90'>
+        <p className='whitespace-pre-line text-[#2c2330]'>
           {challenge.client_briefing}
         </p>
 
@@ -36,9 +38,9 @@ export function BriefingPanel({ challenge }: { challenge: Challenge }) {
             <Sparkles className='size-3.5' />
             Regra da casa
           </div>
-          <p className='text-[13px] leading-relaxed text-foreground/85'>
+          <p className='text-[13px] leading-relaxed text-[#2c2330]'>
             O tutor não vai te dar a resposta. Ele faz perguntas. Se você quiser
-            um hint direto, pague em pontos de independência.
+            um hint direto, paga em pontos de independência.
           </p>
         </div>
       </div>

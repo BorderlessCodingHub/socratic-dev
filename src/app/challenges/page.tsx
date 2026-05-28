@@ -24,6 +24,36 @@ function stackLabel(c: Challenge): string {
   return 'TypeScript'
 }
 
+const STOP = new Set([
+  'de', 'da', 'do', 'dos', 'das', 'a', 'o', 'e', 'que', 'com', 'um', 'uma',
+  'em', 'no', 'na', 'os', 'as', 'para', 'pra',
+])
+
+// Signature of a title's concept (accent-free, stop-words removed, 4-char stems)
+// so near-duplicate titles ("Contar Vogais" / "Contagem de Vogais") collapse.
+function titleSig(t: string): string {
+  return t
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter((w) => w && !STOP.has(w))
+    .map((w) => w.slice(0, 4))
+    .sort()
+    .join('-')
+}
+
+function dedupe(list: Challenge[]): Challenge[] {
+  const seen = new Set<string>()
+  return list.filter((c) => {
+    const key = `${c.kind}|${c.stack}|${c.level}|${titleSig(c.title)}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export default function ChallengesLibraryPage() {
   const [challenges, setChallenges] = React.useState<Challenge[] | null>(null)
   const [filter, setFilter] = React.useState<Filter>('all')
@@ -42,7 +72,8 @@ export default function ChallengesLibraryPage() {
     }
   }, [])
 
-  const visible = (challenges ?? []).filter((c) =>
+  const unique = dedupe(challenges ?? [])
+  const visible = unique.filter((c) =>
     filter === 'all' ? true : c.kind === filter,
   )
 
@@ -71,8 +102,7 @@ export default function ChallengesLibraryPage() {
               menos espera, menos custo.{' '}
               {challenges && (
                 <span className='font-medium text-[#1b1916]'>
-                  {challenges.length}{' '}
-                  {challenges.length === 1 ? 'desafio' : 'desafios'}.
+                  {unique.length} {unique.length === 1 ? 'desafio' : 'desafios'}.
                 </span>
               )}
             </p>
