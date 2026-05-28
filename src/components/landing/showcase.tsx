@@ -67,44 +67,43 @@ export function Showcase() {
 
 function IdeMock() {
   return (
-    <div className='ring-soft overflow-hidden rounded-2xl bg-[oklch(0.1_0.012_280)]'>
-      <div className='flex items-center gap-2 border-b border-white/[0.06] px-4 py-3'>
-        <span className='size-2.5 rounded-full bg-red-500/60' />
-        <span className='size-2.5 rounded-full bg-amber-400/60' />
-        <span className='size-2.5 rounded-full bg-emerald-500/60' />
-        <span className='flex-1 text-center font-mono text-[11px] text-white/45'>
+    <div className='shadow-soft overflow-hidden rounded-2xl border border-[#DFE5E9] bg-white'>
+      <div className='flex items-center gap-2 border-b border-[#DFE5E9] bg-[#F7F9FA] px-4 py-3'>
+        <span className='size-2.5 rounded-full bg-red-400/70' />
+        <span className='size-2.5 rounded-full bg-amber-400/70' />
+        <span className='size-2.5 rounded-full bg-emerald-400/70' />
+        <span className='flex-1 text-center font-mono text-[11px] text-[#6b6478]'>
           api-padaria.ts
         </span>
       </div>
       <div className='space-y-3 p-5 text-[13px]'>
         <div className='flex justify-end'>
-          <div className='max-w-[80%] rounded-2xl rounded-br-md bg-white/10 px-3 py-2 text-white/90'>
+          <div className='max-w-[80%] rounded-2xl rounded-br-md bg-[#1b1916] px-3 py-2 text-white'>
             Como filtro só os produtos que vencem em 3 dias?
           </div>
         </div>
         <div className='flex'>
-          <div className='max-w-[88%] rounded-2xl rounded-bl-md border border-iris/25 bg-gradient-to-br from-iris/20 via-violet/10 to-mint/10 px-3 py-2 text-white/95'>
+          <div className='max-w-[88%] rounded-2xl rounded-bl-md border border-iris/20 bg-iris/5 px-3 py-2 text-[#2c2330]'>
             Antes de codar — que estrutura de dados o{' '}
-            <code className='text-[oklch(0.74_0.16_285)]'>findAll()</code> te
-            devolve?
+            <code className='font-mono text-iris'>findAll()</code> te devolve?
           </div>
         </div>
         <div className='flex justify-end'>
-          <div className='max-w-[80%] rounded-2xl rounded-br-md bg-white/10 px-3 py-2 text-white/90'>
+          <div className='max-w-[80%] rounded-2xl rounded-br-md bg-[#1b1916] px-3 py-2 text-white'>
             um array de objetos
           </div>
         </div>
         <div className='flex'>
-          <div className='max-w-[88%] rounded-2xl rounded-bl-md border border-iris/25 bg-gradient-to-br from-iris/20 via-violet/10 to-mint/10 px-3 py-2 text-white/95'>
+          <div className='max-w-[88%] rounded-2xl rounded-bl-md border border-iris/20 bg-iris/5 px-3 py-2 text-[#2c2330]'>
             Exato. E qual método de array filtra por uma condição?
           </div>
         </div>
         <div className='flex items-center gap-2 pt-1'>
-          <div className='flex h-9 flex-1 items-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 text-[12px] text-white/40'>
+          <div className='flex h-9 flex-1 items-center rounded-xl border border-[#DFE5E9] bg-[#F7F9FA] px-3 text-[12px] text-[#6b6478]'>
             Pense, depois pergunte…
           </div>
-          <div className='grid size-9 place-items-center rounded-xl bg-white/90'>
-            <ArrowRight className='size-3.5 text-black' />
+          <div className='grid size-9 place-items-center rounded-xl bg-primary'>
+            <ArrowRight className='size-3.5 text-white' />
           </div>
         </div>
       </div>

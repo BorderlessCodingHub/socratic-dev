@@ -209,6 +209,13 @@ export default function ChallengePage() {
       })
       const data = await res.json()
       setReview(data.review || data.error || 'Não foi possível gerar o review.')
+      if (sessionId) {
+        fetch(`/api/sessions/${sessionId}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ status: 'completed' }),
+        }).catch(() => {})
+      }
     } finally {
       setReviewing(false)
     }
