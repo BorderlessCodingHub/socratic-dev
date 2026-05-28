@@ -1,12 +1,6 @@
 import { aiErrorResponse, askClaude, askClaudeVision } from '@/lib/ai/client'
+import { reviewSystem } from '@/lib/ai/prompts/review'
 import { supabaseAdmin } from '@/lib/supabase/server'
-
-const SYSTEM = `Você é um staff engineer revisando o diagrama de ARQUITETURA (system design) de um aluno (imagem + resumo).
-Responda em NO MÁXIMO 5 bullets (markdown), direto, sem floreio. NÃO redesenhe por ele.
-- 1 a 2 bullets do que está bom.
-- 1 a 2 bullets do que falta ou tem risco (onde os dados vivem, gargalos, distribuição/particionamento, consistência vs latência, ponto único de falha).
-- 1 pergunta final que leve o aluno a melhorar sozinho.
-Cada bullet com 1 ou 2 frases curtas. Português do Brasil.`
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
@@ -31,14 +25,14 @@ export async function POST(req: Request) {
   try {
     review = imageBase64
       ? await askClaudeVision({
-          system: SYSTEM,
+          system: reviewSystem('design'),
           userText,
           imageBase64,
           maxTokens: 1024,
           effort: 'low',
         })
       : await askClaude({
-          system: SYSTEM,
+          system: reviewSystem('design'),
           user: userText,
           maxTokens: 1024,
           effort: 'low',

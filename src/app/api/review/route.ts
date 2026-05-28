@@ -1,12 +1,6 @@
 import { aiErrorResponse, askClaude } from '@/lib/ai/client'
+import { reviewSystem } from '@/lib/ai/prompts/review'
 import { supabaseAdmin } from '@/lib/supabase/server'
-
-const SYSTEM = `Você é um tech lead fazendo um code review socrático CURTO.
-Responda em NO MÁXIMO 5 bullets em markdown — direto, sem floreio. NÃO reescreva o código.
-- 1 a 2 bullets do que está bom.
-- 1 a 2 bullets do que falta ou pode melhorar.
-- 1 pergunta no final que faça o aluno pensar.
-Cada bullet com 1 ou 2 frases curtas. Português do Brasil. Sem cabeçalhos longos.`
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
@@ -44,7 +38,7 @@ export async function POST(req: Request) {
   let aiError: unknown = null
   try {
     review = await askClaude({
-      system: SYSTEM,
+      system: reviewSystem('code'),
       user,
       maxTokens: 1024,
       effort: 'low',
