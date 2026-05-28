@@ -52,6 +52,12 @@ export function Navbar() {
           {!loading && user ? (
             <>
               <Link
+                href='/challenges'
+                className='hidden rounded-md px-3 py-2 text-sm font-medium text-[#6b6478] transition-colors hover:text-[#1b1916] sm:inline-flex'
+              >
+                Biblioteca
+              </Link>
+              <Link
                 href='/dashboard'
                 className='hidden rounded-md px-3 py-2 text-sm font-medium text-[#6b6478] transition-colors hover:text-[#1b1916] sm:inline-flex'
               >
