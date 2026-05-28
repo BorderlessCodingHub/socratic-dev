@@ -15,41 +15,82 @@ export type ExcalidrawApi = {
   updateScene: (scene: { elements: readonly unknown[] }) => void
 }
 
-// Builds Excalidraw elements from an architecture graph (nodes + edges),
-// laid out in a grid. Used by "Resolver pra mim" to draw the solution.
+// Visual vocabulary per component type — shape + color + icon — so the
+// generated architecture reads like a real diagram, not generic boxes.
+const NODE_STYLE: Record<
+  string,
+  { shape: 'rectangle' | 'ellipse' | 'diamond'; emoji: string; bg: string }
+> = {
+  client: { shape: 'ellipse', emoji: '👤', bg: '#e7f0ff' },
+  gateway: { shape: 'rectangle', emoji: '🚪', bg: '#fff1e6' },
+  service: { shape: 'rectangle', emoji: '⚙️', bg: '#f1f0fb' },
+  database: { shape: 'ellipse', emoji: '🗄️', bg: '#e8f8ee' },
+  cache: { shape: 'diamond', emoji: '⚡', bg: '#fff7d6' },
+  queue: { shape: 'rectangle', emoji: '📨', bg: '#eafaf5' },
+  storage: { shape: 'ellipse', emoji: '📦', bg: '#f3eefe' },
+  external: { shape: 'rectangle', emoji: '☁️', bg: '#eef0f2' },
+}
+
 export async function buildSceneElements(
-  nodes: { id: string; label: string }[],
+  nodes: { id: string; label: string; type?: string }[],
   edges: { from: string; to: string }[],
 ): Promise<readonly unknown[]> {
   const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
   const COLS = 3
-  const W = 200
+  const W = 220
   const H = 90
-  const GAP_X = 90
-  const GAP_Y = 80
+  const GAP_X = 120
+  const GAP_Y = 120
 
-  const skeleton: unknown[] = nodes.map((n, i) => ({
-    type: 'rectangle',
-    id: n.id,
-    x: (i % COLS) * (W + GAP_X),
-    y: Math.floor(i / COLS) * (H + GAP_Y),
-    width: W,
-    height: H,
-    backgroundColor: '#f1f0fb',
-    label: { text: n.label },
-  }))
+  const pos = new Map<string, { x: number; y: number }>()
+  nodes.forEach((n, i) => {
+    pos.set(n.id, {
+      x: (i % COLS) * (W + GAP_X),
+      y: Math.floor(i / COLS) * (H + GAP_Y),
+    })
+  })
 
-  const ids = new Set(nodes.map((n) => n.id))
-  for (const e of edges) {
-    if (ids.has(e.from) && ids.has(e.to)) {
-      skeleton.push({
-        type: 'arrow',
-        x: 0,
-        y: 0,
-        start: { id: e.from },
-        end: { id: e.to },
-      })
+  const skeleton: unknown[] = nodes.map((n) => {
+    const p = pos.get(n.id)!
+    const st = NODE_STYLE[n.type ?? ''] ?? NODE_STYLE.service
+    return {
+      type: st.shape,
+      id: n.id,
+      x: p.x,
+      y: p.y,
+      width: W,
+      height: H,
+      backgroundColor: st.bg,
+      label: { text: `${st.emoji} ${n.label}` },
     }
+  })
+
+  const byId = new Map(nodes.map((n) => [n.id, n.id]))
+  const byLabel = new Map(nodes.map((n) => [n.label.trim().toLowerCase(), n.id]))
+  const resolve = (ref: string): string | undefined =>
+    byId.get(ref) ?? byLabel.get((ref ?? '').trim().toLowerCase())
+
+  for (const e of edges) {
+    const fromId = resolve(e.from)
+    const toId = resolve(e.to)
+    if (!fromId || !toId || fromId === toId) continue
+    const a = pos.get(fromId)!
+    const b = pos.get(toId)!
+    const ax = a.x + W / 2
+    const ay = a.y + H / 2
+    const bx = b.x + W / 2
+    const by = b.y + H / 2
+    skeleton.push({
+      type: 'arrow',
+      x: ax,
+      y: ay,
+      points: [
+        [0, 0],
+        [bx - ax, by - ay],
+      ],
+      start: { id: fromId },
+      end: { id: toId },
+    })
   }
 
   return convertToExcalidrawElements(skeleton as never) as readonly unknown[]
