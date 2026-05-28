@@ -4,6 +4,7 @@ import { Navbar } from '@/components/navbar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/features/auth/hooks/use-user'
 import {
+  getNextChallenge,
   listSessionsForUser,
   type SessionRow,
 } from '@/features/challenges/actions'
@@ -80,13 +81,12 @@ export default function DashboardPage() {
       const level =
         (user?.user_metadata?.preferred_level as string | undefined) ??
         'intermediate'
-      const res = await fetch('/api/next-challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'design', level, user_id: user.id }),
+      const data = await getNextChallenge({
+        kind: 'design',
+        level: level as 'beginner' | 'intermediate' | 'advanced',
+        userId: user.id,
       })
-      const data = await res.json()
-      if (res.ok && data?.id) router.push(`/design?id=${data.id}`)
+      if (!('error' in data) && data?.id) router.push(`/design?id=${data.id}`)
       else setGenDesign(false)
     } catch {
       setGenDesign(false)

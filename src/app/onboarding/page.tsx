@@ -3,6 +3,7 @@
 import { Logo } from '@/components/logo'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/features/auth/hooks/use-user'
+import { getNextChallenge } from '@/features/challenges/actions'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
@@ -162,7 +163,6 @@ export default function OnboardingPage() {
           preferred_level?: string
         }
       | undefined
-    // Already onboarded → skip the steps and generate straight from the profile.
     if (meta?.preferred_track === 'design' && meta?.preferred_level) {
       started.current = true
       generate('design', meta.preferred_level, 'design')
@@ -197,19 +197,23 @@ export default function OnboardingPage() {
       },
     })
     try {
-      const body =
+      const result = await getNextChallenge(
         trk === 'design'
-          ? { kind: 'design', level: dbLevel, user_id: user?.id }
-          : { stack: dbStack, level: dbLevel, user_id: user?.id }
-      const res = await fetch('/api/next-challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      const data = await res.json()
-      if (!res.ok || !data?.id) {
+          ? {
+              kind: 'design',
+              level: dbLevel as 'beginner' | 'intermediate' | 'advanced',
+              userId: user?.id,
+            }
+          : {
+              kind: 'code',
+              stack: dbStack,
+              level: dbLevel as 'beginner' | 'intermediate' | 'advanced',
+              userId: user?.id,
+            },
+      )
+      if ('error' in result || !result?.id) {
         setError(
-          data?.error ??
+          ('error' in result && result.error) ||
             'A IA não conseguiu gerar o desafio agora. Tente de novo.',
         )
         setStarting(false)
@@ -217,7 +221,9 @@ export default function OnboardingPage() {
         return
       }
       router.push(
-        trk === 'design' ? `/design?id=${data.id}` : `/challenge?id=${data.id}`,
+        trk === 'design'
+          ? `/design?id=${result.id}`
+          : `/challenge?id=${result.id}`,
       )
     } catch {
       setError('Falha ao falar com a IA. Verifique a conexão e tente de novo.')
@@ -267,7 +273,6 @@ export default function OnboardingPage() {
                 }}
               />
               <div className='grid-pattern absolute inset-0 opacity-30' />
-
               <div className='relative z-10'>
                 {starting ? (
                   <div>
