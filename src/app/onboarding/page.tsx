@@ -5,7 +5,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/lib/auth/use-user'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Info,
+  Loader2,
+  Sparkles,
+} from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -126,34 +133,34 @@ export default function OnboardingPage() {
   const [starting, setStarting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
+  const started = React.useRef(false)
+
   React.useEffect(() => {
-    if (!user) return
+    if (!user || started.current) return
     const meta = user.user_metadata as
       | { preferred_stack?: string; preferred_level?: string }
       | undefined
+    // Already onboarded → skip the steps and generate straight from the profile.
+    if (meta?.preferred_stack && meta?.preferred_level) {
+      started.current = true
+      generate(meta.preferred_stack, meta.preferred_level)
+      return
+    }
     if (meta?.preferred_stack && DB_TO_STACK[meta.preferred_stack])
       setStack(DB_TO_STACK[meta.preferred_stack])
     if (meta?.preferred_level && DB_TO_LEVEL[meta.preferred_level])
       setLevel(DB_TO_LEVEL[meta.preferred_level])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const canNext = (step === 0 && stack) || (step === 1 && level) || step === 2
 
-  async function start() {
-    if (starting) return
-    if (!user) {
-      router.push('/login?next=/onboarding')
-      return
-    }
+  async function generate(dbStack: string, dbLevel: string) {
     setError(null)
     setStarting(true)
-    const dbStack = STACK_TO_DB[stack ?? 'js'] ?? 'javascript'
-    const dbLevel = LEVEL_TO_DB[level ?? 'starter'] ?? 'beginner'
-
     await supabase.auth.updateUser({
       data: { preferred_stack: dbStack, preferred_level: dbLevel },
     })
-
     try {
       const res = await fetch('/api/generate-challenge', {
         method: 'POST',
@@ -167,13 +174,26 @@ export default function OnboardingPage() {
             'A IA não conseguiu gerar o desafio agora. Tente de novo.',
         )
         setStarting(false)
+        started.current = false
         return
       }
       router.push(`/challenge?id=${data.id}`)
     } catch {
       setError('Falha ao falar com a IA. Verifique a conexão e tente de novo.')
       setStarting(false)
+      started.current = false
     }
+  }
+
+  function start() {
+    if (starting) return
+    if (!user) {
+      router.push('/login?next=/onboarding')
+      return
+    }
+    const dbStack = STACK_TO_DB[stack ?? 'js'] ?? 'javascript'
+    const dbLevel = LEVEL_TO_DB[level ?? 'starter'] ?? 'beginner'
+    generate(dbStack, dbLevel)
   }
 
   const meta = stepMeta[step]
@@ -204,30 +224,33 @@ export default function OnboardingPage() {
               <div className='grid-pattern absolute inset-0 opacity-30' />
 
               <div className='relative z-10'>
-                <div className='mb-6 flex items-center gap-2'>
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className='flex-1'>
-                      <div
-                        className={cn(
-                          'h-1 rounded-full transition-all duration-500',
-                          step >= i ? 'bg-iris' : 'bg-[#1b1916]/10',
-                        )}
-                      />
-                      <div className='mt-2 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                        {['Stack', 'Nível', 'Pronto'][i]}
-                      </div>
+                {starting ? (
+                  <div>
+                    <div className='mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
+                      Gerando
                     </div>
-                  ))}
-                </div>
-
-                <AnimatePresence mode='wait'>
-                  <motion.div
-                    key={step}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.35 }}
-                  >
+                    <h1 className='type-h2'>Quase lá.</h1>
+                    <p className='type-body mt-3 max-w-[44ch]'>
+                      Montando um desafio na sua stack e nível salvos.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className='mb-6 flex items-center gap-2'>
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className='flex-1'>
+                          <div
+                            className={cn(
+                              'h-1 rounded-full transition-all duration-500',
+                              step >= i ? 'bg-iris' : 'bg-[#1b1916]/10',
+                            )}
+                          />
+                          <div className='mt-2 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                            {['Stack', 'Nível', 'Pronto'][i]}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     <div className='mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
                       {meta.eyebrow}
                     </div>
@@ -235,8 +258,8 @@ export default function OnboardingPage() {
                     <p className='type-body mt-3 max-w-[44ch]'>
                       {meta.subtitle}
                     </p>
-                  </motion.div>
-                </AnimatePresence>
+                  </>
+                )}
               </div>
             </div>
 
@@ -245,107 +268,82 @@ export default function OnboardingPage() {
                 <GeneratingChallenge />
               ) : (
                 <>
-              <AnimatePresence mode='wait'>
-                {step === 0 && (
-                  <motion.div
-                    key='stack'
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.35 }}
-                    className='grid gap-3 sm:grid-cols-2'
-                  >
-                    {stacks.map((s, i) => (
-                      <Tile
-                        key={s.id}
-                        i={i}
-                        selected={stack === s.id}
-                        onClick={() => setStack(s.id)}
+              {step === 0 && (
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  {stacks.map((s) => (
+                    <Tile
+                      key={s.id}
+                      selected={stack === s.id}
+                      onClick={() => setStack(s.id)}
+                    >
+                      <div
+                        className={cn(
+                          'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
+                          s.gradient,
+                        )}
                       >
-                        <div
-                          className={cn(
-                            'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
-                            s.gradient,
-                          )}
-                        >
-                          {s.icon}
+                        {s.icon}
+                      </div>
+                      <div className='flex-1'>
+                        <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                          {s.name}
                         </div>
-                        <div className='flex-1'>
+                        <div className='text-sm text-[#6b6478]'>{s.desc}</div>
+                      </div>
+                    </Tile>
+                  ))}
+                </div>
+              )}
+
+              {step === 1 && (
+                <div className='space-y-3'>
+                  {levels.map((l) => (
+                    <Tile
+                      key={l.id}
+                      selected={level === l.id}
+                      onClick={() => setLevel(l.id)}
+                    >
+                      <div className='flex items-center gap-1'>
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                          <span
+                            key={idx}
+                            className={cn(
+                              'h-2 w-5 rounded-full',
+                              idx < l.intensity ? 'bg-iris' : 'bg-[#DFE5E9]',
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <div className='flex-1'>
+                        <div className='flex flex-wrap items-center gap-2'>
                           <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                            {s.name}
+                            {l.name}
                           </div>
-                          <div className='text-sm text-[#6b6478]'>{s.desc}</div>
+                          <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                            {l.tag}
+                          </span>
                         </div>
-                      </Tile>
-                    ))}
-                  </motion.div>
-                )}
+                        <div className='mt-0.5 text-sm text-[#6b6478]'>
+                          {l.desc}
+                        </div>
+                      </div>
+                    </Tile>
+                  ))}
+                </div>
+              )}
 
-                {step === 1 && (
-                  <motion.div
-                    key='level'
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.35 }}
-                    className='space-y-3'
-                  >
-                    {levels.map((l, i) => (
-                      <Tile
-                        key={l.id}
-                        i={i}
-                        selected={level === l.id}
-                        onClick={() => setLevel(l.id)}
-                      >
-                        <div className='flex items-center gap-1'>
-                          {Array.from({ length: 4 }).map((_, idx) => (
-                            <span
-                              key={idx}
-                              className={cn(
-                                'h-2 w-5 rounded-full',
-                                idx < l.intensity ? 'bg-iris' : 'bg-[#DFE5E9]',
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <div className='flex-1'>
-                          <div className='flex flex-wrap items-center gap-2'>
-                            <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                              {l.name}
-                            </div>
-                            <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                              {l.tag}
-                            </span>
-                          </div>
-                          <div className='mt-0.5 text-sm text-[#6b6478]'>
-                            {l.desc}
-                          </div>
-                        </div>
-                      </Tile>
-                    ))}
-                  </motion.div>
-                )}
-
-                {step === 2 && (
-                  <motion.div
-                    key='ready'
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.35 }}
-                    className='grid gap-3 sm:grid-cols-2'
-                  >
-                    <SummaryItem
-                      label='Stack'
-                      value={stacks.find((s) => s.id === stack)?.name ?? '—'}
-                    />
-                    <SummaryItem
-                      label='Nível'
-                      value={levels.find((l) => l.id === level)?.name ?? '—'}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {step === 2 && (
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <SummaryItem
+                    label='Stack'
+                    value={stacks.find((s) => s.id === stack)?.name ?? '—'}
+                  />
+                  <SummaryItem
+                    label='Nível'
+                    value={levels.find((l) => l.id === level)?.name ?? '—'}
+                  />
+                </div>
+              )}
 
               {error && (
                 <div className='mt-6 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600'>
@@ -453,32 +451,39 @@ function GeneratingChallenge() {
         <Skeleton className='h-4 w-5/6 rounded' />
         <Skeleton className='mt-5 h-28 w-full rounded-xl' />
       </div>
+
+      <div className='mt-6 flex items-start gap-2 rounded-xl border border-[#DFE5E9] bg-[#F7F9FA] px-3.5 py-2.5 text-[12px] text-[#6b6478]'>
+        <Info className='mt-0.5 size-3.5 shrink-0' />
+        <span>
+          Gerando com a stack e o nível salvos no seu perfil. Quer mudar?{' '}
+          <Link
+            href='/profile'
+            className='font-medium text-iris hover:underline'
+          >
+            Ajuste no perfil
+          </Link>
+          .
+        </span>
+      </div>
     </motion.div>
   )
 }
 
 function Tile({
-  i,
   selected,
   onClick,
   children,
 }: {
-  i: number
   selected: boolean
   onClick: () => void
   children: React.ReactNode
 }) {
   return (
-    <motion.button
+    <button
       type='button'
       onClick={onClick}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.06, duration: 0.4 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.99 }}
       className={cn(
-        'shadow-soft flex w-full items-center gap-4 rounded-2xl border bg-white p-5 text-left transition-all',
+        'shadow-soft flex w-full cursor-pointer items-center gap-4 rounded-2xl border bg-white p-5 text-left transition-colors',
         selected
           ? 'border-primary/50 bg-primary/[0.04] ring-2 ring-primary/25'
           : 'border-[#DFE5E9] hover:border-[#1b1916]/20',
@@ -487,13 +492,13 @@ function Tile({
       {children}
       <div
         className={cn(
-          'grid size-6 shrink-0 place-items-center rounded-full border transition-all',
+          'grid size-6 shrink-0 place-items-center rounded-full border transition-colors',
           selected ? 'border-primary bg-primary' : 'border-[#DFE5E9] bg-white',
         )}
       >
         {selected && <Check className='size-3.5 text-white' />}
       </div>
-    </motion.button>
+    </button>
   )
 }
 

@@ -38,8 +38,8 @@ export async function POST(req: Request) {
     review = await askClaude({
       system: SYSTEM,
       user,
-      maxTokens: 2048,
-      effort: 'high',
+      maxTokens: 1024,
+      effort: 'low',
     })
   } catch (e) {
     aiError = e
