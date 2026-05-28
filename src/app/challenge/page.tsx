@@ -213,7 +213,10 @@ export default function ChallengePage() {
         fetch(`/api/sessions/${sessionId}`, {
           method: 'PATCH',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ status: 'completed' }),
+          body: JSON.stringify({
+            status: 'completed',
+            duration_seconds: elapsed,
+          }),
         }).catch(() => {})
       }
     } finally {
@@ -386,6 +389,7 @@ export default function ChallengePage() {
             reviewing={reviewing}
             independence={independence}
             hintsUsed={hintsUsed}
+            elapsed={elapsed}
             onClose={() => setReviewOpen(false)}
           />
         )}

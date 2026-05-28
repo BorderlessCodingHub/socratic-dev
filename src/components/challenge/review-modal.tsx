@@ -7,17 +7,25 @@ import { motion } from 'motion/react'
 import Link from 'next/link'
 import { FormattedText } from './formatted-text'
 
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 export function ReviewModal({
   review,
   reviewing,
   independence,
   hintsUsed,
+  elapsed,
   onClose,
 }: {
   review: string | null
   reviewing: boolean
   independence: number
   hintsUsed: number
+  elapsed: number
   onClose: () => void
 }) {
   return (
@@ -25,7 +33,7 @@ export function ReviewModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className='fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-background/80 p-4 backdrop-blur-xl'
+      className='fixed inset-0 z-50 grid place-items-center bg-background/80 p-4 backdrop-blur-xl'
       onClick={onClose}
     >
       <motion.div
@@ -33,19 +41,18 @@ export function ReviewModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 24, scale: 0.97 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className='border-gradient noise relative my-8 w-full max-w-2xl overflow-hidden rounded-3xl'
+        className='border-gradient noise relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl'
         onClick={(e) => e.stopPropagation()}
       >
-        <div className='absolute top-4 right-4 z-10'>
-          <button
-            onClick={onClose}
-            className='grid size-8 place-items-center rounded-full border border-white/[0.08] bg-white/[0.05] transition-colors hover:bg-white/[0.1]'
-          >
-            <X className='size-4' />
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className='absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border border-white/[0.08] bg-white/[0.05] transition-colors hover:bg-white/[0.1]'
+          aria-label='Fechar'
+        >
+          <X className='size-4' />
+        </button>
 
-        <div className='px-8 pt-10 pb-6'>
+        <div className='shrink-0 px-8 pt-10 pb-5'>
           <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-iris/20 bg-iris/10 px-3 py-1 font-mono text-[11px] text-iris'>
             <GitPullRequestArrow className='size-3' />
             Code Review Socrático
@@ -62,7 +69,7 @@ export function ReviewModal({
           </p>
         </div>
 
-        <div className='px-8 pb-6'>
+        <div className='min-h-0 flex-1 overflow-y-auto px-8 pb-6'>
           {reviewing || !review ? (
             <div className='flex items-center gap-2 py-8 text-sm text-muted-foreground'>
               <Loader2 className='size-4 animate-spin' /> Gerando review…
@@ -74,27 +81,28 @@ export function ReviewModal({
           )}
         </div>
 
-        <div className='border-t border-white/[0.06] bg-white/[0.015] px-8 py-6'>
-          <div className='mb-5 grid grid-cols-2 gap-3'>
+        <div className='shrink-0 border-t border-white/[0.06] bg-white/[0.015] px-8 py-6'>
+          <div className='mb-5 grid grid-cols-3 gap-3'>
             <Metric
               label='Independência'
               value={`${independence}%`}
               accent='mint'
             />
             <Metric label='Hints usados' value={String(hintsUsed)} />
+            <Metric label='Tempo' value={formatTime(elapsed)} accent='iris' />
           </div>
           <div className='flex gap-2'>
             <Button
               size='lg'
               variant='ghost'
               onClick={onClose}
-              className='flex-1 rounded-xl'
+              className='flex-1 cursor-pointer rounded-xl'
             >
               Revisar de novo
             </Button>
             <Button
               size='lg'
-              className='flex-1 rounded-xl border-transparent bg-primary text-primary-foreground hover:bg-primary/90'
+              className='flex-1 cursor-pointer rounded-xl border-transparent bg-primary text-primary-foreground hover:bg-primary/90'
               render={<Link href='/dashboard' />}
             >
               Ver progresso <ChevronRight className='size-4' />
