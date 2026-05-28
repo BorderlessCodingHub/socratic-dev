@@ -2,6 +2,7 @@
 
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/lib/auth/use-user'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -115,6 +116,7 @@ export default function OnboardingPage() {
   const [stack, setStack] = React.useState<string | null>(null)
   const [level, setLevel] = React.useState<string | null>(null)
   const [starting, setStarting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (!user) return
@@ -148,6 +150,7 @@ export default function OnboardingPage() {
       router.push('/login?next=/onboarding')
       return
     }
+    setError(null)
     setStarting(true)
     const dbStack = STACK_TO_DB[stack ?? 'js'] ?? 'javascript'
     const dbLevel = LEVEL_TO_DB[level ?? 'starter'] ?? 'beginner'
@@ -161,34 +164,33 @@ export default function OnboardingPage() {
         () => {},
       )
 
-    const byBoth = await supabase
-      .from('challenges')
-      .select('id')
-      .eq('stack', dbStack)
-      .eq('level', dbLevel)
-      .limit(1)
-    let id = byBoth.data?.[0]?.id as string | undefined
-
-    if (!id) {
-      const byStack = await supabase
-        .from('challenges')
-        .select('id')
-        .eq('stack', dbStack)
-        .limit(1)
-      id = byStack.data?.[0]?.id as string | undefined
+    try {
+      const res = await fetch('/api/generate-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stack: dbStack, level: dbLevel }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.id) {
+        setError(
+          data?.error ??
+            'A IA não conseguiu gerar o desafio agora. Tente de novo.',
+        )
+        setStarting(false)
+        return
+      }
+      router.push(`/challenge?id=${data.id}`)
+    } catch {
+      setError('Falha ao falar com a IA. Verifique a conexão e tente de novo.')
+      setStarting(false)
     }
-    if (!id) {
-      const any = await supabase.from('challenges').select('id').limit(1)
-      id = any.data?.[0]?.id as string | undefined
-    }
-    router.push(id ? `/challenge?id=${id}` : '/challenge')
   }
 
   const meta = stepMeta[step]
 
   return (
     <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
-      <header className='container-main flex h-16 shrink-0 items-center justify-between'>
+      <header className='container-main flex h-16 w-full max-w-3xl shrink-0 items-center justify-between'>
         <Logo />
         <Link
           href='/'
@@ -249,6 +251,10 @@ export default function OnboardingPage() {
             </div>
 
             <div className='px-6 py-7 sm:px-10 sm:py-8'>
+              {starting ? (
+                <GeneratingChallenge />
+              ) : (
+                <>
               <AnimatePresence mode='wait'>
                 {step === 0 && (
                   <motion.div
@@ -351,13 +357,19 @@ export default function OnboardingPage() {
                 )}
               </AnimatePresence>
 
+              {error && (
+                <div className='mt-6 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600'>
+                  {error}
+                </div>
+              )}
+
               <div className='mt-7 flex items-center justify-between'>
                 <Button
                   variant='ghost'
                   size='lg'
                   onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
                   className={cn(
-                    'rounded-full text-[#6b6478] hover:text-[#1b1916]',
+                    'rounded-xl text-[#6b6478] hover:text-[#1b1916]',
                     step === 0 && 'invisible',
                   )}
                 >
@@ -369,7 +381,7 @@ export default function OnboardingPage() {
                     size='lg'
                     disabled={!canNext}
                     onClick={() => setStep((s) => Math.min(2, s + 1) as Step)}
-                    className='rounded-full border-transparent bg-primary pr-3 pl-4 text-primary-foreground hover:bg-primary/90 disabled:opacity-40'
+                    className='rounded-xl border-transparent bg-primary pr-3 pl-4 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40'
                   >
                     Continuar <ArrowRight className='size-4' />
                   </Button>
@@ -377,24 +389,82 @@ export default function OnboardingPage() {
                   <Button
                     size='lg'
                     onClick={start}
-                    disabled={starting}
-                    className='glow-iris group rounded-full border-transparent bg-primary pr-4 pl-5 text-primary-foreground hover:bg-primary/90 disabled:opacity-60'
+                    className='group rounded-xl border-transparent bg-primary pr-4 pl-5 text-primary-foreground transition-colors hover:bg-primary/90'
                   >
-                    {starting ? (
-                      <Loader2 className='size-4 animate-spin' />
-                    ) : (
-                      <Sparkles className='size-4' />
-                    )}
-                    Gerar meu desafio
+                    <Sparkles className='size-4' />
+                    {error ? 'Tentar de novo' : 'Gerar meu desafio'}
                     <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
                   </Button>
                 )}
               </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       </main>
     </div>
+  )
+}
+
+const GEN_MESSAGES = [
+  'Inventando um cliente fictício…',
+  'Definindo o formato dos dados de entrada…',
+  'Escrevendo os testes escondidos…',
+  'Calibrando a dificuldade pro seu nível…',
+  'Preparando a primeira pergunta do tutor…',
+]
+
+function GeneratingChallenge() {
+  const [i, setI] = React.useState(0)
+  React.useEffect(() => {
+    const t = setInterval(
+      () => setI((v) => (v + 1) % GEN_MESSAGES.length),
+      1900,
+    )
+    return () => clearInterval(t)
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className='py-2'
+    >
+      <div className='flex items-center gap-3'>
+        <div className='relative grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10'>
+          <span className='absolute inset-0 animate-ping rounded-2xl bg-primary/10' />
+          <Sparkles className='relative size-5 text-primary' />
+        </div>
+        <div className='min-w-0'>
+          <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+            A IA está criando seu desafio
+          </div>
+          <div className='flex items-center gap-1.5 text-sm text-[#6b6478]'>
+            <Loader2 className='size-3.5 shrink-0 animate-spin' />
+            <AnimatePresence mode='wait'>
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.3 }}
+              >
+                {GEN_MESSAGES[i]}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      <div className='mt-7 space-y-3'>
+        <Skeleton className='h-4 w-3/4 rounded' />
+        <Skeleton className='h-4 w-full rounded' />
+        <Skeleton className='h-4 w-5/6 rounded' />
+        <Skeleton className='mt-5 h-28 w-full rounded-xl' />
+      </div>
+    </motion.div>
   )
 }
 

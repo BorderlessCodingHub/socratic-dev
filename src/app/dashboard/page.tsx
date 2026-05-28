@@ -3,6 +3,7 @@
 import { Backdrop } from '@/components/backdrop'
 import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useUser } from '@/lib/auth/use-user'
 import { cn } from '@/lib/utils'
 import {
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const { user, loading } = useUser()
   const [stats, setStats] = React.useState<Stats | null>(null)
   const [sessions, setSessions] = React.useState<SessionRow[]>([])
+  const [loaded, setLoaded] = React.useState(false)
 
   React.useEffect(() => {
     if (!loading && !user) router.replace('/login?next=/dashboard')
@@ -74,6 +76,7 @@ export default function DashboardPage() {
       if (!active) return
       if (s && !s.error) setStats(s)
       if (Array.isArray(sess)) setSessions(sess)
+      setLoaded(true)
     })()
     return () => {
       active = false
@@ -126,7 +129,7 @@ export default function DashboardPage() {
             </div>
             <Button
               size='lg'
-              className='glow-iris group h-11 self-start rounded-full border-transparent bg-primary pr-3 pl-4 text-[14px] text-primary-foreground hover:bg-primary/90 md:self-auto'
+              className='group h-11 self-start rounded-xl border-transparent bg-primary pr-3 pl-4 text-[14px] text-primary-foreground transition-colors hover:bg-primary/90 md:self-auto'
               render={<Link href='/onboarding' />}
             >
               <Sparkles className='size-4' />
@@ -135,50 +138,53 @@ export default function DashboardPage() {
             </Button>
           </motion.div>
 
-          {/* Top stats */}
-          <div className='mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4'>
-            <StatCard
-              i={0}
-              icon={Trophy}
-              label='Streak'
-              value={String(stats?.streak_days ?? 0)}
-              hint='dias seguidos'
-              accent='ember'
-            />
-            <StatCard
-              i={1}
-              icon={Target}
-              label='Desafios'
-              value={String(stats?.total_completed ?? 0)}
-              hint='concluídos'
-              accent='iris'
-            />
-            <StatCard
-              i={2}
-              icon={Lightbulb}
-              label='Hints/desafio'
-              value={String(stats?.avg_hints_per_session ?? 0)}
-              hint='média'
-              accent='mint'
-            />
-            <StatCard
-              i={3}
-              icon={Brain}
-              label='Hints totais'
-              value={String(stats?.total_hints ?? 0)}
-              hint='usados'
-              accent='iris'
-            />
-          </div>
+          {!loaded ? (
+            <DashboardSkeleton />
+          ) : (
+            <>
+              <div className='mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4'>
+                <StatCard
+                  i={0}
+                  icon={Trophy}
+                  label='Streak'
+                  value={String(stats?.streak_days ?? 0)}
+                  hint='dias seguidos'
+                  accent='ember'
+                />
+                <StatCard
+                  i={1}
+                  icon={Target}
+                  label='Desafios'
+                  value={String(stats?.total_completed ?? 0)}
+                  hint='concluídos'
+                  accent='iris'
+                />
+                <StatCard
+                  i={2}
+                  icon={Lightbulb}
+                  label='Hints/desafio'
+                  value={String(stats?.avg_hints_per_session ?? 0)}
+                  hint='média'
+                  accent='mint'
+                />
+                <StatCard
+                  i={3}
+                  icon={Brain}
+                  label='Hints totais'
+                  value={String(stats?.total_hints ?? 0)}
+                  hint='usados'
+                  accent='iris'
+                />
+              </div>
 
-          {/* Charts row */}
-          <div className='mb-8 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
-            <ActivityChart data={week} />
-            <IndependenceRing score={score} />
-          </div>
+              <div className='mb-8 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
+                <ActivityChart data={week} />
+                <IndependenceRing score={score} />
+              </div>
 
-          {/* Recent challenges */}
-          <RecentChallenges items={sessions} />
+              <RecentChallenges items={sessions} />
+            </>
+          )}
 
           {/* Manifesto reminder */}
           <motion.div
@@ -206,6 +212,50 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <>
+      <div className='mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4'>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className='glass rounded-2xl p-5'>
+            <div className='mb-4 flex items-center justify-between'>
+              <Skeleton className='size-9 rounded-xl' />
+              <Skeleton className='h-3 w-12' />
+            </div>
+            <Skeleton className='h-8 w-14' />
+            <Skeleton className='mt-2 h-3 w-16' />
+          </div>
+        ))}
+      </div>
+
+      <div className='mb-8 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
+        <div className='glass rounded-2xl p-6'>
+          <Skeleton className='h-3 w-24' />
+          <Skeleton className='mt-2 h-5 w-40' />
+          <Skeleton className='mt-4 h-64 w-full rounded-xl' />
+        </div>
+        <div className='glass rounded-2xl p-6'>
+          <Skeleton className='h-3 w-20' />
+          <Skeleton className='mt-2 h-5 w-36' />
+          <div className='mt-6 grid place-items-center'>
+            <Skeleton className='size-44 rounded-full' />
+          </div>
+        </div>
+      </div>
+
+      <div className='glass rounded-2xl p-6'>
+        <Skeleton className='h-3 w-20' />
+        <Skeleton className='mt-2 h-5 w-44' />
+        <div className='mt-5 space-y-2'>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className='h-16 w-full rounded-xl' />
+          ))}
+        </div>
+      </div>
+    </>
   )
 }
 

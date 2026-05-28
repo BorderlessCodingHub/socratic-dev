@@ -7,6 +7,7 @@ import { ReviewModal } from '@/components/challenge/review-modal'
 import { RunTerminal } from '@/components/challenge/run-terminal'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { ChatMsg } from '@/lib/ai/types'
 import { useUser } from '@/lib/auth/use-user'
 import {
@@ -231,13 +232,7 @@ export default function ChallengePage() {
   const seconds = String(elapsed % 60).padStart(2, '0')
 
   if (authLoading || (!challenge && user)) {
-    return (
-      <div className='grid h-screen flex-1 place-items-center bg-background text-sm text-muted-foreground'>
-        <span className='flex items-center gap-2'>
-          <Loader2 className='size-4 animate-spin' /> Carregando desafio…
-        </span>
-      </div>
-    )
+    return <ChallengeSkeleton />
   }
   if (!user || !challenge) return null
 
@@ -277,7 +272,7 @@ export default function ChallengePage() {
           <Button
             size='sm'
             disabled={reviewing}
-            className='h-8 gap-1.5 rounded-full border-transparent bg-primary pr-3 pl-3 text-primary-foreground hover:bg-primary/90'
+            className='h-8 gap-1.5 rounded-lg border-transparent bg-primary pr-3 pl-3 text-primary-foreground hover:bg-primary/90'
             onClick={submitReview}
           >
             <GitPullRequestArrow className='size-3.5' />
@@ -397,5 +392,45 @@ function Code2Tag({ language }: { language: RunnerLanguage }) {
     <span className='grid size-4 place-items-center rounded border border-iris/30 bg-iris/20 text-[8px] font-bold text-iris uppercase'>
       {language === 'js' ? 'JS' : 'TS'}
     </span>
+  )
+}
+
+function ChallengeSkeleton() {
+  return (
+    <div className='flex h-screen flex-1 flex-col overflow-hidden bg-white'>
+      <header className='flex h-14 shrink-0 items-center justify-between border-b border-[#DFE5E9] px-4'>
+        <Skeleton className='h-6 w-28' />
+        <div className='flex items-center gap-2'>
+          <Skeleton className='hidden h-8 w-20 rounded-full md:block' />
+          <Skeleton className='h-8 w-24 rounded-full' />
+        </div>
+      </header>
+      <div className='grid min-h-0 flex-1 lg:grid-cols-[360px_1fr_400px]'>
+        <aside className='space-y-3 border-r border-[#DFE5E9] p-6'>
+          <Skeleton className='h-5 w-40 rounded-full' />
+          <Skeleton className='h-7 w-3/4' />
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-5/6' />
+          <Skeleton className='mt-4 h-24 w-full rounded-xl' />
+        </aside>
+        <section className='flex min-h-0 flex-col border-r border-[#DFE5E9]'>
+          <div className='flex h-10 items-center justify-between border-b border-[#DFE5E9] px-4'>
+            <Skeleton className='h-4 w-32' />
+            <Skeleton className='h-4 w-20' />
+          </div>
+          <div className='flex-1 space-y-3 bg-[#0a0a0c] p-6'>
+            <Skeleton className='h-4 w-1/2 bg-white/[0.06]' />
+            <Skeleton className='h-4 w-2/3 bg-white/[0.06]' />
+            <Skeleton className='h-4 w-1/3 bg-white/[0.06]' />
+            <Skeleton className='h-4 w-3/5 bg-white/[0.06]' />
+          </div>
+        </section>
+        <aside className='space-y-3 p-6'>
+          <Skeleton className='h-16 w-full rounded-xl' />
+          <Skeleton className='ml-auto h-12 w-3/4 rounded-xl' />
+          <Skeleton className='h-12 w-2/3 rounded-xl' />
+        </aside>
+      </div>
+    </div>
   )
 }
