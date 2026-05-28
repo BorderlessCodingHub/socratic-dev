@@ -70,6 +70,15 @@ export function RunTerminal({
         {running && <p className='text-zinc-500'>Executando…</p>}
         {result && (
           <>
+            {result.logs.length === 0 &&
+              !result.error &&
+              result.tests.length === 0 && (
+                <p className='text-zinc-500'>
+                  Código executado sem erros. Este desafio ainda não tem testes
+                  definidos — escreva um <span className='text-zinc-200'>console.log</span> para
+                  ver a saída aqui.
+                </p>
+              )}
             {result.logs.map((l, i) => (
               <div
                 key={i}

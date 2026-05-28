@@ -10,6 +10,18 @@ export async function POST(request: Request) {
     )
   }
 
+  const existing = await supabaseAdmin
+    .from('sessions')
+    .select('*')
+    .eq('user_id', user_id)
+    .eq('challenge_id', challenge_id)
+    .eq('status', 'in_progress')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existing.data) return Response.json(existing.data)
+
   const { data, error } = await supabaseAdmin
     .from('sessions')
     .insert({ user_id, challenge_id })

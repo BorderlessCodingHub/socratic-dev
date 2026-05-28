@@ -1,10 +1,9 @@
 'use client'
 
-import { signOut, useUser } from '@/lib/auth/use-user'
+import { useUser } from '@/lib/auth/use-user'
 import { cn } from '@/lib/utils'
 import { motion, useMotionValueEvent, useScroll } from 'motion/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Logo } from './logo'
 
@@ -19,7 +18,6 @@ export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false)
   const { scrollY } = useScroll()
   const { user, loading } = useUser()
-  const router = useRouter()
 
   useMotionValueEvent(scrollY, 'change', (v) => {
     setScrolled(v > 12)
@@ -55,25 +53,20 @@ export function Navbar() {
         <div className='flex items-center gap-2'>
           {!loading && user ? (
             <>
-              <span className='hidden max-w-[160px] truncate font-mono text-[12px] text-[#6b6478] sm:inline'>
-                {user.email}
-              </span>
               <Link
                 href='/dashboard'
                 className='hidden rounded-md px-3 py-2 text-sm font-medium text-[#6b6478] transition-colors hover:text-[#1b1916] sm:inline-flex'
               >
                 Dashboard
               </Link>
-              <button
-                type='button'
-                onClick={async () => {
-                  await signOut()
-                  router.push('/')
-                }}
-                className='inline-flex items-center justify-center rounded-lg border border-[#1b1916]/15 px-4 py-2 text-sm font-medium tracking-tight text-[#1b1916] transition-colors hover:bg-[#1b1916]/5'
+              <Link
+                href='/profile'
+                aria-label='Seu perfil'
+                title={user.email ?? 'Seu perfil'}
+                className='grid size-9 place-items-center rounded-full bg-primary font-mono text-[13px] font-semibold text-primary-foreground uppercase ring-1 ring-primary/20 transition-transform hover:scale-105'
               >
-                Sair
-              </button>
+                {(user.email?.[0] ?? 'u').toUpperCase()}
+              </Link>
             </>
           ) : (
             <>

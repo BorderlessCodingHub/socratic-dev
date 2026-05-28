@@ -66,18 +66,81 @@ const levels = [
   },
 ]
 
+const STACK_TO_DB: Record<string, string> = {
+  js: 'javascript',
+  ts: 'typescript',
+  py: 'python',
+  react: 'react',
+}
+const DB_TO_STACK: Record<string, string> = {
+  javascript: 'js',
+  typescript: 'ts',
+  python: 'py',
+  react: 'react',
+}
+const LEVEL_TO_DB: Record<string, string> = {
+  starter: 'beginner',
+  junior: 'beginner',
+  mid: 'intermediate',
+}
+const DB_TO_LEVEL: Record<string, string> = {
+  beginner: 'starter',
+  intermediate: 'mid',
+}
+
+const stepMeta = [
+  {
+    eyebrow: '01 · Stack',
+    title: 'Em qual linguagem você quer apanhar hoje?',
+    subtitle: 'A IA gera desafios realistas no idioma da sua escolha.',
+  },
+  {
+    eyebrow: '02 · Nível',
+    title: 'Honestidade radical: onde você está?',
+    subtitle: 'Quanto mais real você for, melhor a IA calibra o desafio.',
+  },
+  {
+    eyebrow: '03 · Pronto',
+    title: 'Hora de pensar.',
+    subtitle: 'Vou gerar um desafio real, com cliente fictício. Sem cópia.',
+  },
+]
+
 type Step = 0 | 1 | 2
 
 export default function OnboardingPage() {
+  const router = useRouter()
+  const { user } = useUser()
   const [step, setStep] = React.useState<Step>(0)
   const [stack, setStack] = React.useState<string | null>(null)
   const [level, setLevel] = React.useState<string | null>(null)
+  const [starting, setStarting] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!user) return
+    let active = true
+    ;(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (!active || !data) return
+      const prefs = data as {
+        preferred_stack?: string | null
+        preferred_level?: string | null
+      }
+      if (prefs.preferred_stack && DB_TO_STACK[prefs.preferred_stack])
+        setStack(DB_TO_STACK[prefs.preferred_stack])
+      if (prefs.preferred_level && DB_TO_LEVEL[prefs.preferred_level])
+        setLevel(DB_TO_LEVEL[prefs.preferred_level])
+    })()
+    return () => {
+      active = false
+    }
+  }, [user])
 
   const canNext = (step === 0 && stack) || (step === 1 && level) || step === 2
-
-  const router = useRouter()
-  const { user } = useUser()
-  const [starting, setStarting] = React.useState(false)
 
   async function start() {
     if (starting) return
@@ -86,10 +149,9 @@ export default function OnboardingPage() {
       return
     }
     setStarting(true)
-    const dbStack = stack === 'js' ? 'javascript' : 'typescript'
-    const dbLevel = level === 'mid' ? 'intermediate' : 'beginner'
+    const dbStack = STACK_TO_DB[stack ?? 'js'] ?? 'javascript'
+    const dbLevel = LEVEL_TO_DB[level ?? 'starter'] ?? 'beginner'
 
-    // Save the choice on the user's profile (RLS allows updating your own row).
     supabase
       .from('profiles')
       .update({ preferred_stack: dbStack, preferred_level: dbLevel } as never)
@@ -122,9 +184,11 @@ export default function OnboardingPage() {
     router.push(id ? `/challenge?id=${id}` : '/challenge')
   }
 
+  const meta = stepMeta[step]
+
   return (
     <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
-      <header className='flex h-16 shrink-0 items-center justify-between px-6 sm:px-10'>
+      <header className='container-main flex h-16 shrink-0 items-center justify-between'>
         <Logo />
         <Link
           href='/'
@@ -134,160 +198,187 @@ export default function OnboardingPage() {
         </Link>
       </header>
 
-      <main className='flex flex-1 flex-col pt-6 pb-16'>
-        <div className='mx-auto flex w-full max-w-3xl flex-1 flex-col px-4'>
-          {/* Stepper */}
-          <div className='mb-12 flex items-center gap-2'>
-            {[0, 1, 2].map((i) => (
-              <div key={i} className='flex-1'>
-                <div
-                  className={cn(
-                    'h-1 rounded-full transition-all duration-500',
-                    step >= i
-                      ? 'bg-linear-to-r from-iris to-mint'
-                      : 'bg-[#DFE5E9]',
-                  )}
-                />
-                <div className='mt-2 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                  {['Stack', 'Nível', 'Pronto'][i]}
-                </div>
-              </div>
-            ))}
-          </div>
+      <main className='flex flex-1 items-start py-6 md:items-center md:py-10'>
+        <div className='container-main w-full max-w-3xl'>
+          <div className='shadow-soft-lg overflow-hidden rounded-xl border border-[#DFE5E9] bg-white'>
+            <div className='relative overflow-hidden border-b border-[#DFE5E9] px-6 py-8 sm:px-10 sm:py-10'>
+              <div
+                className='absolute inset-0'
+                style={{
+                  background:
+                    'linear-gradient(146.18deg, rgba(252, 243, 235, 0.6) 12.07%, rgba(223, 229, 233, 0.6) 45.37%, rgba(220, 215, 253, 0.6) 97.58%), white',
+                }}
+              />
+              <div className='grid-pattern absolute inset-0 opacity-30' />
 
-          <AnimatePresence mode='wait'>
-            {step === 0 && (
-              <StepShell
-                key='stack'
-                eyebrow='01 · Stack'
-                title='Em qual linguagem você quer apanhar hoje?'
-                subtitle='A IA gera desafios realistas no idioma da sua escolha.'
-              >
-                <div className='grid gap-3 sm:grid-cols-2'>
-                  {stacks.map((s, i) => (
-                    <Tile
-                      key={s.id}
-                      i={i}
-                      selected={stack === s.id}
-                      onClick={() => setStack(s.id)}
-                    >
+              <div className='relative z-10'>
+                <div className='mb-6 flex items-center gap-2'>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className='flex-1'>
                       <div
                         className={cn(
-                          'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
-                          s.gradient,
+                          'h-1 rounded-full transition-all duration-500',
+                          step >= i ? 'bg-iris' : 'bg-[#1b1916]/10',
                         )}
-                      >
-                        {s.icon}
+                      />
+                      <div className='mt-2 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                        {['Stack', 'Nível', 'Pronto'][i]}
                       </div>
-                      <div className='flex-1'>
-                        <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                          {s.name}
-                        </div>
-                        <div className='text-sm text-[#6b6478]'>{s.desc}</div>
-                      </div>
-                    </Tile>
+                    </div>
                   ))}
                 </div>
-              </StepShell>
-            )}
 
-            {step === 1 && (
-              <StepShell
-                key='level'
-                eyebrow='02 · Nível'
-                title='Honestidade radical: onde você está?'
-                subtitle='Não tem premiação por mentir. Quanto mais real, melhor o desafio.'
-              >
-                <div className='space-y-3'>
-                  {levels.map((l, i) => (
-                    <Tile
-                      key={l.id}
-                      i={i}
-                      selected={level === l.id}
-                      onClick={() => setLevel(l.id)}
-                    >
-                      <div className='flex flex-col gap-1.5'>
+                <AnimatePresence mode='wait'>
+                  <motion.div
+                    key={step}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.35 }}
+                  >
+                    <div className='mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
+                      {meta.eyebrow}
+                    </div>
+                    <h1 className='type-h2'>{meta.title}</h1>
+                    <p className='type-body mt-3 max-w-[44ch]'>
+                      {meta.subtitle}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <div className='px-6 py-7 sm:px-10 sm:py-8'>
+              <AnimatePresence mode='wait'>
+                {step === 0 && (
+                  <motion.div
+                    key='stack'
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.35 }}
+                    className='grid gap-3 sm:grid-cols-2'
+                  >
+                    {stacks.map((s, i) => (
+                      <Tile
+                        key={s.id}
+                        i={i}
+                        selected={stack === s.id}
+                        onClick={() => setStack(s.id)}
+                      >
+                        <div
+                          className={cn(
+                            'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
+                            s.gradient,
+                          )}
+                        >
+                          {s.icon}
+                        </div>
+                        <div className='flex-1'>
+                          <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                            {s.name}
+                          </div>
+                          <div className='text-sm text-[#6b6478]'>{s.desc}</div>
+                        </div>
+                      </Tile>
+                    ))}
+                  </motion.div>
+                )}
+
+                {step === 1 && (
+                  <motion.div
+                    key='level'
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.35 }}
+                    className='space-y-3'
+                  >
+                    {levels.map((l, i) => (
+                      <Tile
+                        key={l.id}
+                        i={i}
+                        selected={level === l.id}
+                        onClick={() => setLevel(l.id)}
+                      >
                         <div className='flex items-center gap-1'>
                           {Array.from({ length: 3 }).map((_, idx) => (
                             <span
                               key={idx}
                               className={cn(
                                 'h-2 w-6 rounded-full',
-                                idx < l.intensity
-                                  ? 'bg-linear-to-r from-iris to-mint'
-                                  : 'bg-[#DFE5E9]',
+                                idx < l.intensity ? 'bg-iris' : 'bg-[#DFE5E9]',
                               )}
                             />
                           ))}
                         </div>
-                      </div>
-                      <div className='flex-1'>
-                        <div className='flex items-center gap-2'>
-                          <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                            {l.name}
+                        <div className='flex-1'>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                              {l.name}
+                            </div>
+                            <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                              {l.tag}
+                            </span>
                           </div>
-                          <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                            {l.tag}
-                          </span>
+                          <div className='mt-0.5 text-sm text-[#6b6478]'>
+                            {l.desc}
+                          </div>
                         </div>
-                        <div className='mt-0.5 text-sm text-[#6b6478]'>
-                          {l.desc}
-                        </div>
-                      </div>
-                    </Tile>
-                  ))}
-                </div>
-              </StepShell>
-            )}
+                      </Tile>
+                    ))}
+                  </motion.div>
+                )}
 
-            {step === 2 && (
-              <motion.div
-                key='ready'
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.5 }}
-                className='text-center'
-              >
-                <div className='mb-6 inline-flex items-center gap-2 rounded-full border border-[#DFE5E9] bg-white px-3 py-1 font-mono text-[11px] text-[#6b6478]'>
-                  <span className='size-1 animate-pulse rounded-full bg-mint' />
-                  Tudo pronto
-                </div>
-                <h1 className='mb-6 font-heading text-4xl leading-tight font-light tracking-[-0.035em] text-[#1b1916] sm:text-5xl'>
-                  Hora de{' '}
-                  <span className='text-gradient font-serif font-normal italic'>
-                    pensar
-                  </span>
-                  .
-                </h1>
-                <p className='mx-auto mb-10 max-w-md text-lg text-[#2c2330]'>
-                  Vou gerar um desafio real, com cliente fictício e tudo. Sem
-                  resposta pronta. Sem cópia.
-                </p>
-                <div className='mx-auto mb-10 grid max-w-sm gap-3 sm:grid-cols-2'>
-                  <SummaryItem
-                    label='Stack'
-                    value={stacks.find((s) => s.id === stack)?.name ?? '-'}
-                  />
-                  <SummaryItem
-                    label='Nível'
-                    value={levels.find((l) => l.id === level)?.name ?? '-'}
-                  />
-                </div>
-                <div className='relative flex w-full items-center justify-between'>
-                  <Button
-                    variant='ghost'
-                    size='lg'
-                    onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
-                    className='rounded-full text-[#6b6478] hover:text-[#1b1916]'
+                {step === 2 && (
+                  <motion.div
+                    key='ready'
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.35 }}
+                    className='grid gap-3 sm:grid-cols-2'
                   >
-                    <ArrowLeft className='size-4' /> Voltar
-                  </Button>
+                    <SummaryItem
+                      label='Stack'
+                      value={stacks.find((s) => s.id === stack)?.name ?? '—'}
+                    />
+                    <SummaryItem
+                      label='Nível'
+                      value={levels.find((l) => l.id === level)?.name ?? '—'}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className='mt-7 flex items-center justify-between'>
+                <Button
+                  variant='ghost'
+                  size='lg'
+                  onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
+                  className={cn(
+                    'rounded-full text-[#6b6478] hover:text-[#1b1916]',
+                    step === 0 && 'invisible',
+                  )}
+                >
+                  <ArrowLeft className='size-4' /> Voltar
+                </Button>
+
+                {step < 2 ? (
                   <Button
-                    size='xl'
+                    size='lg'
+                    disabled={!canNext}
+                    onClick={() => setStep((s) => Math.min(2, s + 1) as Step)}
+                    className='rounded-full border-transparent bg-primary pr-3 pl-4 text-primary-foreground hover:bg-primary/90 disabled:opacity-40'
+                  >
+                    Continuar <ArrowRight className='size-4' />
+                  </Button>
+                ) : (
+                  <Button
+                    size='lg'
                     onClick={start}
                     disabled={starting}
-                    className='glow-iris group absolute left-1/2 h-12 -translate-x-1/2 rounded-full border-transparent bg-primary pr-4 pl-5 text-[15px] text-primary-foreground hover:bg-primary/90 disabled:opacity-60'
+                    className='glow-iris group rounded-full border-transparent bg-primary pr-4 pl-5 text-primary-foreground hover:bg-primary/90 disabled:opacity-60'
                   >
                     {starting ? (
                       <Loader2 className='size-4 animate-spin' />
@@ -297,74 +388,13 @@ export default function OnboardingPage() {
                     Gerar meu desafio
                     <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
                   </Button>
-                  <div />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {step < 2 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className='mt-12 flex items-center justify-between'
-            >
-              <Button
-                variant='ghost'
-                size='lg'
-                onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
-                disabled={step === 0}
-                className={cn(
-                  'rounded-full text-[#6b6478] hover:text-[#1b1916]',
-                  step === 0 && 'invisible',
                 )}
-              >
-                <ArrowLeft className='size-4' /> Voltar
-              </Button>
-              <Button
-                size='lg'
-                disabled={!canNext}
-                onClick={() => setStep((s) => Math.min(2, s + 1) as Step)}
-                className='rounded-full border-transparent bg-primary pr-3 pl-4 text-primary-foreground hover:bg-primary/90 disabled:opacity-40'
-              >
-                Continuar <ArrowRight className='size-4' />
-              </Button>
-            </motion.div>
-          )}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
-  )
-}
-
-function StepShell({
-  eyebrow,
-  title,
-  subtitle,
-  children,
-}: {
-  eyebrow: string
-  title: string
-  subtitle: string
-  children: React.ReactNode
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className='mb-8'>
-        <div className='mb-3 font-mono text-[11px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
-          {eyebrow}
-        </div>
-        <h2 className='type-h3'>{title}</h2>
-        <p className='type-body mt-3'>{subtitle}</p>
-      </div>
-      {children}
-    </motion.div>
   )
 }
 
@@ -398,7 +428,7 @@ function Tile({
       {children}
       <div
         className={cn(
-          'grid size-6 place-items-center rounded-full border transition-all',
+          'grid size-6 shrink-0 place-items-center rounded-full border transition-all',
           selected ? 'border-primary bg-primary' : 'border-[#DFE5E9] bg-white',
         )}
       >
