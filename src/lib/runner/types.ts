@@ -1,4 +1,4 @@
-export type RunnerLanguage = 'js' | 'ts' | 'react'
+import type { RunnerLanguage } from '@/domain/stacks'
 
 export type LogLevel = 'log' | 'info' | 'warn' | 'error'
 
