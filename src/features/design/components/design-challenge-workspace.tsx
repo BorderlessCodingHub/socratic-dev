@@ -13,6 +13,7 @@ import {
   summarizeElements,
   type ExcalidrawApi,
 } from '@/features/design/utils/scene'
+import { apiFetch } from '@/lib/api/client'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
@@ -94,7 +95,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     s.setInput('')
     s.setThinking(true)
     try {
-      const res = await fetch('/api/tutor', {
+      const res = await apiFetch('/api/tutor', {
         ...POST,
         body: tutorBody({ mode: 'reply', messages: next }),
       })
@@ -112,7 +113,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     if (s.thinking || !challenge) return
     s.setThinking(true)
     try {
-      const res = await fetch('/api/tutor', {
+      const res = await apiFetch('/api/tutor', {
         ...POST,
         body: tutorBody({ mode: 'reply', messages: s.messages }),
       })
@@ -131,15 +132,17 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     s.setThinking(true)
     s.applyHint(level)
     try {
-      const res = await fetch('/api/tutor', {
+      const res = await apiFetch('/api/tutor', {
         ...POST,
         body: tutorBody({
           mode: 'hint',
           hintLevel: level,
           messages: s.messages,
+          session_id: s.sessionId,
         }),
       })
       const data = await res.json()
+      s.syncRemaining(data.remaining)
       s.pushMessage({
         role: 'ai',
         text: data.text || data.error || 'Hint indisponível.',
@@ -155,16 +158,18 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     s.setThinking(true)
     s.spendSolve()
     try {
-      const res = await fetch('/api/solve', {
+      const res = await apiFetch('/api/solve', {
         ...POST,
         body: JSON.stringify({
           kind: 'design',
           title: challenge.title,
           briefing: challenge.client_briefing,
           work: summarizeElements(currentElements()),
+          session_id: s.sessionId,
         }),
       })
       const data = await res.json()
+      s.syncRemaining(data.remaining)
       if (Array.isArray(data.nodes) && data.nodes.length > 0) {
         const elements = await buildSceneElements(data.nodes, data.edges ?? [])
         apiRef.current?.updateScene({ elements })
@@ -208,7 +213,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     }
 
     try {
-      const res = await fetch('/api/design-review', {
+      const res = await apiFetch('/api/design-review', {
         ...POST,
         body: JSON.stringify({
           title: challenge.title,
@@ -217,7 +222,6 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
           imageBase64,
           scene: JSON.stringify(elements),
           session_id: s.sessionId,
-          user_id: user.id,
         }),
       })
       const data = await res.json()

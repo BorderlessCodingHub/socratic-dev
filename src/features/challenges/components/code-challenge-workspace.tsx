@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import type { RunnerLanguage } from '@/domain/stacks'
 import { runCode } from '@/features/runner/run-code'
 import type { RunResult } from '@/features/runner/types'
+import { apiFetch } from '@/lib/api/client'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
@@ -92,7 +93,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     s.setInput('')
     s.setThinking(true)
     try {
-      const res = await fetch('/api/tutor', {
+      const res = await apiFetch('/api/tutor', {
         ...POST,
         body: JSON.stringify({
           mode: 'reply',
@@ -117,7 +118,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     s.setThinking(true)
     s.applyHint(level)
     try {
-      const res = await fetch('/api/tutor', {
+      const res = await apiFetch('/api/tutor', {
         ...POST,
         body: JSON.stringify({
           mode: 'hint',
@@ -126,9 +127,11 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
           code: s.work,
           title: challenge.title,
           briefing: challenge.client_briefing,
+          session_id: s.sessionId,
         }),
       })
       const data = await res.json()
+      s.syncRemaining(data.remaining)
       s.pushMessage({
         role: 'ai',
         text: data.text || data.error || 'Hint indisponível.',
@@ -144,16 +147,18 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     s.setThinking(true)
     s.spendSolve()
     try {
-      const res = await fetch('/api/solve', {
+      const res = await apiFetch('/api/solve', {
         ...POST,
         body: JSON.stringify({
           kind: 'code',
           title: challenge.title,
           briefing: challenge.client_briefing,
           work: s.work,
+          session_id: s.sessionId,
         }),
       })
       const data = await res.json()
+      s.syncRemaining(data.remaining)
       if (data.code) {
         s.setWork(data.code)
         s.pushMessage({
@@ -204,7 +209,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     const solved = total === 0 || passed === total
 
     try {
-      const res = await fetch('/api/review', {
+      const res = await apiFetch('/api/review', {
         ...POST,
         body: JSON.stringify({
           code,
@@ -213,7 +218,6 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
           tests_passed: passed,
           tests_total: total,
           session_id: s.sessionId,
-          user_id: user.id,
         }),
       })
       const data = await res.json()
