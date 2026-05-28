@@ -2,7 +2,7 @@
 
 import { Navbar } from '@/components/navbar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { signOut, useUser } from '@/lib/auth/use-user'
+import { signOut, useUser } from '@/features/auth/hooks/use-user'
 import { supabase } from '@/lib/supabase/client'
 import {
   ArrowRight,

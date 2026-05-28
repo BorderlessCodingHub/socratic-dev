@@ -2,7 +2,7 @@
 
 import { Navbar } from '@/components/navbar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useUser } from '@/lib/auth/use-user'
+import { useUser } from '@/features/auth/hooks/use-user'
 import {
   ArrowRight,
   ChevronLeft,
@@ -52,7 +52,13 @@ const STATUS_LABEL: Record<string, string> = {
 
 const IRIS = 'oklch(0.55 0.24 285)'
 
-const CELL = ['bg-[#EDF0F2]', 'bg-iris/25', 'bg-iris/45', 'bg-iris/70', 'bg-iris']
+const CELL = [
+  'bg-[#EDF0F2]',
+  'bg-iris/25',
+  'bg-iris/45',
+  'bg-iris/70',
+  'bg-iris',
+]
 
 function activityLevel(value: number, max: number): number {
   if (value <= 0) return 0
@@ -328,7 +334,7 @@ function StatCard({
           {label}
         </div>
       </div>
-      <div className='font-heading text-3xl font-semibold tracking-tight tabular-nums text-[#1b1916]'>
+      <div className='font-heading text-3xl font-semibold tracking-tight text-[#1b1916] tabular-nums'>
         {value}
       </div>
       <div className='mt-1 text-[12px] text-[#6b6478]'>{hint}</div>

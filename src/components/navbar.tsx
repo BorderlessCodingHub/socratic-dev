@@ -1,6 +1,6 @@
 'use client'
 
-import { useUser } from '@/lib/auth/use-user'
+import { useUser } from '@/features/auth/hooks/use-user'
 import { cn } from '@/lib/utils'
 import { Lightbulb, Plus } from 'lucide-react'
 import { motion, useMotionValueEvent, useScroll } from 'motion/react'

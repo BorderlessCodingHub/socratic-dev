@@ -2,7 +2,7 @@
 
 import { Logo } from '@/components/logo'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useUser } from '@/lib/auth/use-user'
+import { useUser } from '@/features/auth/hooks/use-user'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
