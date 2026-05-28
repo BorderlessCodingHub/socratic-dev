@@ -1,6 +1,6 @@
 'use client'
 
-import type { RunResult } from '@/lib/runner/types'
+import type { RunResult } from '@/features/runner/types'
 import { cn } from '@/lib/utils'
 import { CheckCircle2, Loader2, Terminal, X, XCircle } from 'lucide-react'
 
@@ -24,7 +24,7 @@ export function RunTerminal({
         </span>
         <div className='flex items-center gap-3'>
           {running ? (
-            <span className='flex items-center gap-1.5 normal-case text-zinc-400'>
+            <span className='flex items-center gap-1.5 text-zinc-400 normal-case'>
               <Loader2 className='size-3 animate-spin' /> rodando…
             </span>
           ) : result ? (
@@ -75,8 +75,9 @@ export function RunTerminal({
               result.tests.length === 0 && (
                 <p className='text-zinc-500'>
                   Código executado sem erros. Este desafio ainda não tem testes
-                  definidos — escreva um <span className='text-zinc-200'>console.log</span> para
-                  ver a saída aqui.
+                  definidos — escreva um{' '}
+                  <span className='text-zinc-200'>console.log</span> para ver a
+                  saída aqui.
                 </p>
               )}
             {result.logs.map((l, i) => (
