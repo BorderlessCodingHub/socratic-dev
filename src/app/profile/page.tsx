@@ -3,6 +3,9 @@
 import { Navbar } from '@/components/navbar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { signOut, useUser } from '@/features/auth/hooks/use-user'
+import { getDashboardStats } from '@/features/dashboard/actions'
+import type { Stats } from '@/features/dashboard/types'
+import { getProfile, type Profile } from '@/features/profile/actions'
 import { supabase } from '@/lib/supabase/client'
 import {
   ArrowRight,
@@ -17,21 +20,6 @@ import { motion } from 'motion/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
-
-type Profile = {
-  email: string
-  total_challenges_completed: number
-  total_hints_used: number
-  created_at: string
-  preferred_stack?: string | null
-  preferred_level?: string | null
-}
-
-type Stats = {
-  independence_score: number
-  total_completed: number
-  total_hints: number
-}
 
 const STACK_OPTIONS = [
   { value: 'javascript', label: 'JavaScript' },
@@ -104,12 +92,12 @@ export default function ProfilePage() {
     let active = true
     ;(async () => {
       const [p, s] = await Promise.all([
-        fetch(`/api/profile?user_id=${user.id}`).then((r) => r.json()),
-        fetch(`/api/stats?user_id=${user.id}`).then((r) => r.json()),
+        getProfile(user.id),
+        getDashboardStats(user.id),
       ])
       if (!active) return
-      if (p && !p.error) setProfile(p)
-      if (s && !s.error) setStats(s)
+      if (p) setProfile(p)
+      if (s && !('error' in s)) setStats(s)
       setLoaded(true)
     })()
     return () => {
@@ -135,7 +123,6 @@ export default function ProfilePage() {
                 }}
               />
               <div className='grid-pattern absolute inset-0 opacity-30' />
-
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -253,8 +240,7 @@ export default function ProfilePage() {
                       }}
                       className='inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#1b1916]/5 hover:text-[#1b1916] sm:ml-auto'
                     >
-                      <LogOut className='size-4' />
-                      Sair
+                      <LogOut className='size-4' /> Sair
                     </button>
                   </div>
                 </>

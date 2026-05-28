@@ -8,6 +8,9 @@ import {
   listSessionsForUser,
   type SessionRow,
 } from '@/features/challenges/actions'
+import { getDashboardStats } from '@/features/dashboard/actions'
+import type { Stats } from '@/features/dashboard/types'
+import { activityLevel } from '@/features/dashboard/utils'
 import {
   ArrowRight,
   ChevronLeft,
@@ -32,15 +35,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-type Stats = {
-  total_completed: number
-  total_hints: number
-  avg_hints_per_session: number
-  independence_score: number
-  streak_days: number
-  week_progress: { day: string; value: number }[]
-}
-
 const STATUS_LABEL: Record<string, string> = {
   completed: 'Concluído',
   in_progress: 'Em andamento',
@@ -56,15 +50,6 @@ const CELL = [
   'bg-iris/70',
   'bg-iris',
 ]
-
-function activityLevel(value: number, max: number): number {
-  if (value <= 0) return 0
-  const r = value / max
-  if (r > 0.75) return 4
-  if (r > 0.5) return 3
-  if (r > 0.25) return 2
-  return 1
-}
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -102,11 +87,11 @@ export default function DashboardPage() {
     let active = true
     ;(async () => {
       const [s, sess] = await Promise.all([
-        fetch(`/api/stats?user_id=${user.id}`).then((r) => r.json()),
+        getDashboardStats(user.id),
         listSessionsForUser(user.id),
       ])
       if (!active) return
-      if (s && !s.error) setStats(s)
+      if (s && !('error' in s)) setStats(s)
       setSessions(sess)
       setLoaded(true)
     })()
@@ -273,7 +258,6 @@ function DashboardSkeleton() {
           </div>
         ))}
       </div>
-
       <div className='mb-3 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
         <div className='rounded-2xl border border-[#DFE5E9] bg-white p-6'>
           <Skeleton className='h-3 w-24' />
@@ -288,7 +272,6 @@ function DashboardSkeleton() {
           </div>
         </div>
       </div>
-
       <div className='rounded-2xl border border-[#DFE5E9] bg-white p-6'>
         <Skeleton className='h-3 w-20' />
         <Skeleton className='mt-2 h-5 w-44' />
@@ -389,7 +372,6 @@ function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
           Atividade dos últimos meses
         </h3>
       </div>
-
       <div className='mt-6 flex gap-2 overflow-x-auto'>
         <div className='grid grid-rows-7 gap-1 pr-1'>
           {DOW_LABELS.map((l, i) => (
@@ -415,7 +397,6 @@ function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
           ))}
         </div>
       </div>
-
       <div className='mt-6 flex items-center justify-end gap-1.5 font-mono text-[10px] text-[#6b6478]'>
         <span>Menos</span>
         {CELL.map((c, l) => (
