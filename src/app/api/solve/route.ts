@@ -1,4 +1,14 @@
 import { aiErrorResponse, askClaude } from '@/lib/ai/client'
+import {
+  CAPS,
+  jsonError,
+  rateLimit,
+  requireUser,
+  tooLarge,
+  tooMany,
+} from '@/lib/api/guard'
+import { consumeHints } from '@/lib/api/hints-server'
+import { SOLVE_COST } from '@/lib/hints'
 
 const CODE_SYS = `Você resolve um desafio de programação. Retorne APENAS o código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM explicação — somente o código que vai direto no editor.`
 
@@ -22,9 +32,24 @@ function parseJson(raw: string): Record<string, unknown> {
 
 export async function POST(req: Request) {
   try {
+    const auth = await requireUser(req)
+    if (auth instanceof Response) return auth
+    const userId = auth.user.id
+
+    if (!rateLimit(`solve:${userId}`, 10, 60_000)) return tooMany()
+
     const body = await req.json()
     const kind = body.kind === 'design' ? 'design' : 'code'
     const work: string = body.work ?? ''
+    const sessionId: string | undefined = body.session_id
+
+    if (work.length > CAPS.text) return tooLarge()
+    if (!sessionId) return jsonError('session_id é obrigatório.', 400)
+
+    const remaining = await consumeHints(userId, sessionId, 3, SOLVE_COST)
+    if (remaining === null)
+      return jsonError('Hints insuficientes para resolver.', 429)
+
     const user = [
       `Desafio: ${body.title ?? ''}`,
       `Briefing: ${body.briefing ?? ''}`,
@@ -44,6 +69,7 @@ export async function POST(req: Request) {
       return Response.json({
         nodes: Array.isArray(json.nodes) ? json.nodes : [],
         edges: Array.isArray(json.edges) ? json.edges : [],
+        remaining,
       })
     }
 
