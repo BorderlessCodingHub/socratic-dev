@@ -48,6 +48,8 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     initialMessages: [{ role: 'ai', text: intro }],
   })
 
+  const [outcome, setOutcome] = React.useState<'pass' | 'fail'>('pass')
+
   const [reviewOpen, setReviewOpen] = React.useState(false)
   const [review, setReview] = React.useState<string | null>(null)
   const [reviewing, setReviewing] = React.useState(false)
@@ -199,12 +201,16 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
 
     const elements = currentElements()
     if (elements.length === 0) {
+      setOutcome('fail')
       setReview(
         'Você ainda não desenhou nada — comece o diagrama e submeta de novo.',
       )
+      s.complete(s.elapsed, 'abandoned')
       setReviewing(false)
       return
     }
+    setOutcome('pass')
+    s.complete(s.elapsed, 'completed')
 
     const summary = summarizeElements(elements)
     let imageBase64: string | null = null
@@ -364,11 +370,9 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
             hintsUsed={s.hintsUsed}
             elapsed={s.elapsed}
             tests={null}
+            outcome={outcome}
             onClose={() => setReviewOpen(false)}
-            onComplete={() => {
-              s.complete(s.elapsed)
-              router.push('/dashboard')
-            }}
+            onComplete={() => router.push('/dashboard')}
           />
         )}
       </AnimatePresence>

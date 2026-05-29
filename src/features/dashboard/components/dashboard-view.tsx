@@ -39,7 +39,7 @@ import {
 const STATUS_LABEL: Record<string, string> = {
   completed: 'Concluído',
   in_progress: 'Em andamento',
-  abandoned: 'Abandonado',
+  abandoned: 'Reprovado',
 }
 
 const IRIS = 'oklch(0.55 0.24 285)'

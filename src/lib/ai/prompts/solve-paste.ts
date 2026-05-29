@@ -1,6 +1,6 @@
 import type { ChallengeKind } from '@/domain/challenge-kinds'
 
-const CODE_SYS = `Você resolve um desafio de programação. Retorne APENAS o código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM explicação — somente o código que vai direto no editor.`
+const CODE_SYS = `Você resolve um desafio de programação. Sua solução DEVE passar em TODOS os testes fornecidos pelo usuário — esses testes são a verdade do desafio. Retorne APENAS o código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM explicação — somente o código que vai direto no editor.`
 
 const DESIGN_SYS = `Você resolve um desafio de SYSTEM DESIGN (arquitetura) para INICIANTES — seja didático, explique como para quem nunca viu arquitetura.
 Responda APENAS com JSON válido (sem markdown):

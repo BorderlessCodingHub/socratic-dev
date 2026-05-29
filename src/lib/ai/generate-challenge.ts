@@ -38,6 +38,7 @@ export async function generateChallenge(opts: {
   kind: 'code' | 'design'
   stack?: string
   level: GenLevel
+  userPrompt?: string
 }) {
   const stackMap: Record<string, string> = {
     javascript: 'javascript',

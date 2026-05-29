@@ -130,11 +130,14 @@ export function useSocraticSession<TWork>(opts: {
     }
   }
 
-  function complete(durationSeconds: number) {
+  function complete(
+    durationSeconds: number,
+    status: 'completed' | 'abandoned' = 'completed',
+  ) {
     if (!sessionId) return
     getAccessToken()
       .then((token) =>
-        completeSession({ token, id: sessionId, durationSeconds }),
+        completeSession({ token, id: sessionId, durationSeconds, status }),
       )
       .catch(() => {})
   }
