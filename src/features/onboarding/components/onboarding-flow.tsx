@@ -129,10 +129,7 @@ export function OnboardingFlow({ user }: { user: User }) {
   const [starting, setStarting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  const started = React.useRef(false)
-
   React.useEffect(() => {
-    if (started.current) return
     const meta = user.user_metadata as
       | {
           preferred_track?: string
@@ -140,17 +137,6 @@ export function OnboardingFlow({ user }: { user: User }) {
           preferred_level?: string
         }
       | undefined
-
-    // Already onboarded → go straight to dashboard. No surprise challenge
-    // generation on every visit (this was annoying users on each login).
-    const onboarded =
-      !!meta?.preferred_level &&
-      (meta?.preferred_track === 'design' || !!meta?.preferred_stack)
-    if (onboarded) {
-      started.current = true
-      router.replace('/dashboard')
-      return
-    }
 
     // Restore saved preferences using the registries (no translation tables).
     if (meta?.preferred_track) setTrack(meta.preferred_track)
@@ -201,7 +187,6 @@ export function OnboardingFlow({ user }: { user: User }) {
             'A IA não conseguiu gerar o desafio agora. Tente de novo.',
         )
         setStarting(false)
-        started.current = false
         return
       }
       router.push(
@@ -212,7 +197,6 @@ export function OnboardingFlow({ user }: { user: User }) {
     } catch {
       setError('Falha ao falar com a IA. Verifique a conexão e tente de novo.')
       setStarting(false)
-      started.current = false
     }
   }
 
