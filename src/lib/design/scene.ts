@@ -3,8 +3,11 @@ type SceneEl = {
   text?: string
   id?: string
   containerId?: string | null
-  startBinding?: { elementId?: string } | null
-  endBinding?: { elementId?: string } | null
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  points?: number[][]
   isDeleted?: boolean
 }
 
@@ -96,26 +99,36 @@ export async function buildSceneElements(
   const resolve = (ref: string): string | undefined =>
     byId.get(ref) ?? byLabel.get((ref ?? '').trim().toLowerCase())
 
+  const border = (cx: number, cy: number, tx: number, ty: number) => {
+    const dx = tx - cx
+    const dy = ty - cy
+    const s = Math.min(
+      W / 2 / (Math.abs(dx) || 1e-6),
+      H / 2 / (Math.abs(dy) || 1e-6),
+    )
+    return [cx + dx * s, cy + dy * s] as const
+  }
+
   for (const e of edges) {
     const fromId = resolve(e.from)
     const toId = resolve(e.to)
     if (!fromId || !toId || fromId === toId) continue
     const a = pos.get(fromId)!
     const b = pos.get(toId)!
-    const ax = a.x + W / 2
-    const ay = a.y + H / 2
-    const bx = b.x + W / 2
-    const by = b.y + H / 2
+    const acx = a.x + W / 2
+    const acy = a.y + H / 2
+    const bcx = b.x + W / 2
+    const bcy = b.y + H / 2
+    const [sx, sy] = border(acx, acy, bcx, bcy)
+    const [ex, ey] = border(bcx, bcy, acx, acy)
     skeleton.push({
       type: 'arrow',
-      x: ax,
-      y: ay,
+      x: sx,
+      y: sy,
       points: [
         [0, 0],
-        [bx - ax, by - ay],
+        [ex - sx, ey - sy],
       ],
-      start: { id: fromId },
-      end: { id: toId },
       ...(e.label ? { label: { text: e.label } } : {}),
     })
   }
@@ -136,35 +149,56 @@ export function summarizeElements(elements: readonly unknown[]): string {
   if (els.length === 0) return 'O canvas está vazio — nada desenhado ainda.'
 
   const labelByContainer = new Map<string, string>()
-  const standalone: string[] = []
   for (const e of els) {
-    if (e.type === 'text' && e.text?.trim()) {
-      const t = e.text.trim()
-      if (e.containerId) labelByContainer.set(e.containerId, t)
-      else standalone.push(t)
+    if (e.type === 'text' && e.text?.trim() && e.containerId) {
+      labelByContainer.set(e.containerId, e.text.trim())
     }
   }
 
-  const boxes = [...labelByContainer.values(), ...standalone]
+  type Shape = { label: string; cx: number; cy: number }
+  const shapes: Shape[] = []
+  for (const e of els) {
+    if (!['rectangle', 'ellipse', 'diamond'].includes(e.type ?? '')) continue
+    shapes.push({
+      label: (e.id && labelByContainer.get(e.id)) || 'componente',
+      cx: (e.x ?? 0) + (e.width ?? 0) / 2,
+      cy: (e.y ?? 0) + (e.height ?? 0) / 2,
+    })
+  }
+
+  const nearest = (x: number, y: number): Shape | null => {
+    let best: Shape | null = null
+    let bd = Infinity
+    for (const s of shapes) {
+      const d = (s.cx - x) ** 2 + (s.cy - y) ** 2
+      if (d < bd) {
+        bd = d
+        best = s
+      }
+    }
+    return best
+  }
+
   const connections: string[] = []
   for (const e of els) {
     if (e.type !== 'arrow' && e.type !== 'line') continue
-    const fromL = (e.startBinding?.elementId &&
-      labelByContainer.get(e.startBinding.elementId)) || '?'
-    const toL = (e.endBinding?.elementId &&
-      labelByContainer.get(e.endBinding.elementId)) || '?'
-    connections.push(`${fromL} → ${toL}`)
+    const pts = e.points ?? []
+    if (pts.length < 2) continue
+    const last = pts[pts.length - 1]
+    const from = nearest((e.x ?? 0) + (pts[0][0] ?? 0), (e.y ?? 0) + (pts[0][1] ?? 0))
+    const to = nearest((e.x ?? 0) + (last[0] ?? 0), (e.y ?? 0) + (last[1] ?? 0))
+    if (!from || !to || from === to) continue
+    const lbl = e.id ? labelByContainer.get(e.id) : undefined
+    connections.push(
+      lbl ? `${from.label} →(${lbl}) ${to.label}` : `${from.label} → ${to.label}`,
+    )
   }
 
-  const shapes = els.filter((e) =>
-    ['rectangle', 'ellipse', 'diamond'].includes(e.type ?? ''),
-  ).length
-
   const lines = [
-    `Elementos no canvas: ${els.length} (${shapes} formas, ${connections.length} conexões).`,
-    boxes.length
-      ? `Nós/rótulos: ${boxes.join(', ')}.`
-      : 'Ainda não há rótulos de texto nas formas.',
+    `Elementos no canvas: ${els.length} (${shapes.length} formas, ${connections.length} conexões).`,
+    shapes.length
+      ? `Nós: ${shapes.map((s) => s.label).join(', ')}.`
+      : 'Ainda não há formas com rótulo.',
   ]
   if (connections.length) lines.push(`Conexões (setas): ${connections.join('; ')}.`)
   return lines.join('\n')
