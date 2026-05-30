@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Code2, Loader2, Network, Sparkles, Wand2, X } from 'lucide-react'
+import { Code2, Loader2, Network, PenLine, Sparkles, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
@@ -91,7 +91,7 @@ export function CustomChallengeDialog({
             <button
               type='button'
               onClick={onClose}
-              className='absolute top-4 right-4 grid size-8 cursor-pointer place-items-center rounded-full border border-[#DFE5E9] bg-white text-[#6b6478] hover:bg-[#F7F9FA]'
+              className='absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border border-[#DFE5E9] bg-white text-[#6b6478] hover:bg-[#F7F9FA]'
               aria-label='Fechar'
             >
               <X className='size-4' />
@@ -114,7 +114,7 @@ export function CustomChallengeDialog({
             ) : (
               <div className='px-8 pt-9 pb-7'>
                 <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-iris/20 bg-iris/10 px-3 py-1 font-mono text-[11px] text-iris'>
-                  <Wand2 className='size-3' />
+                  <PenLine className='size-3' />
                   Desafio sob medida
                 </div>
                 <h2 className='mb-2 font-heading text-3xl leading-tight font-semibold tracking-tight text-[#1b1916]'>
@@ -220,7 +220,7 @@ export function CustomChallengeDialog({
                   <button
                     type='button'
                     onClick={onClose}
-                    className='flex-1 cursor-pointer rounded-xl border border-[#DFE5E9] px-5 py-3 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#F7F9FA]'
+                    className='flex-1 cursor-pointer rounded-xl border border-[#DFE5E9] px-5 py-3 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#F7F9FA] hover:text-[#1b1916]'
                   >
                     Cancelar
                   </button>
@@ -230,7 +230,7 @@ export function CustomChallengeDialog({
                     disabled={prompt.trim().length < 10}
                     className='group flex-1 cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50'
                   >
-                    <Wand2 className='size-4' />
+                    <PenLine className='size-4' />
                     Gerar meu desafio
                   </button>
                 </div>
@@ -259,7 +259,7 @@ function ChoiceTile({
       type='button'
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2.5 rounded-xl border bg-white px-4 py-3 text-sm font-medium text-[#1b1916] transition-colors',
+        'flex cursor-pointer items-center gap-2.5 rounded-xl border bg-white px-4 py-3 text-sm font-medium text-[#1b1916] transition-colors',
         selected
           ? 'border-primary/50 bg-primary/[0.04] ring-2 ring-primary/25'
           : 'border-[#DFE5E9] hover:border-[#1b1916]/20',
@@ -287,7 +287,7 @@ function Chip({
       type='button'
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors',
+        'cursor-pointer rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors',
         selected
           ? 'border-primary bg-primary text-primary-foreground'
           : 'border-[#DFE5E9] text-[#6b6478] hover:bg-[#F7F9FA]',

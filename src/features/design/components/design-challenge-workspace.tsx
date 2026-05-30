@@ -376,6 +376,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
             elapsed={s.elapsed}
             tests={null}
             outcome={outcome}
+            sessionId={s.sessionId}
             onClose={() => setReviewOpen(false)}
             onComplete={() => router.push('/dashboard')}
           />

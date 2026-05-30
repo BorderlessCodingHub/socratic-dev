@@ -22,10 +22,10 @@ import {
   Lightbulb,
   Loader2,
   Network,
+  PenLine,
   Sparkles,
   TrendingUp,
   Trophy,
-  Wand2,
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
@@ -138,7 +138,7 @@ export function DashboardView({ user }: { user: User }) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className='mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between'
+            className='mb-10 flex flex-col gap-6'
           >
             <div className='min-w-0'>
               <div className='mb-2 font-mono text-[11px] tracking-[0.08em] text-[#6b6478] uppercase'>
@@ -166,20 +166,20 @@ export function DashboardView({ user }: { user: User }) {
                 </>
               )}
             </div>
-            <div className='flex shrink-0 flex-col gap-2 self-start sm:flex-row md:self-auto'>
+            <div className='flex flex-col gap-2 self-start sm:flex-row'>
               <button
                 type='button'
                 onClick={() => setCustomOpen(true)}
-                className='inline-flex items-center justify-center gap-2 rounded-xl border border-iris/30 bg-iris/5 px-5 py-3 text-[15px] font-medium tracking-tight text-iris transition-colors hover:bg-iris/10'
+                className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-iris/30 bg-iris/5 px-5 py-3 text-[15px] font-medium tracking-tight text-iris transition-colors hover:bg-iris/10'
               >
-                <Wand2 className='size-4' />
+                <PenLine className='size-4' />
                 Sob medida
               </button>
               <button
                 type='button'
                 onClick={startDesign}
                 disabled={genDesign}
-                className='inline-flex items-center justify-center gap-2 rounded-xl border border-[#1b1916]/20 px-5 py-3 text-[15px] font-medium tracking-tight text-[#1b1916] transition-colors hover:bg-[#1b1916]/5 disabled:opacity-60'
+                className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#1b1916]/20 px-5 py-3 text-[15px] font-medium tracking-tight text-[#1b1916] transition-colors hover:bg-[#1b1916]/5 disabled:cursor-not-allowed disabled:opacity-60'
               >
                 {genDesign ? (
                   <Loader2 className='size-4 animate-spin' />
@@ -192,7 +192,7 @@ export function DashboardView({ user }: { user: User }) {
                 type='button'
                 onClick={startCode}
                 disabled={genCode}
-                className='group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60'
+                className='group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60'
               >
                 {genCode ? (
                   <Loader2 className='size-4 animate-spin' />

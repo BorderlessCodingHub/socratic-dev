@@ -415,6 +415,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
             elapsed={s.elapsed}
             tests={submitTests}
             outcome={outcome}
+            sessionId={s.sessionId}
             onClose={() => setReviewOpen(false)}
             onComplete={() => router.push('/dashboard')}
           />

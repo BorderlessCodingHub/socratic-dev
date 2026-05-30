@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   CheckCircle2,
   GitPullRequestArrow,
+  Link2,
   Loader2,
   X,
   XCircle,
@@ -29,6 +30,7 @@ export function ReviewModal({
   elapsed,
   tests,
   outcome = 'pass',
+  sessionId,
   onClose,
   onComplete,
 }: {
@@ -39,10 +41,12 @@ export function ReviewModal({
   elapsed: number
   tests: { passed: number; total: number } | null
   outcome?: ReviewOutcome
+  sessionId?: string | null
   onClose: () => void
   onComplete?: () => void
 }) {
   const [celebrating, setCelebrating] = React.useState(false)
+  const [copied, setCopied] = React.useState(false)
 
   function handleComplete() {
     if (celebrating) return
@@ -50,7 +54,20 @@ export function ReviewModal({
     setTimeout(() => onComplete?.(), 1600)
   }
 
+  async function copyShareLink() {
+    if (!sessionId || typeof window === 'undefined') return
+    const url = `${window.location.origin}/replay/${sessionId}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      window.prompt('Copie o link:', url)
+    }
+  }
+
   const passed = outcome === 'pass'
+  const canShare = passed && !!sessionId
 
   return (
     <motion.div
@@ -138,20 +155,40 @@ export function ReviewModal({
             <Metric label='Hints usados' value={String(hintsUsed)} />
             <Metric label='Tempo' value={formatTime(elapsed)} accent='iris' />
           </div>
-          <div className='flex gap-2'>
+          <div className='flex flex-col gap-2 sm:flex-row'>
             <Button
               size='lg'
               variant='ghost'
               onClick={onClose}
-              className='flex-1 cursor-pointer rounded-xl text-[#6b6478] hover:text-[#1b1916]'
+              className='cursor-pointer rounded-xl text-[#6b6478] hover:text-[#1b1916] sm:flex-1'
             >
               Revisar de novo
             </Button>
+            {canShare && (
+              <Button
+                size='lg'
+                variant='ghost'
+                onClick={copyShareLink}
+                className='cursor-pointer rounded-xl border border-[#DFE5E9] text-[#1b1916] hover:bg-[#F7F9FA] sm:flex-1'
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle2 className='size-4 text-emerald-600' />
+                    Link copiado
+                  </>
+                ) : (
+                  <>
+                    <Link2 className='size-4' />
+                    Compartilhar
+                  </>
+                )}
+              </Button>
+            )}
             <Button
               size='lg'
               onClick={handleComplete}
               className={cn(
-                'flex-1 cursor-pointer rounded-xl border-transparent text-primary-foreground',
+                'cursor-pointer rounded-xl border-transparent text-primary-foreground sm:flex-1',
                 passed
                   ? 'bg-primary hover:bg-primary/90'
                   : 'bg-amber-600 hover:bg-amber-600/90',
