@@ -33,15 +33,27 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [oauthError, setOauthError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [loadingOAuth, setLoadingOAuth] = useState(false)
+
+  function translateAuthError(msg: string): string {
+    if (/invalid login credentials/i.test(msg)) return 'E-mail ou senha inválidos.'
+    if (/email not confirmed/i.test(msg)) return 'E-mail não confirmado. Verifique sua caixa de entrada.'
+    if (/user already registered/i.test(msg)) return 'Este e-mail já está cadastrado.'
+    if (/user with this email address has already been registered/i.test(msg)) return 'Este e-mail já está cadastrado.'
+    if (/too many requests/i.test(msg)) return 'Muitas tentativas. Aguarde alguns minutos.'
+    if (/email.*invalid/i.test(msg)) return 'E-mail inválido.'
+    if (/password.*short|password.*length/i.test(msg)) return 'A senha precisa ter pelo menos 6 caracteres.'
+    return msg
+  }
 
   async function submit(e: React.SubmitEvent) {
     e.preventDefault()
     if (busy) return
     setBusy(true)
-    setError(null)
+    setFormError(null)
     setNotice(null)
     try {
       if (mode === 'signup') {
@@ -58,7 +70,8 @@ function LoginForm() {
       )?.preferred_level
       router.replace(explicitNext || (onboarded ? '/dashboard' : '/onboarding'))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha na autenticação')
+      const raw = err instanceof Error ? err.message : 'Falha na autenticação'
+      setFormError(translateAuthError(raw))
     } finally {
       setBusy(false)
     }
@@ -66,6 +79,7 @@ function LoginForm() {
 
   async function signInWithGithub() {
     setLoadingOAuth(true)
+    setOauthError(null)
     try {
       const next = explicitNext || '/onboarding'
       const { error } = await supabase.auth.signInWithOAuth({
@@ -76,9 +90,9 @@ function LoginForm() {
       })
       if (error) throw error
     } catch (err) {
-      setError(
+      setOauthError(
         err instanceof Error
-          ? err.message
+          ? translateAuthError(err.message)
           : 'Falha na autenticação GitHub OAuth',
       )
       setLoadingOAuth(false)
@@ -134,7 +148,7 @@ function LoginForm() {
                 )}
                 Entrar com GitHub
               </Button>
-              {error && <p className='text-sm text-[#c0392b]'>{error}</p>}
+              {oauthError && <p className='text-sm text-[#c0392b]'>{oauthError}</p>}
             </div>
             <div className='flex items-center gap-2 text-muted-foreground'>
               <div className='h-px flex-1 bg-input' />
@@ -160,7 +174,7 @@ function LoginForm() {
                 placeholder='senha (mín. 6 caracteres)'
                 className='rounded-xl border border-[#DFE5E9] bg-white px-4 py-3 text-[#1b1916] outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
               />
-              {error && <p className='text-sm text-[#c0392b]'>{error}</p>}
+              {formError && <p className='text-sm text-[#c0392b]'>{formError}</p>}
               {notice && <p className='text-sm text-[#6b6478]'>{notice}</p>}
               <button
                 type='submit'
@@ -183,7 +197,8 @@ function LoginForm() {
             type='button'
             onClick={() => {
               setMode(mode === 'login' ? 'signup' : 'login')
-              setError(null)
+              setFormError(null)
+              setOauthError(null)
               setNotice(null)
             }}
             className='mt-5 cursor-pointer text-sm text-[#6b6478] transition-colors hover:text-[#1b1916]'
