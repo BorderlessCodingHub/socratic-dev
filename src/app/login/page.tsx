@@ -67,11 +67,14 @@ function LoginForm() {
   async function signInWithGithub() {
     setLoadingOAuth(true)
     try {
+      const next = explicitNext || '/onboarding'
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
       })
       if (error) throw error
-      router.replace(explicitNext || '/onboarding')
     } catch (err) {
       setError(
         err instanceof Error
