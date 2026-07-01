@@ -12,6 +12,7 @@ import {
   tooMany,
 } from '@/lib/api/guard'
 import { consumeHints } from '@/lib/api/hints-server'
+import { getLocale } from '@/lib/i18n/server'
 
 type Mode = 'reply' | 'hint' | 'solve'
 
@@ -54,7 +55,9 @@ export async function POST(req: Request) {
       remaining = r
     }
 
-    const system = mode === 'solve' ? solveSystem(kind) : tutorSystem(kind)
+    const locale = await getLocale()
+    const system =
+      mode === 'solve' ? solveSystem(kind, locale) : tutorSystem(kind, locale)
 
     const transcript = messages
       .map((m) => `${m.role === 'ai' ? 'Tutor' : 'Aluno'}: ${m.text}`)

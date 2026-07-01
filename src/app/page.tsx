@@ -10,7 +10,6 @@ import { Showcase } from '@/features/landing/components/showcase'
 import { Statement } from '@/features/landing/components/statement'
 import { Stats } from '@/features/landing/components/stats'
 import { Testimonial } from '@/features/landing/components/testimonial'
-import { Trust } from '@/features/landing/components/trust'
 import { UseCases } from '@/features/landing/components/usecases'
 
 export default function HomePage() {
@@ -20,7 +19,7 @@ export default function HomePage() {
       <main className='flex-1 pt-[88px] pb-8 md:pt-20'>
         <div className='container-main'>
           {/* Continuous bordered frame — sections separated by hairline dividers */}
-          <div className='divide-y divide-[#DFE5E9] overflow-hidden rounded-xl border border-[#DFE5E9] bg-white'>
+          <div className='divide-border border-border divide-y overflow-hidden rounded-lg border bg-white'>
             <Hero />
             <LogoCloud />
             <Statement />
@@ -30,7 +29,6 @@ export default function HomePage() {
             <Features />
             <UseCases />
             <Stats />
-            <Trust />
             <Testimonial />
             <FinalCta />
           </div>

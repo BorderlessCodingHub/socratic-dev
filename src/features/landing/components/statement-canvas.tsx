@@ -1,124 +1,104 @@
 'use client'
 
+import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { ArrowRight, Brain, Zap } from 'lucide-react'
+
+const copy = {
+  en: {
+    shortcut: {
+      eyebrow: 'Shortcut',
+      title: 'How you use AI today',
+      steps: ['ask', 'AI spits it out', 'it works', 'forgot it'],
+      footer: 'ship today · empty tomorrow',
+    },
+    retained: {
+      eyebrow: 'Retained',
+      title: 'How Socratic teaches you',
+      steps: ['ask', 'why?', 'try it', 'got it'],
+      footer: '+5 min of thinking · a career of returns',
+    },
+  },
+  pt: {
+    shortcut: {
+      eyebrow: 'Atalho',
+      title: 'Como você usa IA hoje',
+      steps: ['pergunta', 'IA cospe', 'funciona', 'esqueci'],
+      footer: 'ship hoje · vazio amanhã',
+    },
+    retained: {
+      eyebrow: 'Retido',
+      title: 'Como o Sócrates te ensina',
+      steps: ['pergunta', 'por quê?', 'tenta', 'entendi'],
+      footer: '+5 min de pensar · uma carreira de retorno',
+    },
+  },
+}
 
 export function StatementCanvas() {
+  const t = useT(copy)
   return (
-    <div className='mx-auto mt-14 grid w-full max-w-[940px] gap-4 px-4 lg:mt-16 lg:grid-cols-2'>
+    <div className='mx-auto mt-14 grid w-full max-w-[880px] gap-4 px-4 text-left lg:mt-16 lg:grid-cols-2'>
       <ComparisonCard
-        eyebrow='Atalho'
-        eyebrowAccent='red'
-        icon={<Zap className='size-4' strokeWidth={1.5} />}
-        title='Como você usa IA hoje'
-        steps={[
-          { emoji: '🤔', label: 'pergunta' },
-          { emoji: '🤖', label: 'IA cospe' },
-          { emoji: '✓', label: 'funciona' },
-          { emoji: '💤', label: 'esqueci', accent: 'red' },
-        ]}
-        footer='ship hoje · vazio amanhã'
+        eyebrow={t.shortcut.eyebrow}
+        title={t.shortcut.title}
+        tone='sand'
+        steps={t.shortcut.steps}
+        footer={t.shortcut.footer}
       />
       <ComparisonCard
-        eyebrow='Retido'
-        eyebrowAccent='emerald'
-        icon={<Brain className='size-4' strokeWidth={1.5} />}
-        title='Como o Sócrates te ensina'
-        steps={[
-          { emoji: '🤔', label: 'pergunta' },
-          { emoji: '❓', label: 'por quê?' },
-          { emoji: '💭', label: 'tenta' },
-          { emoji: '💡', label: 'entendi', accent: 'emerald' },
-        ]}
-        footer='+5 min de pensar · uma carreira de retorno'
+        eyebrow={t.retained.eyebrow}
+        title={t.retained.title}
+        tone='sage'
+        steps={t.retained.steps}
+        footer={t.retained.footer}
       />
     </div>
   )
-}
-
-type Step = {
-  emoji: string
-  label: string
-  accent?: 'red' | 'emerald'
 }
 
 function ComparisonCard({
   eyebrow,
-  eyebrowAccent,
-  icon,
   title,
+  tone,
   steps,
   footer,
 }: {
   eyebrow: string
-  eyebrowAccent: 'red' | 'emerald'
-  icon: React.ReactNode
   title: string
-  steps: Step[]
+  tone: 'sand' | 'sage'
+  steps: readonly string[]
   footer: string
 }) {
   return (
-    <div className='shadow-soft relative flex h-full flex-col rounded-2xl border border-[#DFE5E9] bg-white p-6 text-left sm:p-7'>
-      <div className='mb-5 flex items-center justify-between'>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase',
-            eyebrowAccent === 'red'
-              ? 'border-red-200 bg-red-50 text-red-700'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-700',
-          )}
-        >
-          {eyebrow}
-        </span>
-        <span className='grid size-9 place-items-center rounded-xl bg-[#dad8ea]/55 text-[#1b1916]'>
-          {icon}
-        </span>
-      </div>
-
-      <h3 className='font-heading mb-5 text-[18px] font-medium tracking-tight text-[#1b1916]'>
-        {title}
-      </h3>
-
-      <div className='flex flex-wrap items-center gap-x-1.5 gap-y-2'>
-        {steps.map((s, i) => (
-          <span key={i} className='inline-flex items-center gap-1.5'>
-            <Pill accent={s.accent}>
-              <span className='text-[15px] leading-none'>{s.emoji}</span>
-              <span>{s.label}</span>
-            </Pill>
-            {i < steps.length - 1 && (
-              <ArrowRight className='size-3.5 shrink-0 text-[#6b6478]' />
-            )}
-          </span>
-        ))}
-      </div>
-
-      <p className='mt-auto pt-6 font-mono text-[11px] tracking-wide text-[#6b6478]'>
-        {footer}
-      </p>
-    </div>
-  )
-}
-
-function Pill({
-  children,
-  accent,
-}: {
-  children: React.ReactNode
-  accent?: 'red' | 'emerald'
-}) {
-  return (
-    <span
+    <div
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 text-[13px] text-[#1b1916]',
-        accent === 'red'
-          ? 'border-red-200 bg-red-50/60 text-red-800'
-          : accent === 'emerald'
-            ? 'border-emerald-200 bg-emerald-50/60 text-emerald-800'
-            : 'border-[#DFE5E9]',
+        'flex h-full flex-col rounded-lg p-7 sm:p-8',
+        tone === 'sand' ? 'bg-pastel-sand' : 'bg-pastel-sage',
       )}
     >
-      {children}
-    </span>
+      <p className='eyebrow mb-6'>{eyebrow}</p>
+      <h3 className='type-h4 mb-8'>{title}</h3>
+      <ol className='flex flex-col gap-3'>
+        {steps.map((step, i) => (
+          <li
+            key={step}
+            className='flex items-baseline gap-3 text-[15px] text-aubergine'
+          >
+            <span className='font-mono text-[11px] tracking-wider text-muted-foreground'>
+              0{i + 1}
+            </span>
+            <span aria-hidden className='text-ink/40'>
+              →
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+      <div className='mt-auto pt-8'>
+        <p className='border-t border-ink/10 pt-4 font-mono text-[11px] tracking-wide text-muted-foreground'>
+          {footer}
+        </p>
+      </div>
+    </div>
   )
 }

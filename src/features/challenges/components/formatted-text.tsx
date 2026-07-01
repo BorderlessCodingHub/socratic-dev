@@ -13,7 +13,7 @@ function renderInline(text: string): React.ReactNode[] {
     const tok = m[0]
     if (tok.startsWith('**')) {
       out.push(
-        <strong key={key++} className='font-semibold text-[#1b1916]'>
+        <strong key={key++} className='font-medium text-ink'>
           {tok.slice(2, -2)}
         </strong>,
       )
@@ -21,7 +21,7 @@ function renderInline(text: string): React.ReactNode[] {
       out.push(
         <code
           key={key++}
-          className='rounded bg-iris/5 px-1 py-0.5 font-mono text-[12.5px] text-iris'
+          className='rounded bg-primary/5 px-1 py-0.5 font-mono text-[12.5px] text-primary'
         >
           {tok.slice(1, -1)}
         </code>,

@@ -1,4 +1,6 @@
 import type { ChallengeKind } from '@/domain/challenge-kinds'
+import type { Locale } from '@/lib/i18n'
+import { languageDirective } from './locale'
 
 const CODE_SYS = `Você resolve um desafio de programação. Sua solução DEVE passar em TODOS os testes fornecidos pelo usuário — esses testes são a verdade do desafio. Retorne APENAS o código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM explicação — somente o código que vai direto no editor.`
 
@@ -17,8 +19,9 @@ Regras de ESTRUTURA (essenciais pra ficar legível):
 - Use VÁRIOS tipos diferentes pra formar 3 a 5 camadas distintas: client (topo) → gateway/auth → services → fila/cache → database/storage (base).
 - NÃO crie arestas que pulam etapas (cliente direto pro banco) — sempre passe pela camada do meio.
 - Inclua pelo menos um banco de dados ("database" ou "storage") na base.
-- Português do Brasil, tom de tech lead resolvendo um problema real.`
+- Tom de tech lead resolvendo um problema real.`
 
-export function solvePasteSystem(kind: ChallengeKind): string {
-  return kind === 'design' ? DESIGN_SYS : CODE_SYS
+export function solvePasteSystem(kind: ChallengeKind, locale: Locale): string {
+  const base = kind === 'design' ? DESIGN_SYS : CODE_SYS
+  return `${base}\n${languageDirective(locale)}`
 }

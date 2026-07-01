@@ -1,5 +1,7 @@
 import { Logo } from '@/components/logo'
+import { Button } from '@/components/ui/button'
 import { FormattedText } from '@/features/challenges/components/formatted-text'
+import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import {
@@ -20,6 +22,67 @@ import { notFound } from 'next/navigation'
 
 const PERSONA_RE = /^Cliente:\s*([^()]+?)\s*\(([^)]+)\)\s*—\s*(.+)$/
 
+const copy = {
+  en: {
+    levels: {
+      beginner: 'Beginner',
+      intermediate: 'Intermediate',
+      advanced: 'Advanced',
+    },
+    trainToo: 'Start training',
+    publicSession: 'Public session · socratic.dev',
+    completed: 'Completed',
+    failed: 'Failed',
+    dateLocale: 'en-US',
+    independence: 'Independence',
+    independenceHint:
+      '100 minus the hint penalty. Shows how much you thought on your own.',
+    hintsUsed: 'Hints used',
+    time: 'Time',
+    clientRequest: 'Client request',
+    howHints: 'How hints were used',
+    hintLevel: (n: number) => `Level ${n}`,
+    finalCode: 'Final submitted code',
+    socraticReview: 'Socratic review',
+    proofTitle: 'Proof without shortcuts',
+    proofBodyPre:
+      'This session was AI-generated, with hidden tests running in the browser. The tutor never hands over the answer — it only asks questions. Every hint costs independence. ',
+    proofBodyStrong: 'Want to try?',
+    startMyOwn: 'Start my own',
+    sessionId: 'Session ID:',
+  },
+  pt: {
+    levels: {
+      beginner: 'Iniciante',
+      intermediate: 'Intermediário',
+      advanced: 'Avançado',
+    },
+    trainToo: 'Treinar também',
+    publicSession: 'Sessão pública · socratic.dev',
+    completed: 'Concluído',
+    failed: 'Reprovado',
+    dateLocale: 'pt-BR',
+    independence: 'Independência',
+    independenceHint:
+      '100 menos a penalidade de hints. Mostra o quanto pensou sozinho.',
+    hintsUsed: 'Hints usados',
+    time: 'Tempo',
+    clientRequest: 'Pedido do cliente',
+    howHints: 'Como pediu hints',
+    hintLevel: (n: number) => `Nível ${n}`,
+    finalCode: 'Código final submetido',
+    socraticReview: 'Review socrático',
+    proofTitle: 'Prova sem cola',
+    proofBodyPre:
+      'Essa sessão foi gerada por IA, com testes escondidos rodando no browser. O tutor nunca entrega a resposta — só pergunta. Cada hint custa independência. ',
+    proofBodyStrong: 'Quer tentar?',
+    startMyOwn: 'Começar meu próprio',
+    sessionId: 'ID da sessão:',
+  },
+} as const
+
+type Copy = (typeof copy)['en' | 'pt']
+
 function parsePersona(brief: string) {
   const [first, ...rest] = brief.split('\n')
   const m = first?.match(PERSONA_RE)
@@ -30,13 +93,13 @@ function parsePersona(brief: string) {
   }
 }
 
-function levelLabel(level: string): string {
+function levelLabel(level: string, t: Copy): string {
   return level === 'beginner'
-    ? 'Iniciante'
+    ? t.levels.beginner
     : level === 'intermediate'
-      ? 'Intermediário'
+      ? t.levels.intermediate
       : level === 'advanced'
-        ? 'Avançado'
+        ? t.levels.advanced
         : level
 }
 
@@ -100,19 +163,19 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const { id } = await props.params
   const data = await fetchReplay(id)
-  if (!data) return { title: 'Replay não encontrado · socratic.dev' }
+  if (!data) return { title: 'Replay not found · socratic.dev' }
   const session = data.session as {
     challenges: { title?: string } | null
     status: string
   }
-  const title = session.challenges?.title ?? 'Desafio'
+  const title = session.challenges?.title ?? 'Challenge'
   const score = calcIndependence(data.hints)
   return {
-    title: `${title} · ${score}% independente · socratic.dev`,
-    description: `Sessão pública: ${title} resolvida com ${score}% de independência. Sem cola, sem IA cuspindo a resposta.`,
+    title: `${title} · ${score}% independent · socratic.dev`,
+    description: `Public session: ${title} solved with ${score}% independence. No cheating, no AI spitting out the answer.`,
     openGraph: {
-      title: `${title} — ${score}% independente`,
-      description: 'Prova social verificável. Resolvido no socratic.dev.',
+      title: `${title} — ${score}% independent`,
+      description: 'Verifiable social proof. Solved on socratic.dev.',
       type: 'article',
     },
   }
@@ -122,6 +185,8 @@ export default async function ReplayPage(props: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await props.params
+  const locale = await getLocale()
+  const t = copy[locale]
   const data = await fetchReplay(id)
   if (!data) notFound()
 
@@ -152,59 +217,56 @@ export default async function ReplayPage(props: {
 
   return (
     <div className='relative flex min-h-screen flex-col bg-white'>
-      <header className='sticky top-0 z-40 border-b border-[#DFE5E9] bg-white/90 backdrop-blur'>
+      <header className='sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur'>
         <div className='container-main flex h-16 items-center justify-between'>
           <Logo />
-          <Link
-            href='/onboarding'
-            className='cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90'
-          >
-            Treinar também
-          </Link>
+          <Button render={<Link href='/onboarding' />} variant='ink' size='sm'>
+            {t.trainToo}
+          </Button>
         </div>
       </header>
 
       <main className='flex-1 pt-10 pb-20'>
         <div className='container-main max-w-3xl'>
-          <div className='mb-3 inline-flex items-center gap-2 rounded-full border border-iris/20 bg-iris/10 px-3 py-1 font-mono text-[11px] text-iris'>
-            <Sparkles className='size-3' />
-            Sessão pública · socratic.dev
+          <div className='mb-3 inline-flex items-center gap-2 rounded-full bg-pastel-lilac px-3 py-1 font-mono text-[11px] text-primary'>
+            <Sparkles className='size-3' strokeWidth={1.5} />
+            {t.publicSession}
           </div>
 
-          <h1 className='font-heading text-4xl leading-tight font-semibold tracking-tight text-[#1b1916] sm:text-5xl'>
+          <h1 className='font-heading text-4xl leading-tight font-light tracking-tight text-ink sm:text-5xl'>
             {c.title}
           </h1>
 
-          <div className='mt-4 flex flex-wrap items-center gap-2 font-mono text-[11px] text-[#6b6478]'>
-            <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5'>
+          <div className='mt-4 flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground'>
+            <span className='rounded-full border border-border bg-white px-2 py-0.5'>
               {isDesign ? (
-                <Network className='mr-1 inline size-3' />
+                <Network className='mr-1 inline size-3' strokeWidth={1.5} />
               ) : (
-                <Code2 className='mr-1 inline size-3' />
+                <Code2 className='mr-1 inline size-3' strokeWidth={1.5} />
               )}
               {stackLabel(c.stack, c.kind)}
             </span>
-            <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5'>
-              {levelLabel(c.level)}
+            <span className='rounded-full border border-border bg-white px-2 py-0.5'>
+              {levelLabel(c.level, t)}
             </span>
             <span
               className={cn(
-                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5',
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
                 passed
-                  ? 'border-emerald-600/30 bg-emerald-50 text-emerald-700'
-                  : 'border-amber-500/30 bg-amber-50 text-amber-700',
+                  ? 'bg-mint/10 text-mint'
+                  : 'bg-warning/10 text-warning-foreground',
               )}
             >
               {passed ? (
-                <CheckCircle2 className='size-3' />
+                <CheckCircle2 className='size-3' strokeWidth={1.5} />
               ) : (
-                <XCircle className='size-3' />
+                <XCircle className='size-3' strokeWidth={1.5} />
               )}
-              {passed ? 'Concluído' : 'Reprovado'}
+              {passed ? t.completed : t.failed}
             </span>
             <span className='inline-flex items-center gap-1'>
-              <Calendar className='size-3' />
-              {date.toLocaleDateString('pt-BR', {
+              <Calendar className='size-3' strokeWidth={1.5} />
+              {date.toLocaleDateString(t.dateLocale, {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric',
@@ -212,27 +274,34 @@ export default async function ReplayPage(props: {
             </span>
           </div>
 
-          {/* Hero metrics */}
           <div className='mt-8 grid grid-cols-3 gap-3'>
             <Metric
-              label='Independência'
+              label={t.independence}
+              icon='brain'
               value={`${independence}%`}
               accent='mint'
-              hint='100 menos a penalidade de hints. Mostra o quanto pensou sozinho.'
+              hint={t.independenceHint}
             />
-            <Metric label='Hints usados' value={String(data.hints.length)} />
             <Metric
-              label='Tempo'
+              label={t.hintsUsed}
+              icon='lightbulb'
+              value={String(data.hints.length)}
+            />
+            <Metric
+              label={t.time}
+              icon='clock'
               value={formatTime(session.duration_seconds)}
-              accent='iris'
+              accent='primary'
             />
           </div>
 
-          {/* Persona + brief */}
-          <Section title='Pedido do cliente' icon={<Sparkles className='size-3.5' />}>
+          <Section
+            title={t.clientRequest}
+            icon={<Sparkles className='size-3.5' strokeWidth={1.5} />}
+          >
             {persona && (
-              <div className='mb-4 flex items-center gap-3 rounded-2xl border border-[#DFE5E9] bg-white p-3'>
-                <div className='grid size-11 shrink-0 place-items-center rounded-full bg-[#dad8ea]/55 font-heading text-sm font-semibold text-[#1b1916]'>
+              <div className='mb-4 flex items-center gap-3 rounded-lg border border-border bg-white p-3'>
+                <div className='grid size-11 shrink-0 place-items-center rounded-full bg-pastel-lavender font-heading text-sm font-medium text-ink'>
                   {persona.name
                     .split(/\s+/)
                     .map((p) => p[0])
@@ -241,25 +310,24 @@ export default async function ReplayPage(props: {
                     .toUpperCase()}
                 </div>
                 <div className='min-w-0'>
-                  <div className='truncate font-heading text-[15px] font-semibold text-[#1b1916]'>
+                  <div className='truncate font-heading text-[15px] font-medium text-ink'>
                     {persona.name}
                   </div>
-                  <div className='truncate text-[12px] text-[#6b6478]'>
+                  <div className='truncate text-[12px] text-muted-foreground'>
                     {persona.role} · {persona.company}
                   </div>
                 </div>
               </div>
             )}
-            <p className='whitespace-pre-line text-[14px] leading-relaxed text-[#2c2330]'>
+            <p className='whitespace-pre-line text-[14px] leading-relaxed text-aubergine'>
               {persona ? body : c.client_briefing}
             </p>
           </Section>
 
-          {/* Hint breakdown */}
           {data.hints.length > 0 && (
             <Section
-              title='Como pediu hints'
-              icon={<Lightbulb className='size-3.5' />}
+              title={t.howHints}
+              icon={<Lightbulb className='size-3.5' strokeWidth={1.5} />}
             >
               <div className='grid grid-cols-3 gap-2 text-center text-sm'>
                 {([1, 2, 3] as const).map((lvl) => {
@@ -267,15 +335,15 @@ export default async function ReplayPage(props: {
                   return (
                     <div
                       key={lvl}
-                      className='rounded-xl border border-[#DFE5E9] bg-white p-3'
+                      className='rounded-lg border border-border bg-white p-3'
                     >
-                      <div className='font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                        Nível {lvl}
+                      <div className='font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+                        {t.hintLevel(lvl)}
                       </div>
-                      <div className='mt-1 font-heading text-xl font-semibold text-[#1b1916]'>
+                      <div className='mt-1 font-heading text-xl font-light tabular-nums text-ink'>
                         {n}
                       </div>
-                      <div className='text-[11px] text-[#6b6478]'>
+                      <div className='text-[11px] text-muted-foreground'>
                         −{n * lvl * 4} indep.
                       </div>
                     </div>
@@ -285,49 +353,47 @@ export default async function ReplayPage(props: {
             </Section>
           )}
 
-          {/* Final code (for code track) */}
           {!isDesign && data.submission?.code && (
             <Section
-              title='Código final submetido'
-              icon={<Code2 className='size-3.5' />}
+              title={t.finalCode}
+              icon={<Code2 className='size-3.5' strokeWidth={1.5} />}
             >
-              <pre className='overflow-x-auto rounded-2xl border border-[#DFE5E9] bg-[#0f1115] p-5 font-mono text-[12.5px] leading-relaxed text-[#e6e7eb]'>
+              <pre className='overflow-x-auto rounded-lg bg-ink p-5 font-mono text-[12.5px] leading-relaxed text-white/80'>
                 <code>{data.submission.code}</code>
               </pre>
             </Section>
           )}
 
-          {/* AI review */}
           {data.submission?.review_response && (
             <Section
-              title='Review socrático'
-              icon={<GitPullRequestArrow className='size-3.5' />}
+              title={t.socraticReview}
+              icon={<GitPullRequestArrow className='size-3.5' strokeWidth={1.5} />}
             >
-              <div className='rounded-2xl border border-[#DFE5E9] bg-[#F7F9FA] p-5 text-[14px] leading-relaxed text-[#2c2330]'>
+              <div className='rounded-lg bg-muted p-5 text-[14px] leading-relaxed text-aubergine'>
                 <FormattedText text={data.submission.review_response} />
               </div>
             </Section>
           )}
 
-          <div className='mt-12 rounded-2xl border border-[#DFE5E9] bg-[#F7F9FA] p-6 text-center'>
-            <div className='mb-1.5 font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-              Prova sem cola
+          <div className='mt-12 rounded-lg bg-pastel-greige p-6 text-center'>
+            <div className='mb-1.5 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+              {t.proofTitle}
             </div>
-            <p className='text-[14px] text-[#2c2330]'>
-              Essa sessão foi gerada por IA, com testes escondidos rodando no
-              browser. O tutor nunca entrega a resposta — só pergunta. Cada hint
-              custa independência. <strong>Quer tentar?</strong>
+            <p className='text-[14px] text-aubergine'>
+              {t.proofBodyPre}
+              <strong>{t.proofBodyStrong}</strong>
             </p>
-            <Link
-              href='/onboarding'
-              className='mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90'
+            <Button
+              render={<Link href='/onboarding' />}
+              variant='ink'
+              className='mt-4'
             >
-              Começar meu próprio
-            </Link>
+              {t.startMyOwn}
+            </Button>
           </div>
 
-          <div className='mt-8 text-center font-mono text-[10px] text-[#6b6478]'>
-            ID da sessão: <span className='text-[#1b1916]'>{session.id}</span>
+          <div className='mt-8 text-center font-mono text-[10px] text-muted-foreground'>
+            {t.sessionId} <span className='text-ink'>{session.id}</span>
           </div>
         </div>
       </main>
@@ -346,7 +412,7 @@ function Section({
 }) {
   return (
     <section className='mt-10'>
-      <div className='mb-3 inline-flex items-center gap-2 font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
+      <div className='mb-3 inline-flex items-center gap-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
         {icon}
         {title}
       </div>
@@ -357,31 +423,35 @@ function Section({
 
 function Metric({
   label,
+  icon,
   value,
   accent,
   hint,
 }: {
   label: string
+  icon?: 'brain' | 'clock' | 'lightbulb'
   value: string
-  accent?: 'mint' | 'iris'
+  accent?: 'mint' | 'primary'
   hint?: string
 }) {
   return (
     <div
       title={hint}
-      className='rounded-xl border border-[#DFE5E9] bg-white p-3.5'
+      className='rounded-lg border border-border bg-white p-3.5'
     >
-      <div className='mb-1 inline-flex items-center gap-1 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-        {label === 'Independência' && <Brain className='size-3' />}
-        {label === 'Tempo' && <Clock className='size-3' />}
-        {label === 'Hints usados' && <Lightbulb className='size-3' />}
+      <div className='mb-1 inline-flex items-center gap-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+        {icon === 'brain' && <Brain className='size-3' strokeWidth={1.5} />}
+        {icon === 'clock' && <Clock className='size-3' strokeWidth={1.5} />}
+        {icon === 'lightbulb' && (
+          <Lightbulb className='size-3' strokeWidth={1.5} />
+        )}
         {label}
       </div>
       <div
         className={cn(
-          'font-heading text-2xl font-semibold tabular-nums text-[#1b1916]',
-          accent === 'mint' && 'text-emerald-600',
-          accent === 'iris' && 'text-iris',
+          'font-heading text-2xl font-light tabular-nums text-ink',
+          accent === 'mint' && 'text-mint',
+          accent === 'primary' && 'text-primary',
         )}
       >
         {value}

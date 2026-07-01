@@ -68,6 +68,20 @@
   --color-violet: var(--violet);
   --color-mint: var(--mint);
   --color-ember: var(--ember);
+  --color-ink: var(--ink);
+  --color-aubergine: var(--aubergine);
+  --color-paper: var(--paper);
+  --color-greige: var(--greige);
+  --color-lime: var(--lime);
+  --color-lime-dark: var(--lime-dark);
+  --color-lime-light: var(--lime-light);
+  --color-pastel-greige: var(--pastel-greige);
+  --color-pastel-sage: var(--pastel-sage);
+  --color-pastel-stone: var(--pastel-stone);
+  --color-pastel-mist: var(--pastel-mist);
+  --color-pastel-sand: var(--pastel-sand);
+  --color-pastel-lavender: var(--pastel-lavender);
+  --color-pastel-lilac: var(--pastel-lilac);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -222,50 +236,66 @@
   --warning: oklch(0.7 0.15 75);
   --warning-foreground: oklch(0.55 0.14 75);
 
-  /* Encord-inspired brand: indigo/violet on light */
-  --iris: oklch(0.55 0.24 285); /* indigo brand */
-  --violet: oklch(0.5 0.26 292);
-  --mint: oklch(0.7 0.14 165); /* fresh accent, darkened for white bg */
-  --ember: oklch(0.62 0.2 35);
+  /* Encord brand palette (encord.com) */
+  --ink: #1b1916;
+  --aubergine: #2c2330;
+  --paper: #f0f0ed;
+  --greige: #eae7e4;
+  --lime: #a6e40e;
+  --lime-dark: #7aaa0a;
+  --lime-light: #c4f53a;
+  --iris: #691df2;
+  --violet: #5a10d4;
+  --mint: #7aaa0a;
+  --ember: #e07a5f;
 
-  --accent: oklch(0.96 0.005 285);
-  --accent-foreground: oklch(0.21 0.02 285);
-  --background: oklch(1 0 0);
-  --border: oklch(0.91 0.005 285);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 285);
+  /* Pastel card fills */
+  --pastel-greige: #eae7e4;
+  --pastel-sage: #e8efdb;
+  --pastel-stone: #c6c8c8;
+  --pastel-mist: #dfe5e9;
+  --pastel-sand: #ddd2c7;
+  --pastel-lavender: #dad8ea;
+  --pastel-lilac: #eeebff;
+
+  --accent: #eae7e4;
+  --accent-foreground: #1b1916;
+  --background: #ffffff;
+  --border: #dfe5e9;
+  --card: #ffffff;
+  --card-foreground: #1b1916;
   --destructive: oklch(0.58 0.22 25);
-  --foreground: oklch(0.21 0.02 285);
-  --input: oklch(0.91 0.005 285);
-  --muted: oklch(0.965 0.004 285);
-  --muted-foreground: oklch(0.52 0.02 285);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 285);
-  --primary: oklch(0.55 0.24 285);
-  --primary-foreground: oklch(0.99 0 0);
-  --ring: oklch(0.55 0.24 285 / 0.45);
-  --secondary: oklch(0.965 0.004 285);
-  --secondary-foreground: oklch(0.21 0.02 285);
+  --foreground: #1b1916;
+  --input: #dfe5e9;
+  --muted: #f7f9fa;
+  --muted-foreground: #6b6478;
+  --popover: #ffffff;
+  --popover-foreground: #1b1916;
+  --primary: #691df2;
+  --primary-foreground: #ffffff;
+  --ring: color-mix(in oklab, #691df2 45%, transparent);
+  --secondary: #f0f0ed;
+  --secondary-foreground: #1b1916;
 
-  --chart-1: oklch(0.55 0.24 285);
-  --chart-2: oklch(0.7 0.14 165);
-  --chart-3: oklch(0.62 0.2 35);
-  --chart-4: oklch(0.6 0.18 235);
-  --chart-5: oklch(0.55 0.2 320);
+  --chart-1: #691df2;
+  --chart-2: #7aaa0a;
+  --chart-3: #e07a5f;
+  --chart-4: #4a7bd9;
+  --chart-5: #b05fd0;
 
   --code: oklch(0.97 0.004 285);
   --code-foreground: var(--foreground);
   --code-highlight: oklch(0 0 0 / 0.05);
   --radius: 0.875rem;
 
-  --sidebar: oklch(0.985 0.003 285);
-  --sidebar-accent: oklch(0.96 0.005 285);
-  --sidebar-accent-foreground: oklch(0.21 0.02 285);
-  --sidebar-border: oklch(0.91 0.005 285);
-  --sidebar-foreground: oklch(0.4 0.02 285);
-  --sidebar-primary: oklch(0.55 0.24 285);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-ring: oklch(0.55 0.24 285 / 0.45);
+  --sidebar: #f7f9fa;
+  --sidebar-accent: #eae7e4;
+  --sidebar-accent-foreground: #1b1916;
+  --sidebar-border: #dfe5e9;
+  --sidebar-foreground: #2c2330;
+  --sidebar-primary: #691df2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: color-mix(in oklab, #691df2 45%, transparent);
 }
 
 .dark {
@@ -367,10 +397,10 @@
   .text-gradient {
     background: linear-gradient(
       110deg,
-      oklch(0.55 0.24 285) 0%,
-      oklch(0.5 0.26 292) 38%,
-      oklch(0.56 0.22 322) 65%,
-      oklch(0.55 0.24 285) 100%
+      #691df2 0%,
+      #5a10d4 38%,
+      #8b4df5 65%,
+      #691df2 100%
     );
     background-size: 200% auto;
     -webkit-background-clip: text;
@@ -380,22 +410,14 @@
   }
 
   .text-gradient-static {
-    background: linear-gradient(
-      135deg,
-      oklch(0.21 0.02 285) 0%,
-      oklch(0.4 0.04 285) 100%
-    );
+    background: linear-gradient(135deg, var(--ink) 0%, var(--aubergine) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-gradient-iris {
-    background: linear-gradient(
-      135deg,
-      oklch(0.55 0.24 285) 0%,
-      oklch(0.5 0.26 300) 100%
-    );
+    background: linear-gradient(135deg, #691df2 0%, #5a10d4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -444,7 +466,7 @@
   .glow-iris {
     box-shadow:
       0 1px 2px oklch(0 0 0 / 0.06),
-      0 12px 30px -10px oklch(0.55 0.24 285 / 0.35);
+      0 12px 30px -10px color-mix(in oklab, #691df2 35%, transparent);
   }
 
   /* Encord-style soft elevation for white cards */
@@ -471,9 +493,9 @@
       linear-gradient(var(--card), var(--card)) padding-box,
       linear-gradient(
           135deg,
-          oklch(0.55 0.24 285 / 0.45),
-          oklch(0.5 0.26 300 / 0.28),
-          oklch(0.55 0.24 285 / 0.08)
+          color-mix(in oklab, #691df2 45%, transparent),
+          color-mix(in oklab, #5a10d4 28%, transparent),
+          color-mix(in oklab, #691df2 8%, transparent)
         )
         border-box;
     border: 1px solid transparent;
@@ -521,7 +543,7 @@
 
   .type-display {
     font-family: var(--font-heading);
-    color: #1b1916;
+    color: var(--ink);
     font-weight: 300;
     letter-spacing: -0.04em;
     font-size: 40px;
@@ -529,7 +551,7 @@
   }
   .type-h2 {
     font-family: var(--font-heading);
-    color: #1b1916;
+    color: var(--ink);
     font-weight: 300;
     letter-spacing: -2.1px;
     line-height: 1;
@@ -537,14 +559,22 @@
   }
   .type-h3 {
     font-family: var(--font-heading);
-    color: #1b1916;
+    color: var(--ink);
     font-weight: 300;
     letter-spacing: -1.2px;
     line-height: 1.1;
     font-size: 28px;
   }
+  .type-h4 {
+    font-family: var(--font-heading);
+    color: var(--ink);
+    font-weight: 300;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    font-size: 22px;
+  }
   .type-body {
-    color: #2c2330;
+    color: var(--aubergine);
     font-size: 16px;
     letter-spacing: -0.18px;
     line-height: 1.4;
@@ -556,6 +586,37 @@
     letter-spacing: -1.4px;
     line-height: 1.3;
     font-size: 28px;
+  }
+
+  /* Mono uppercase label (Encord eyebrow) */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* Encord "Read more" underline: scales in from the left on hover */
+  .link-underline {
+    position: relative;
+  }
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -2px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease-out;
+  }
+  .link-underline:hover::after,
+  a:hover .link-underline::after,
+  .group\/link:hover .link-underline::after {
+    transform: scaleX(1);
   }
   @media (min-width: 640px) {
     .type-display {
@@ -599,6 +660,6 @@
     }
   }
   .animate-marquee {
-    animation: marquee 32s linear infinite;
+    animation: marquee 36s linear infinite;
   }
 }

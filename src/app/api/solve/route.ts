@@ -10,6 +10,7 @@ import {
   tooMany,
 } from '@/lib/api/guard'
 import { consumeHints, getBalance } from '@/lib/api/hints-server'
+import { getLocale } from '@/lib/i18n/server'
 import { SOLVE_COST } from '@/features/hints/constants'
 
 function stripFences(raw: string): string {
@@ -72,9 +73,11 @@ export async function POST(req: Request) {
           ].join('\n')
         : codeParts.join('\n')
 
+    const locale = await getLocale()
+
     if (kind === 'design') {
       const raw = await askClaude({
-        system: solvePasteSystem('design'),
+        system: solvePasteSystem('design', locale),
         user,
         maxTokens: 1800,
         effort: 'medium',
@@ -89,7 +92,7 @@ export async function POST(req: Request) {
     }
 
     const raw = await askClaude({
-      system: solvePasteSystem('code'),
+      system: solvePasteSystem('code', locale),
       user,
       maxTokens: 2048,
       effort: 'medium',

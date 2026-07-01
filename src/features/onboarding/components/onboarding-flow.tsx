@@ -1,11 +1,13 @@
 'use client'
 
 import { Logo } from '@/components/logo'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { levelById, levelByUiId } from '@/domain/levels'
 import { stackById, stackByUiId } from '@/domain/stacks'
 import { getNextChallenge } from '@/features/challenges/actions'
 import { getAccessToken } from '@/lib/api/client'
+import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
@@ -24,105 +26,238 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
 
-const stacks = [
-  {
-    id: 'js',
-    name: 'JavaScript',
-    desc: 'Web, Node, full-stack',
-    icon: 'JS',
-    gradient: 'from-amber-400/30 to-orange-500/20',
+const copy = {
+  en: {
+    stacks: [
+      {
+        id: 'js',
+        name: 'JavaScript',
+        desc: 'Web, Node, full-stack',
+        icon: 'JS',
+        chip: 'bg-pastel-sand',
+      },
+      {
+        id: 'ts',
+        name: 'TypeScript',
+        desc: 'Type safety, modern tooling',
+        icon: 'TS',
+        chip: 'bg-pastel-mist',
+      },
+      {
+        id: 'py',
+        name: 'Python',
+        desc: 'Backend, data, scripts',
+        icon: 'PY',
+        chip: 'bg-pastel-sage',
+      },
+      {
+        id: 'react',
+        name: 'React',
+        desc: 'Components, hooks, state',
+        icon: 'RX',
+        chip: 'bg-pastel-lavender',
+      },
+    ],
+    levels: [
+      {
+        id: 'starter',
+        name: 'Beginner',
+        tag: 'Just starting out',
+        desc: 'Variables, conditionals, loops, arrays. No pressure.',
+        intensity: 1,
+      },
+      {
+        id: 'junior',
+        name: 'Junior',
+        tag: 'Built a few projects',
+        desc: 'Functions, objects, fetch, async/await. Comfortable reading docs.',
+        intensity: 2,
+      },
+      {
+        id: 'mid',
+        name: 'Intermediate',
+        tag: 'Ready to level up',
+        desc: 'Patterns, architecture, performance. Tougher code reviews.',
+        intensity: 3,
+      },
+      {
+        id: 'advanced',
+        name: 'Advanced',
+        tag: 'Big tech ambitions',
+        desc: 'Algorithms, optimal complexity, edge cases. FAANG interview energy.',
+        intensity: 4,
+      },
+    ],
+    tracks: [
+      {
+        id: 'code',
+        name: 'Code',
+        desc: 'Solve a real problem in the editor, with tests.',
+        Icon: Code2,
+      },
+      {
+        id: 'design',
+        name: 'System Design',
+        desc: 'Architect systems on a canvas; the AI reviews it.',
+        Icon: Network,
+      },
+    ],
+    stepMeta: [
+      {
+        eyebrow: '01 · Track',
+        title: 'How do you want to train today?',
+        subtitle: 'Code or system design (architecture) — pick your track.',
+      },
+      {
+        eyebrow: '02 · Level',
+        title: 'Radical honesty: where are you?',
+        subtitle: 'The more honest you are, the better the AI calibrates the challenge.',
+      },
+      {
+        eyebrow: '03 · Ready',
+        title: 'Time to think.',
+        subtitle: "I'll generate a real challenge, with a fictional client. No copy-paste.",
+      },
+    ],
+    stepLabels: ['Track', 'Level', 'Ready'],
+    backToSite: 'Back to site',
+    generatingEyebrow: 'Generating',
+    generatingTitle: 'Almost there.',
+    generatingSubtitle: 'Building a challenge based on your choices.',
+    language: 'Language',
+    designNotePre: "System design has no language — you'll ",
+    designNoteBold: 'sketch the system architecture',
+    designNotePost: ' (services, data, flow) on a canvas and the AI reviews it.',
+    trackLabel: 'Track',
+    levelLabel: 'Level',
+    designValue: 'System Design',
+    codeValue: 'Code',
+    genError: "The AI couldn't generate a challenge right now. Try again.",
+    connError: "Couldn't reach the AI. Check your connection and try again.",
+    back: 'Back',
+    next: 'Continue',
+    retry: 'Try again',
+    generate: 'Generate my challenge',
   },
-  {
-    id: 'ts',
-    name: 'TypeScript',
-    desc: 'Type safety, tooling moderno',
-    icon: 'TS',
-    gradient: 'from-blue-500/30 to-iris/20',
+  pt: {
+    stacks: [
+      {
+        id: 'js',
+        name: 'JavaScript',
+        desc: 'Web, Node, full-stack',
+        icon: 'JS',
+        chip: 'bg-pastel-sand',
+      },
+      {
+        id: 'ts',
+        name: 'TypeScript',
+        desc: 'Type safety, tooling moderno',
+        icon: 'TS',
+        chip: 'bg-pastel-mist',
+      },
+      {
+        id: 'py',
+        name: 'Python',
+        desc: 'Backend, dados, scripts',
+        icon: 'PY',
+        chip: 'bg-pastel-sage',
+      },
+      {
+        id: 'react',
+        name: 'React',
+        desc: 'Componentes, hooks, estado',
+        icon: 'RX',
+        chip: 'bg-pastel-lavender',
+      },
+    ],
+    levels: [
+      {
+        id: 'starter',
+        name: 'Iniciante',
+        tag: 'Comecei agora',
+        desc: 'Variáveis, condicionais, loops, arrays. Sem traumas.',
+        intensity: 1,
+      },
+      {
+        id: 'junior',
+        name: 'Júnior',
+        tag: 'Já fiz alguns projetos',
+        desc: 'Funções, objetos, fetch, async/await. Confortável com docs.',
+        intensity: 2,
+      },
+      {
+        id: 'mid',
+        name: 'Intermediário',
+        tag: 'Quero crescer',
+        desc: 'Padrões, arquitetura, performance. Code review mais duro.',
+        intensity: 3,
+      },
+      {
+        id: 'advanced',
+        name: 'Avançado',
+        tag: 'Quero nível big tech',
+        desc: 'Algoritmos, complexidade ótima, edge cases. Pegada de entrevista FAANG.',
+        intensity: 4,
+      },
+    ],
+    tracks: [
+      {
+        id: 'code',
+        name: 'Código',
+        desc: 'Resolva um problema real no editor, com testes.',
+        Icon: Code2,
+      },
+      {
+        id: 'design',
+        name: 'System Design',
+        desc: 'Arquitete sistemas num canvas; a IA analisa.',
+        Icon: Network,
+      },
+    ],
+    stepMeta: [
+      {
+        eyebrow: '01 · Trilha',
+        title: 'Como você quer treinar hoje?',
+        subtitle: 'Código ou system design (arquitetura) — escolha a trilha.',
+      },
+      {
+        eyebrow: '02 · Nível',
+        title: 'Honestidade radical: onde você está?',
+        subtitle: 'Quanto mais real você for, melhor a IA calibra o desafio.',
+      },
+      {
+        eyebrow: '03 · Pronto',
+        title: 'Hora de pensar.',
+        subtitle: 'Vou gerar um desafio real, com cliente fictício. Sem cópia.',
+      },
+    ],
+    stepLabels: ['Trilha', 'Nível', 'Pronto'],
+    backToSite: 'Voltar ao site',
+    generatingEyebrow: 'Gerando',
+    generatingTitle: 'Quase lá.',
+    generatingSubtitle: 'Montando um desafio com base nas suas escolhas.',
+    language: 'Linguagem',
+    designNotePre: 'System design não tem linguagem — você vai ',
+    designNoteBold: 'desenhar a arquitetura do sistema',
+    designNotePost: ' (serviços, dados, fluxo) num canvas e a IA analisa.',
+    trackLabel: 'Trilha',
+    levelLabel: 'Nível',
+    designValue: 'Design System',
+    codeValue: 'Código',
+    genError: 'A IA não conseguiu gerar o desafio agora. Tente de novo.',
+    connError: 'Falha ao falar com a IA. Verifique a conexão e tente de novo.',
+    back: 'Voltar',
+    next: 'Continuar',
+    retry: 'Tentar de novo',
+    generate: 'Gerar meu desafio',
   },
-  {
-    id: 'py',
-    name: 'Python',
-    desc: 'Backend, dados, scripts',
-    icon: 'PY',
-    gradient: 'from-mint/30 to-blue-400/20',
-  },
-  {
-    id: 'react',
-    name: 'React',
-    desc: 'Componentes, hooks, estado',
-    icon: 'RX',
-    gradient: 'from-cyan-400/30 to-iris/20',
-  },
-]
-
-const levels = [
-  {
-    id: 'starter',
-    name: 'Iniciante',
-    tag: 'Comecei agora',
-    desc: 'Variáveis, condicionais, loops, arrays. Sem traumas.',
-    intensity: 1,
-  },
-  {
-    id: 'junior',
-    name: 'Júnior',
-    tag: 'Já fiz alguns projetos',
-    desc: 'Funções, objetos, fetch, async/await. Confortável com docs.',
-    intensity: 2,
-  },
-  {
-    id: 'mid',
-    name: 'Intermediário',
-    tag: 'Quero crescer',
-    desc: 'Padrões, arquitetura, performance. Code review mais duro.',
-    intensity: 3,
-  },
-  {
-    id: 'advanced',
-    name: 'Avançado',
-    tag: 'Quero nível big tech',
-    desc: 'Algoritmos, complexidade ótima, edge cases. Pegada de entrevista FAANG.',
-    intensity: 4,
-  },
-]
-
-const tracks = [
-  {
-    id: 'code',
-    name: 'Código',
-    desc: 'Resolva um problema real no editor, com testes.',
-    Icon: Code2,
-  },
-  {
-    id: 'design',
-    name: 'System Design',
-    desc: 'Arquitete sistemas num canvas; a IA analisa.',
-    Icon: Network,
-  },
-]
-
-const stepMeta = [
-  {
-    eyebrow: '01 · Trilha',
-    title: 'Como você quer treinar hoje?',
-    subtitle: 'Código ou system design (arquitetura) — escolha a trilha.',
-  },
-  {
-    eyebrow: '02 · Nível',
-    title: 'Honestidade radical: onde você está?',
-    subtitle: 'Quanto mais real você for, melhor a IA calibra o desafio.',
-  },
-  {
-    eyebrow: '03 · Pronto',
-    title: 'Hora de pensar.',
-    subtitle: 'Vou gerar um desafio real, com cliente fictício. Sem cópia.',
-  },
-]
+}
 
 type Step = 0 | 1 | 2
 
 export function OnboardingFlow({ user }: { user: User }) {
   const router = useRouter()
+  const t = useT(copy)
   const [step, setStep] = React.useState<Step>(0)
   const [track, setTrack] = React.useState<string | null>(null)
   const [stack, setStack] = React.useState<string | null>(null)
@@ -191,10 +326,7 @@ export function OnboardingFlow({ user }: { user: User }) {
             },
       )
       if ('error' in result || !result?.id) {
-        setError(
-          ('error' in result && result.error) ||
-            'A IA não conseguiu gerar o desafio agora. Tente de novo.',
-        )
+        setError(('error' in result && result.error) || t.genError)
         setStarting(false)
         return
       }
@@ -204,7 +336,7 @@ export function OnboardingFlow({ user }: { user: User }) {
           : `/challenge?id=${result.id}`,
       )
     } catch {
-      setError('Falha ao falar com a IA. Verifique a conexão e tente de novo.')
+      setError(t.connError)
       setStarting(false)
     }
   }
@@ -221,7 +353,7 @@ export function OnboardingFlow({ user }: { user: User }) {
     generate(dbStack, dbLevel, 'code')
   }
 
-  const meta = stepMeta[step]
+  const meta = t.stepMeta[step]
 
   return (
     <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
@@ -229,33 +361,23 @@ export function OnboardingFlow({ user }: { user: User }) {
         <Logo />
         <Link
           href='/'
-          className='text-sm text-[#6b6478] transition-colors hover:text-[#1b1916]'
+          className='text-sm text-muted-foreground transition-colors hover:text-ink'
         >
-          Voltar ao site
+          {t.backToSite}
         </Link>
       </header>
 
       <main className='flex flex-1 items-start py-6 md:items-center md:py-10'>
         <div className='container-main w-full max-w-3xl'>
-          <div className='shadow-soft-lg overflow-hidden rounded-xl border border-[#DFE5E9] bg-white'>
-            <div className='relative overflow-hidden border-b border-[#DFE5E9] px-6 py-8 sm:px-10 sm:py-10'>
-              <div
-                className='absolute inset-0'
-                style={{
-                  background:
-                    'linear-gradient(146.18deg, rgba(252, 243, 235, 0.6) 12.07%, rgba(223, 229, 233, 0.6) 45.37%, rgba(220, 215, 253, 0.6) 97.58%), white',
-                }}
-              />
-              <div className='grid-pattern absolute inset-0 opacity-30' />
-              <div className='relative z-10'>
+          <div className='shadow-soft-lg overflow-hidden rounded-lg border border-border bg-white'>
+            <div className='border-b border-border bg-pastel-lilac/60 px-6 py-8 sm:px-10 sm:py-10'>
+              <div>
                 {starting ? (
                   <div>
-                    <div className='mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
-                      Gerando
-                    </div>
-                    <h1 className='type-h2'>Quase lá.</h1>
+                    <p className='eyebrow mb-2'>{t.generatingEyebrow}</p>
+                    <h1 className='type-h2'>{t.generatingTitle}</h1>
                     <p className='type-body mt-3 max-w-[44ch]'>
-                      Montando um desafio com base nas suas escolhas.
+                      {t.generatingSubtitle}
                     </p>
                   </div>
                 ) : (
@@ -266,18 +388,16 @@ export function OnboardingFlow({ user }: { user: User }) {
                           <div
                             className={cn(
                               'h-1 rounded-full transition-all duration-500',
-                              step >= i ? 'bg-iris' : 'bg-[#1b1916]/10',
+                              step >= i ? 'bg-primary' : 'bg-border',
                             )}
                           />
-                          <div className='mt-2 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                            {['Trilha', 'Nível', 'Pronto'][i]}
+                          <div className='mt-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+                            {t.stepLabels[i]}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className='mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
-                      {meta.eyebrow}
-                    </div>
+                    <p className='eyebrow mb-2'>{meta.eyebrow}</p>
                     <h1 className='type-h2'>{meta.title}</h1>
                     <p className='type-body mt-3 max-w-[44ch]'>
                       {meta.subtitle}
@@ -295,21 +415,21 @@ export function OnboardingFlow({ user }: { user: User }) {
                   {step === 0 && (
                     <div className='space-y-4'>
                       <div className='grid gap-3 sm:grid-cols-2'>
-                        {tracks.map((t) => (
+                        {t.tracks.map((tk) => (
                           <Tile
-                            key={t.id}
-                            selected={track === t.id}
-                            onClick={() => setTrack(t.id)}
+                            key={tk.id}
+                            selected={track === tk.id}
+                            onClick={() => setTrack(tk.id)}
                           >
-                            <div className='grid size-12 place-items-center rounded-2xl bg-[#dad8ea]/55 text-[#1b1916]'>
-                              <t.Icon className='size-6' strokeWidth={1.5} />
+                            <div className='grid size-12 place-items-center rounded-full bg-pastel-lavender text-ink'>
+                              <tk.Icon className='size-6' strokeWidth={1.5} />
                             </div>
                             <div className='flex-1'>
-                              <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-                                {t.name}
+                              <div className='font-heading text-lg font-medium tracking-tight text-ink'>
+                                {tk.name}
                               </div>
-                              <div className='text-sm text-[#6b6478]'>
-                                {t.desc}
+                              <div className='text-sm text-muted-foreground'>
+                                {tk.desc}
                               </div>
                             </div>
                           </Tile>
@@ -318,11 +438,9 @@ export function OnboardingFlow({ user }: { user: User }) {
 
                       {track === 'code' && (
                         <div>
-                          <div className='mb-2 font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-                            Linguagem
-                          </div>
+                          <p className='eyebrow mb-2'>{t.language}</p>
                           <div className='grid gap-3 sm:grid-cols-2'>
-                            {stacks.map((s) => (
+                            {t.stacks.map((s) => (
                               <Tile
                                 key={s.id}
                                 selected={stack === s.id}
@@ -330,17 +448,17 @@ export function OnboardingFlow({ user }: { user: User }) {
                               >
                                 <div
                                   className={cn(
-                                    'grid size-12 place-items-center rounded-2xl border border-black/5 bg-linear-to-br font-mono text-sm font-bold text-[#1b1916]',
-                                    s.gradient,
+                                    'grid size-12 place-items-center rounded-full font-mono text-sm font-medium text-ink',
+                                    s.chip,
                                   )}
                                 >
                                   {s.icon}
                                 </div>
                                 <div className='flex-1'>
-                                  <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                                  <div className='font-heading text-lg font-medium tracking-tight text-ink'>
                                     {s.name}
                                   </div>
-                                  <div className='text-sm text-[#6b6478]'>
+                                  <div className='text-sm text-muted-foreground'>
                                     {s.desc}
                                   </div>
                                 </div>
@@ -351,12 +469,12 @@ export function OnboardingFlow({ user }: { user: User }) {
                       )}
 
                       {track === 'design' && (
-                        <div className='rounded-2xl border border-[#DFE5E9] bg-[#F7F9FA] p-4 text-sm text-[#6b6478]'>
-                          System design não tem linguagem — você vai{' '}
-                          <span className='font-medium text-[#1b1916]'>
-                            desenhar a arquitetura do sistema
-                          </span>{' '}
-                          (serviços, dados, fluxo) num canvas e a IA analisa.
+                        <div className='rounded-md border border-border bg-muted p-4 text-sm text-muted-foreground'>
+                          {t.designNotePre}
+                          <span className='font-medium text-ink'>
+                            {t.designNoteBold}
+                          </span>
+                          {t.designNotePost}
                         </div>
                       )}
                     </div>
@@ -364,7 +482,7 @@ export function OnboardingFlow({ user }: { user: User }) {
 
                   {step === 1 && (
                     <div className='space-y-3'>
-                      {levels.map((l) => (
+                      {t.levels.map((l) => (
                         <Tile
                           key={l.id}
                           selected={level === l.id}
@@ -376,23 +494,21 @@ export function OnboardingFlow({ user }: { user: User }) {
                                 key={idx}
                                 className={cn(
                                   'h-2 w-5 rounded-full',
-                                  idx < l.intensity
-                                    ? 'bg-iris'
-                                    : 'bg-[#DFE5E9]',
+                                  idx < l.intensity ? 'bg-primary' : 'bg-border',
                                 )}
                               />
                             ))}
                           </div>
                           <div className='flex-1'>
                             <div className='flex flex-wrap items-center gap-2'>
-                              <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                              <div className='font-heading text-lg font-medium tracking-tight text-ink'>
                                 {l.name}
                               </div>
-                              <span className='rounded-full border border-[#DFE5E9] bg-[#F7F9FA] px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                              <span className='rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
                                 {l.tag}
                               </span>
                             </div>
-                            <div className='mt-0.5 text-sm text-[#6b6478]'>
+                            <div className='mt-0.5 text-sm text-muted-foreground'>
                               {l.desc}
                             </div>
                           </div>
@@ -404,61 +520,60 @@ export function OnboardingFlow({ user }: { user: User }) {
                   {step === 2 && (
                     <div className='grid gap-3 sm:grid-cols-2'>
                       <SummaryItem
-                        label='Trilha'
+                        label={t.trackLabel}
                         value={
                           track === 'design'
-                            ? 'Design System'
-                            : (stacks.find((s) => s.id === stack)?.name ??
-                              'Código')
+                            ? t.designValue
+                            : (t.stacks.find((s) => s.id === stack)?.name ??
+                              t.codeValue)
                         }
                       />
                       <SummaryItem
-                        label='Nível'
-                        value={levels.find((l) => l.id === level)?.name ?? '—'}
+                        label={t.levelLabel}
+                        value={t.levels.find((l) => l.id === level)?.name ?? '—'}
                       />
                     </div>
                   )}
 
                   {error && (
-                    <div className='mt-6 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600'>
+                    <div className='mt-6 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive'>
                       {error}
                     </div>
                   )}
 
                   <div className='mt-7 flex items-center justify-between'>
-                    <button
-                      type='button'
+                    <Button
+                      variant='ghost'
                       onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
-                      className={cn(
-                        'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#1b1916]/5 hover:text-[#1b1916]',
-                        step === 0 && 'invisible',
-                      )}
+                      className={cn(step === 0 && 'invisible')}
                     >
-                      <ArrowLeft className='size-4' /> Voltar
-                    </button>
+                      <ArrowLeft className='size-4' /> {t.back}
+                    </Button>
 
                     {step < 2 ? (
-                      <button
-                        type='button'
+                      <Button
+                        variant='ink'
+                        size='lg'
                         disabled={!canNext}
                         onClick={() =>
                           setStep((s) => Math.min(2, s + 1) as Step)
                         }
-                        className='group inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40'
+                        className='group'
                       >
-                        Continuar
+                        {t.next}
                         <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                      </button>
+                      </Button>
                     ) : (
-                      <button
-                        type='button'
+                      <Button
+                        variant='ink'
+                        size='lg'
                         onClick={start}
-                        className='group inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90'
+                        className='group'
                       >
                         <Sparkles className='size-4' />
-                        {error ? 'Tentar de novo' : 'Gerar meu desafio'}
+                        {error ? t.retry : t.generate}
                         <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </>
@@ -471,23 +586,43 @@ export function OnboardingFlow({ user }: { user: User }) {
   )
 }
 
-const GEN_MESSAGES = [
-  'Inventando um cliente fictício…',
-  'Definindo o formato dos dados de entrada…',
-  'Escrevendo os testes escondidos…',
-  'Calibrando a dificuldade pro seu nível…',
-  'Preparando a primeira pergunta do tutor…',
-]
+const genCopy = {
+  en: {
+    messages: [
+      'Inventing a fictional client…',
+      'Defining the input data format…',
+      'Writing the hidden tests…',
+      'Calibrating difficulty to your level…',
+      "Preparing the tutor's first question…",
+    ],
+    title: 'The AI is building your challenge',
+    notePre: 'Generating with the stack and level saved to your profile. Want to change them?',
+    noteLink: 'Update your profile',
+  },
+  pt: {
+    messages: [
+      'Inventando um cliente fictício…',
+      'Definindo o formato dos dados de entrada…',
+      'Escrevendo os testes escondidos…',
+      'Calibrando a dificuldade pro seu nível…',
+      'Preparando a primeira pergunta do tutor…',
+    ],
+    title: 'A IA está criando seu desafio',
+    notePre: 'Gerando com a stack e o nível salvos no seu perfil. Quer mudar?',
+    noteLink: 'Ajuste no perfil',
+  },
+}
 
 function GeneratingChallenge() {
+  const t = useT(genCopy)
   const [i, setI] = React.useState(0)
   React.useEffect(() => {
-    const t = setInterval(
-      () => setI((v) => (v + 1) % GEN_MESSAGES.length),
+    const timer = setInterval(
+      () => setI((v) => (v + 1) % t.messages.length),
       1900,
     )
-    return () => clearInterval(t)
-  }, [])
+    return () => clearInterval(timer)
+  }, [t.messages.length])
 
   return (
     <motion.div
@@ -497,14 +632,14 @@ function GeneratingChallenge() {
       className='py-2'
     >
       <div className='flex items-center gap-3'>
-        <div className='grid size-11 shrink-0 place-items-center rounded-xl bg-[#dad8ea]/55 text-[#1b1916]'>
+        <div className='grid size-11 shrink-0 place-items-center rounded-full bg-pastel-lavender text-ink'>
           <Sparkles className='size-5' strokeWidth={1.5} />
         </div>
         <div className='min-w-0'>
-          <div className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
-            A IA está criando seu desafio
+          <div className='font-heading text-lg font-medium tracking-tight text-ink'>
+            {t.title}
           </div>
-          <div className='flex items-center gap-1.5 text-sm text-[#6b6478]'>
+          <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
             <Loader2 className='size-3.5 shrink-0 animate-spin' />
             <AnimatePresence mode='wait'>
               <motion.span
@@ -514,7 +649,7 @@ function GeneratingChallenge() {
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.3 }}
               >
-                {GEN_MESSAGES[i]}
+                {t.messages[i]}
               </motion.span>
             </AnimatePresence>
           </div>
@@ -525,18 +660,18 @@ function GeneratingChallenge() {
         <Skeleton className='h-4 w-3/4 rounded' />
         <Skeleton className='h-4 w-full rounded' />
         <Skeleton className='h-4 w-5/6 rounded' />
-        <Skeleton className='mt-5 h-28 w-full rounded-xl' />
+        <Skeleton className='mt-5 h-28 w-full rounded-md' />
       </div>
 
-      <div className='mt-6 flex items-start gap-2 rounded-xl border border-[#DFE5E9] bg-[#F7F9FA] px-3.5 py-2.5 text-[12px] text-[#6b6478]'>
+      <div className='mt-6 flex items-start gap-2 rounded-md border border-border bg-muted px-3.5 py-2.5 text-[12px] text-muted-foreground'>
         <Info className='mt-0.5 size-3.5 shrink-0' />
         <span>
-          Gerando com a stack e o nível salvos no seu perfil. Quer mudar?{' '}
+          {t.notePre}{' '}
           <Link
             href='/profile'
-            className='font-medium text-iris hover:underline'
+            className='font-medium text-primary hover:underline'
           >
-            Ajuste no perfil
+            {t.noteLink}
           </Link>
           .
         </span>
@@ -559,17 +694,17 @@ function Tile({
       type='button'
       onClick={onClick}
       className={cn(
-        'shadow-soft flex w-full cursor-pointer items-center gap-4 rounded-2xl border bg-white p-5 text-left transition-colors',
+        'shadow-soft flex w-full cursor-pointer items-center gap-4 rounded-md border bg-white p-5 text-left transition-colors duration-300 ease-out',
         selected
-          ? 'border-primary/50 bg-primary/[0.04] ring-2 ring-primary/25'
-          : 'border-[#DFE5E9] hover:border-[#1b1916]/20',
+          ? 'border-primary ring-2 ring-primary/25'
+          : 'border-border hover:border-ink/20',
       )}
     >
       {children}
       <div
         className={cn(
           'grid size-6 shrink-0 place-items-center rounded-full border transition-colors',
-          selected ? 'border-primary bg-primary' : 'border-[#DFE5E9] bg-white',
+          selected ? 'border-primary bg-primary' : 'border-border bg-white',
         )}
       >
         {selected && <Check className='size-3.5 text-white' />}
@@ -580,11 +715,11 @@ function Tile({
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-2xl border border-[#DFE5E9] bg-white p-4'>
-      <div className='mb-1 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+    <div className='rounded-md border border-border bg-white p-4'>
+      <div className='mb-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
         {label}
       </div>
-      <div className='font-heading text-base font-medium tracking-tight text-[#1b1916]'>
+      <div className='font-heading text-base font-medium tracking-tight text-ink'>
         {value}
       </div>
     </div>

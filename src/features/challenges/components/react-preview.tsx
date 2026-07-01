@@ -1,10 +1,28 @@
 'use client'
 
+import { useT } from '@/lib/i18n'
 import { Eye, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { transform } from 'sucrase'
 
-function buildSrcDoc(compiled: string): string {
+const copy = {
+  en: {
+    importPre: 'import "',
+    importPost: '" is not supported in the preview',
+    noExport: 'export a component (export default) to see the preview',
+    closePreview: 'Close preview',
+  },
+  pt: {
+    importPre: 'import de "',
+    importPost: '" não suportado no preview',
+    noExport: 'exporte um componente (export default) para ver o preview',
+    closePreview: 'Fechar preview',
+  },
+} as const
+
+type Copy = (typeof copy)['en' | 'pt']
+
+function buildSrcDoc(compiled: string, msgs: Copy): string {
   return `<!doctype html>
 <html>
 <head>
@@ -24,7 +42,7 @@ function buildSrcDoc(compiled: string): string {
   const mods = { 'react': React, 'react/jsx-runtime': JSXRuntime, 'react/jsx-dev-runtime': JSXRuntime };
   const require = (m) => {
     if (m in mods) return mods[m];
-    throw new Error('import de "' + m + '" não suportado no preview');
+    throw new Error(${JSON.stringify(msgs.importPre)} + m + ${JSON.stringify(msgs.importPost)});
   };
   try {
     const exports = {};
@@ -34,7 +52,7 @@ ${compiled}
     })(exports, module, require);
     const Comp = module.exports.default || module.exports.App ||
       Object.values(module.exports).find((v) => typeof v === 'function');
-    if (!Comp) throw new Error('exporte um componente (export default) para ver o preview');
+    if (!Comp) throw new Error(${JSON.stringify(msgs.noExport)});
     createRoot(document.getElementById('root')).render(React.createElement(Comp));
   } catch (e) {
     document.getElementById('err').textContent = '✕ ' + (e && e.message ? e.message : String(e));
@@ -51,6 +69,7 @@ export function ReactPreview({
   code: string
   onClose?: () => void
 }) {
+  const t = useT(copy)
   const [srcDoc, setSrcDoc] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -59,32 +78,32 @@ export function ReactPreview({
       const compiled = transform(code, {
         transforms: ['typescript', 'jsx', 'imports'],
       }).code
-      setSrcDoc(buildSrcDoc(compiled))
+      setSrcDoc(buildSrcDoc(compiled, t))
       setError(null)
     } catch (e) {
       setError((e as Error).message)
     }
-  }, [code])
+  }, [code, t])
 
   return (
-    <div className='flex h-[55%] min-h-[200px] shrink-0 flex-col border-t border-white/[0.06] bg-[#0a0a0c]'>
-      <div className='flex h-9 shrink-0 items-center justify-between border-b border-white/[0.06] px-4 font-mono text-[11px] tracking-wider text-zinc-400 uppercase'>
+    <div className='flex h-[55%] min-h-[200px] shrink-0 flex-col border-t border-white/10 bg-ink'>
+      <div className='flex h-9 shrink-0 items-center justify-between border-b border-white/10 px-4 font-mono text-[11px] tracking-wider text-white/50 uppercase'>
         <span className='flex items-center gap-1.5'>
-          <Eye className='size-3.5' /> Preview
+          <Eye className='size-3.5' strokeWidth={1.5} /> Preview
         </span>
         {onClose && (
           <button
             type='button'
             onClick={onClose}
-            aria-label='Fechar preview'
-            className='-mr-1 grid size-6 place-items-center rounded text-zinc-400 hover:bg-white/10 hover:text-white'
+            aria-label={t.closePreview}
+            className='-mr-1 grid size-6 place-items-center rounded text-white/50 hover:bg-white/10 hover:text-white'
           >
             <X className='size-3.5' />
           </button>
         )}
       </div>
       {error ? (
-        <div className='px-4 py-3 font-mono text-[12px] text-red-400'>
+        <div className='px-4 py-3 font-mono text-[12px] text-ember'>
           ✕ {error}
         </div>
       ) : (

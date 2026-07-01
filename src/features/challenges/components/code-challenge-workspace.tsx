@@ -1,23 +1,15 @@
 'use client'
 
-import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import type { RunnerLanguage } from '@/domain/stacks'
 import { runCode } from '@/features/runner/run-code'
 import type { RunResult } from '@/features/runner/types'
 import { apiFetch } from '@/lib/api/client'
+import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
-import {
-  Brain,
-  Building,
-  Clock,
-  GitPullRequestArrow,
-  Loader2,
-  PlayCircle,
-  Terminal,
-} from 'lucide-react'
+import { Loader2, PlayCircle, Terminal } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -26,24 +18,63 @@ import { useSocraticSession } from '../hooks/use-socratic-session'
 import type { Challenge } from '../types'
 import { challengeIntro, challengeLanguage, starterCode } from '../utils'
 import { BriefingPanel } from './briefing-panel'
+import { ChallengeSkeleton } from './challenge-skeleton'
 import { ChatPanel } from './chat-panel'
 import { ReactPreview } from './react-preview'
 import { ReviewModal } from './review-modal'
 import { RunTerminal } from './run-terminal'
+import { WorkspaceHeader } from './workspace-header'
+
+const copy = {
+  en: {
+    loadingEditor: 'Loading editor...',
+    replyFallback: "Couldn't respond right now.",
+    hintUnavailable: 'Hint unavailable.',
+    solutionApplied:
+      'I applied the solution in the editor. Run the tests and study why it works.',
+    solveFallback: "Couldn't solve it right now.",
+    noSolutionYet:
+      "You haven't written a solution yet — implement something in the editor and submit again.",
+    reviewFallback: "Couldn't generate the review.",
+    pythonNote:
+      'Python is evaluated by the AI on submit. Click "Submit" to get Socratic feedback.',
+    run: 'Run',
+  },
+  pt: {
+    loadingEditor: 'Carregando editor...',
+    replyFallback: 'Não consegui responder agora.',
+    hintUnavailable: 'Hint indisponível.',
+    solutionApplied:
+      'Apliquei a solução no editor. Rode os testes e estude por que ela funciona.',
+    solveFallback: 'Não consegui resolver agora.',
+    noSolutionYet:
+      'Você ainda não escreveu uma solução — implemente algo no editor e submeta de novo.',
+    reviewFallback: 'Não foi possível gerar o review.',
+    pythonNote:
+      'Python é avaliado pela IA ao submeter. Clique em "Submeter" para receber o feedback socrático.',
+    run: 'Rodar',
+  },
+} as const
+
+function EditorLoading() {
+  const t = useT(copy)
+  return (
+    <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
+      <Loader2 className='mr-2 size-4 animate-spin' /> {t.loadingEditor}
+    </div>
+  )
+}
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
-  loading: () => (
-    <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
-      <Loader2 className='mr-2 size-4 animate-spin' /> Carregando editor...
-    </div>
-  ),
+  loading: () => <EditorLoading />,
 })
 
 const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
 export function CodeChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
+  const t = useT(copy)
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
 
   const s = useSocraticSession<string>({
@@ -109,7 +140,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
       const data = await res.json()
       s.pushMessage({
         role: 'ai',
-        text: data.text || data.error || 'Não consegui responder agora.',
+        text: data.text || data.error || t.replyFallback,
       })
     } finally {
       s.setThinking(false)
@@ -137,7 +168,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
       s.syncRemaining(data.remaining)
       s.pushMessage({
         role: 'ai',
-        text: data.text || data.error || 'Hint indisponível.',
+        text: data.text || data.error || t.hintUnavailable,
         hintLevel: level,
       })
     } finally {
@@ -167,12 +198,12 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
         s.setWork(data.code)
         s.pushMessage({
           role: 'ai',
-          text: 'Apliquei a solução no editor. Rode os testes e estude por que ela funciona.',
+          text: t.solutionApplied,
         })
       } else {
         s.pushMessage({
           role: 'ai',
-          text: data.error || 'Não consegui resolver agora.',
+          text: data.error || t.solveFallback,
         })
       }
     } finally {
@@ -192,9 +223,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
       code.trim().length > 0 && code.trim() !== starterCode(challenge).trim()
     if (!touched) {
       setOutcome('fail')
-      setReview(
-        'Você ainda não escreveu uma solução — implemente algo no editor e submeta de novo.',
-      )
+      setReview(t.noSolutionYet)
       s.complete(s.elapsed, 'abandoned')
       setReviewing(false)
       return
@@ -229,7 +258,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
         }),
       })
       const data = await res.json()
-      setReview(data.review || data.error || 'Não foi possível gerar o review.')
+      setReview(data.review || data.error || t.reviewFallback)
     } finally {
       setReviewing(false)
     }
@@ -241,7 +270,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     if (language === 'react') return
     if (language === 'py') {
       setResult({
-        logs: [{ level: 'info', text: 'Python é avaliado pela IA ao submeter. Clique em "Submeter" para receber o feedback socrático.' }],
+        logs: [{ level: 'info', text: t.pythonNote }],
         tests: [],
         ok: false,
         durationMs: 0,
@@ -258,71 +287,30 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     setRunning(false)
   }
 
-  const minutes = String(Math.floor(s.elapsed / 60)).padStart(2, '0')
-  const seconds = String(s.elapsed % 60).padStart(2, '0')
-
-  if (!challenge) return null
+  if (!challenge) return <ChallengeSkeleton />
 
   return (
     <div className='relative flex h-screen flex-col overflow-hidden'>
-      <header className='z-30 flex h-14 shrink-0 items-center justify-between border-b border-[#DFE5E9] bg-white/80 px-4 backdrop-blur-xl'>
-        <div className='flex items-center gap-4'>
-          <Logo />
-          <div className='hidden items-center gap-2 border-l border-[#DFE5E9] pl-4 font-mono text-[12px] text-[#6b6478] sm:flex'>
-            <Building className='size-3.5' />
-            {challenge.title}
-          </div>
-        </div>
-        <div className='flex items-center gap-2'>
-          <div className='glass hidden h-8 items-center gap-2 rounded-full px-3 font-mono text-[12px] md:flex'>
-            <Clock className='size-3.5 opacity-70' />
-            <span>
-              {minutes}:{seconds}
-            </span>
-          </div>
-          <div
-            className='glass hidden h-8 items-center gap-2 rounded-full px-3 text-[12px] md:flex'
-            title='Começa em 100. Cada hint custa. É o quanto você pensou sozinho.'
-          >
-            <Brain className='size-3.5 opacity-70' />
-            <span className='text-muted-foreground'>Independência:</span>
-            <span
-              className={cn(
-                'font-semibold tabular-nums',
-                s.independence > 70
-                  ? 'text-mint'
-                  : s.independence > 40
-                    ? 'text-warning-foreground'
-                    : 'text-destructive-foreground',
-              )}
-            >
-              {s.independence}%
-            </span>
-          </div>
-          <Button
-            size='sm'
-            disabled={reviewing}
-            className='h-8 gap-1.5 rounded-lg border-transparent bg-primary pr-3 pl-3 text-primary-foreground hover:bg-primary/90'
-            onClick={submitReview}
-          >
-            <GitPullRequestArrow className='size-3.5' />
-            Submeter
-          </Button>
-        </div>
-      </header>
+      <WorkspaceHeader
+        title={challenge.title}
+        elapsed={s.elapsed}
+        independence={s.independence}
+        submitting={reviewing}
+        onSubmit={submitReview}
+      />
 
       <div className='grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[360px_1fr_400px] lg:grid-rows-[minmax(0,1fr)]'>
-        <aside className='min-h-0 overflow-y-auto border-r border-[#DFE5E9] bg-[#F7F9FA]'>
+        <aside className='min-h-0 overflow-y-auto border-r border-border bg-muted'>
           <BriefingPanel challenge={challenge} />
         </aside>
 
         <section className='relative flex min-h-0 flex-col'>
-          <div className='flex h-10 items-center justify-between border-b border-[#DFE5E9] bg-[#F7F9FA] px-4'>
-            <div className='flex items-center gap-2 font-mono text-[12px] text-[#6b6478]'>
+          <div className='flex h-10 items-center justify-between border-b border-border bg-muted px-4'>
+            <div className='flex items-center gap-2 font-mono text-[12px] text-muted-foreground'>
               <Code2Tag language={language} />
               <span>solucao.{language === 'js' ? 'js' : language === 'py' ? 'py' : language === 'react' ? 'tsx' : 'ts'}</span>
-              <span className='ml-1 size-1 rounded-full bg-amber-400/70' />
-              <span className='text-[11px] text-amber-400/70'>unsaved</span>
+              <span className='ml-1 size-1 rounded-full bg-warning/70' />
+              <span className='text-[11px] text-warning-foreground/80'>unsaved</span>
             </div>
             <div className='flex items-center gap-1.5'>
               <Button
@@ -349,7 +337,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
                 ) : (
                   <PlayCircle className='size-3.5' />
                 )}
-                Rodar
+                {t.run}
               </Button>
             </div>
           </div>
@@ -388,7 +376,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
             ))}
         </section>
 
-        <aside className='flex min-h-0 flex-col border-l border-[#DFE5E9] bg-[#F7F9FA]'>
+        <aside className='flex min-h-0 flex-col border-l border-border bg-muted'>
           <ChatPanel
             messages={s.messages}
             scrollRef={s.scrollRef}
@@ -428,7 +416,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
 function Code2Tag({ language }: { language: RunnerLanguage }) {
   const label = { js: 'JS', ts: 'TS', react: 'RX', py: 'PY' }[language]
   return (
-    <span className='grid size-4 place-items-center rounded border border-iris/30 bg-iris/20 text-[8px] font-bold text-iris uppercase'>
+    <span className='grid size-4 place-items-center rounded border border-primary/20 bg-primary/10 text-[8px] font-semibold text-primary uppercase'>
       {label}
     </span>
   )

@@ -8,6 +8,7 @@ import {
   tooLarge,
   tooMany,
 } from '@/lib/api/guard'
+import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function POST(req: Request) {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
   let aiError: unknown = null
   try {
     review = await askClaude({
-      system: reviewSystem('code'),
+      system: reviewSystem('code', await getLocale()),
       user,
       maxTokens: 1024,
       effort: 'low',

@@ -1,194 +1,305 @@
 'use client'
 
+import { useT, type Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { ArrowRight, Check } from 'lucide-react'
 import { motion } from 'motion/react'
 import * as React from 'react'
 import { Reveal } from './reveal'
-import { SectionBackdrop } from './section-backdrop'
+
+const copy = {
+  en: {
+    loopEyebrow: 'The Socratic loop',
+    loopTitle: 'You get stuck. It asks. You think.',
+    loopBody:
+      'Instead of dumping the solution, the tutor returns the right question at the right time — nudging you to the next step without giving away the destination.',
+    bullets: [
+      'Questions aimed at the concept, not the syntax',
+      'Hints that escalate only when you ask',
+      'Every bit of help recorded in your score',
+    ],
+    file: 'bakery-api.ts',
+    tutorTab: 'Socratic tutor',
+    placeholder: 'Think first, then ask',
+    scoreEyebrow: 'Measurable independence',
+    scoreTitle: 'How much you solved on your own — as a number.',
+    scoreBody:
+      'Every challenge ends with an independence score. Asked for three hints? It drops. Solved it cold? It climbs. Progress you cannot outsource to the AI.',
+    scoreLabel: 'Independence score',
+    trend: '▲ 12 this week',
+    bars: ['APIs', 'Front-end', 'Algorithms', 'Debugging'],
+    sessions: 'last 30 days · 14 sessions',
+  },
+  pt: {
+    loopEyebrow: 'O loop socrático',
+    loopTitle: 'Você trava. Ele pergunta. Você pensa.',
+    loopBody:
+      'Em vez de despejar a solução, o tutor devolve a pergunta certa no momento certo — te empurrando para o próximo passo sem entregar o destino.',
+    bullets: [
+      'Perguntas que miram o conceito, não a sintaxe',
+      'Hints que escalam só quando você pede',
+      'Cada ajuda registrada no seu score',
+    ],
+    file: 'api-padaria.ts',
+    tutorTab: 'Tutor socrático',
+    placeholder: 'Pense, depois pergunte',
+    scoreEyebrow: 'Independência medível',
+    scoreTitle: 'O quanto você resolveu sozinho, em número.',
+    scoreBody:
+      'Cada desafio fecha com um score de independência. Pediu três hints? O número cai. Resolveu no seco? Ele sobe. Progresso que você não consegue terceirizar para a IA.',
+    scoreLabel: 'Score de independência',
+    trend: '▲ 12 esta semana',
+    bars: ['APIs', 'Front-end', 'Algoritmos', 'Debugging'],
+    sessions: 'últimos 30 dias · 14 sessões',
+  },
+} as const
+
+const CHAT: Record<
+  Locale,
+  { from: 'user' | 'tutor'; text: React.ReactNode }[]
+> = {
+  en: [
+    { from: 'user', text: 'How do I filter only products expiring in 3 days?' },
+    {
+      from: 'tutor',
+      text: (
+        <>
+          Before you code — what data structure does{' '}
+          <code className='text-primary font-mono'>findAll()</code> return?
+        </>
+      ),
+    },
+    { from: 'user', text: 'an array of objects' },
+    {
+      from: 'tutor',
+      text: 'Exactly. And which array method filters by a condition?',
+    },
+  ],
+  pt: [
+    { from: 'user', text: 'Como filtro só os produtos que vencem em 3 dias?' },
+    {
+      from: 'tutor',
+      text: (
+        <>
+          Antes de codar — que estrutura de dados o{' '}
+          <code className='text-primary font-mono'>findAll()</code> te devolve?
+        </>
+      ),
+    },
+    { from: 'user', text: 'um array de objetos' },
+    {
+      from: 'tutor',
+      text: 'Exato. E qual método de array filtra por uma condição?',
+    },
+  ],
+}
 
 export function Showcase() {
+  const t = useT(copy)
+
   return (
-    <section className='relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16 lg:py-24'>
-      <SectionBackdrop variant='cool' />
-      <div className='relative grid items-center gap-10 lg:grid-cols-2 lg:gap-16'>
-        <Reveal>
-          <span className='text-[13px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
-            O loop socrático
-          </span>
-          <h2 className='type-h2 mt-4'>
-            Você trava. Ele pergunta. Você pensa.
-          </h2>
-          <p className='type-body mt-5 max-w-[520px]'>
-            Em vez de despejar a solução, o tutor devolve a pergunta certa no
-            momento certo — te empurrando para o próximo passo sem entregar o
-            destino.
-          </p>
-          <ul className='mt-6 space-y-3'>
-            {[
-              'Perguntas que miram o conceito, não a sintaxe',
-              'Hints que escalam só quando você pede',
-              'Cada ajuda registrada no seu score',
-            ].map((t) => (
-              <li key={t} className='flex items-start gap-3 type-body'>
-                <span className='mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#1b1916] text-white'>
-                  <Check className='size-3' strokeWidth={2.5} />
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+    <section className='space-y-4 p-3 md:space-y-6 md:p-6'>
+      <Reveal>
+        <div className='bg-pastel-lilac/45 rounded-lg px-5 pt-10 pb-5 sm:px-8 sm:pt-12 lg:px-12 lg:pt-14 lg:pb-8'>
+          <div className='mb-10 grid gap-6 lg:mb-12 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'>
+            <div>
+              <p className='eyebrow'>{t.loopEyebrow}</p>
+              <h2 className='type-h2 mt-4 max-w-[560px]'>{t.loopTitle}</h2>
+            </div>
+            <div>
+              <p className='type-body'>{t.loopBody}</p>
+              <ul className='mt-5 space-y-2.5'>
+                {t.bullets.map((b) => (
+                  <li
+                    key={b}
+                    className='text-aubergine flex items-start gap-2.5 text-[15px] tracking-[-0.18px]'
+                  >
+                    <span className='bg-ink mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full text-white'>
+                      <Check className='size-2.5' strokeWidth={3} />
+                    </span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <WorkspaceWindow />
+        </div>
+      </Reveal>
 
-        <Reveal delay={0.1}>
-          <IdeMock />
-        </Reveal>
-      </div>
-
-      {/* Row 2 — progress visual + text */}
-      <div className='relative mt-16 grid items-center gap-10 lg:mt-24 lg:grid-cols-2 lg:gap-16'>
-        <Reveal className='order-2 lg:order-1'>
-          <ProgressMock />
-        </Reveal>
-        <Reveal delay={0.1} className='order-1 lg:order-2'>
-          <span className='text-[13px] font-semibold tracking-[0.08em] text-[#6b6478] uppercase'>
-            Independência medível
-          </span>
-          <h2 className='type-h2 mt-4'>
-            O quanto você resolveu sozinho, em número.
-          </h2>
-          <p className='type-body mt-5 max-w-[520px]'>
-            Cada desafio fecha com um score de independência. Pediu três hints?
-            O número cai. Resolveu no seco? Ele sobe. Progresso que você não
-            consegue terceirizar para a IA.
-          </p>
-        </Reveal>
-      </div>
+      <Reveal>
+        <div className='bg-pastel-mist/50 rounded-lg px-5 pt-10 pb-5 sm:px-8 sm:pt-12 lg:px-12 lg:pt-14 lg:pb-8'>
+          <div className='mb-10 grid gap-6 lg:mb-12 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'>
+            <div>
+              <p className='eyebrow'>{t.scoreEyebrow}</p>
+              <h2 className='type-h2 mt-4 max-w-[620px]'>{t.scoreTitle}</h2>
+            </div>
+            <p className='type-body'>{t.scoreBody}</p>
+          </div>
+          <ScoreBoard />
+        </div>
+      </Reveal>
     </section>
   )
 }
 
-type Msg = { from: 'user' | 'tutor'; text: React.ReactNode }
-
-const CHAT: Msg[] = [
-  { from: 'user', text: 'Como filtro só os produtos que vencem em 3 dias?' },
-  {
-    from: 'tutor',
-    text: (
-      <>
-        Antes de codar — que estrutura de dados o{' '}
-        <code className='font-mono text-iris'>findAll()</code> te devolve?
-      </>
-    ),
-  },
-  { from: 'user', text: 'um array de objetos' },
-  { from: 'tutor', text: 'Exato. E qual método de array filtra por uma condição?' },
+const CODE: { indent: number; parts: [string, string][] }[] = [
+  { indent: 0, parts: [['kw', 'const'], ['pl', ' products = '], ['kw', 'await'], ['pl', ' repo.findAll()']] },
+  { indent: 0, parts: [['cm', '// TODO: only items expiring in 3 days']] },
+  { indent: 0, parts: [['kw', 'const'], ['pl', ' soon = products.'], ['fn', 'filter'], ['pl', '((p) => {']] },
+  { indent: 1, parts: [['kw', 'const'], ['pl', ' days = daysUntil(p.'], ['pl', 'expiresAt'], ['pl', ')']] },
+  { indent: 1, parts: [['kw', 'return'], ['pl', ' days <= '], ['nm', '3']] },
+  { indent: 0, parts: [['pl', '})']] },
 ]
+
+const TONE: Record<string, string> = {
+  kw: 'text-primary',
+  fn: 'text-mint',
+  nm: 'text-ember',
+  cm: 'text-muted-foreground/70',
+  pl: 'text-aubergine',
+}
 
 const CHAT_CYCLE_MS = 9000
 
-function IdeMock() {
+function WorkspaceWindow() {
+  const t = useT(copy)
+  const chat = useT(CHAT)
   const [tick, setTick] = React.useState(0)
   React.useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), CHAT_CYCLE_MS)
+    const id = setInterval(() => setTick((v) => v + 1), CHAT_CYCLE_MS)
     return () => clearInterval(id)
   }, [])
 
   return (
-    <div className='shadow-soft overflow-hidden rounded-2xl border border-[#DFE5E9] bg-white'>
-      <div className='flex items-center gap-2 border-b border-[#DFE5E9] bg-[#F7F9FA] px-4 py-3'>
-        <span className='size-2.5 rounded-full bg-red-400/70' />
-        <span className='size-2.5 rounded-full bg-amber-400/70' />
-        <span className='size-2.5 rounded-full bg-emerald-400/70' />
-        <span className='flex-1 text-center font-mono text-[11px] text-[#6b6478]'>
-          api-padaria.ts
+    <div className='shadow-soft-lg border-border overflow-hidden rounded-lg border bg-white'>
+      <div className='border-border bg-muted flex items-center gap-2 border-b px-4 py-3'>
+        <span className='bg-pastel-stone size-2.5 rounded-full' />
+        <span className='bg-pastel-sand size-2.5 rounded-full' />
+        <span className='bg-pastel-sage size-2.5 rounded-full' />
+        <span className='text-muted-foreground flex-1 text-center font-mono text-[11px]'>
+          {t.file}
         </span>
       </div>
-      <div key={tick} className='space-y-3 p-5 text-[13px]'>
-        {CHAT.map((m, i) => (
+      <div className='grid lg:grid-cols-[1fr_380px]'>
+        <div className='border-border hidden border-r p-5 font-mono text-[12.5px] leading-[1.9] lg:block'>
+          {CODE.map((line, i) => (
+            <div key={i} className='flex'>
+              <span className='text-muted-foreground/40 w-7 shrink-0 select-none'>
+                {i + 1}
+              </span>
+              <span style={{ paddingLeft: line.indent * 16 }}>
+                {line.parts.map(([tone, text], j) => (
+                  <span key={j} className={TONE[tone]}>
+                    {text}
+                  </span>
+                ))}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className='flex flex-col'>
+          <div className='border-border text-muted-foreground border-b px-4 py-2 font-mono text-[10px] tracking-[0.14em] uppercase'>
+            {t.tutorTab}
+          </div>
+          <div key={tick} className='flex-1 space-y-3 p-4 text-[13px]'>
+            {chat.map((m, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: 0.3 + i * 1.05,
+                  duration: 0.35,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className={cn(
+                  'flex',
+                  m.from === 'user' ? 'justify-end' : 'justify-start',
+                )}
+              >
+                <div
+                  className={cn(
+                    'rounded-2xl px-3 py-2',
+                    m.from === 'user'
+                      ? 'bg-ink max-w-[80%] rounded-br-md text-white'
+                      : 'border-primary/20 bg-pastel-lilac/50 text-aubergine max-w-[88%] rounded-bl-md border',
+                  )}
+                >
+                  {m.text}
+                </div>
+              </motion.div>
+            ))}
+          </div>
           <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: 0.3 + i * 1.05,
-              duration: 0.35,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            className={cn(
-              'flex',
-              m.from === 'user' ? 'justify-end' : 'justify-start',
-            )}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 + chat.length * 1.05, duration: 0.4 }}
+            className='flex items-center gap-2 p-4 pt-0'
           >
-            <div
-              className={cn(
-                'rounded-2xl px-3 py-2',
-                m.from === 'user'
-                  ? 'max-w-[80%] rounded-br-md bg-[#1b1916] text-white'
-                  : 'max-w-[88%] rounded-bl-md border border-iris/20 bg-iris/5 text-[#2c2330]',
-              )}
-            >
-              {m.text}
+            <div className='border-border bg-muted text-muted-foreground flex h-9 flex-1 items-center gap-1 rounded-full border px-3.5 text-[12px]'>
+              {t.placeholder}
+              <span className='bg-ink/40 ml-0.5 inline-block h-3.5 w-[1.5px] animate-pulse' />
+            </div>
+            <div className='bg-primary grid size-9 shrink-0 place-items-center rounded-full'>
+              <ArrowRight className='size-3.5 text-white' />
             </div>
           </motion.div>
-        ))}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 + CHAT.length * 1.05, duration: 0.4 }}
-          className='flex items-center gap-2 pt-1'
-        >
-          <div className='flex h-9 flex-1 items-center gap-1 rounded-xl border border-[#DFE5E9] bg-[#F7F9FA] px-3 text-[12px] text-[#6b6478]'>
-            Pense, depois pergunte
-            <span className='ml-0.5 inline-block h-3.5 w-[1.5px] animate-pulse bg-[#1b1916]/40' />
-          </div>
-          <div className='grid size-9 place-items-center rounded-xl bg-primary'>
-            <ArrowRight className='size-3.5 text-white' />
-          </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )
 }
 
-function ProgressMock() {
-  const bars = [
-    { label: 'APIs', v: 82 },
-    { label: 'Front-end', v: 64 },
-    { label: 'Algoritmos', v: 48 },
-    { label: 'Debugging', v: 71 },
-  ]
+function ScoreBoard() {
+  const t = useT(copy)
+  const bars = [82, 64, 48, 71]
+
   return (
-    <div className='rounded-2xl border border-[#DFE5E9] bg-white p-6 shadow-soft sm:p-8'>
-      <div className='flex items-end justify-between'>
-        <div>
-          <div className='text-sm text-[#6b6478]'>Score de independência</div>
-          <div className='font-heading text-4xl font-light tracking-tight text-[#1b1916]'>
-            73<span className='text-2xl text-[#6b6478]'>/100</span>
-          </div>
-        </div>
-        <div className='rounded-full bg-[#dad8ea]/55 px-3 py-1 text-xs font-medium text-[#1b1916]'>
-          ▲ 12 esta semana
-        </div>
-      </div>
-      <div className='mt-6 space-y-4'>
-        {bars.map((b, i) => (
-          <div key={b.label}>
-            <div className='mb-1.5 flex justify-between text-xs text-[#6b6478]'>
-              <span>{b.label}</span>
-              <span>{b.v}%</span>
-            </div>
-            <div className='h-2 overflow-hidden rounded-full bg-[#eef1f4]'>
-              <motion.div
-                initial={{ width: 0 }}
-                whileInView={{ width: `${b.v}%` }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.9, delay: i * 0.1, ease: 'easeOut' }}
-                className='h-full rounded-full bg-[#1b1916]'
-              />
+    <div className='shadow-soft-lg border-border overflow-hidden rounded-lg border bg-white'>
+      <div className='grid lg:grid-cols-[380px_1fr]'>
+        <div className='border-border flex flex-col justify-between gap-8 border-b p-6 sm:p-8 lg:border-r lg:border-b-0'>
+          <div>
+            <div className='eyebrow'>{t.scoreLabel}</div>
+            <div className='font-heading text-ink mt-3 text-[88px] leading-none font-light tracking-[-4px] sm:text-[112px]'>
+              73
+              <span className='text-muted-foreground text-[32px] tracking-[-1px] sm:text-[40px]'>
+                /100
+              </span>
             </div>
           </div>
-        ))}
+          <div className='flex items-center gap-3'>
+            <span className='bg-lime text-ink rounded-full px-3 py-1 font-mono text-[11px] font-medium'>
+              {t.trend}
+            </span>
+            <span className='text-muted-foreground font-mono text-[11px]'>
+              {t.sessions}
+            </span>
+          </div>
+        </div>
+        <div className='space-y-5 p-6 sm:p-8'>
+          {t.bars.map((label, i) => (
+            <div key={label}>
+              <div className='text-muted-foreground mb-1.5 flex justify-between font-mono text-[11px]'>
+                <span className='tracking-[0.1em] uppercase'>{label}</span>
+                <span>{bars[i]}%</span>
+              </div>
+              <div className='bg-muted h-2 overflow-hidden rounded-full'>
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${bars[i]}%` }}
+                  viewport={{ once: true }}
+                  transition={{
+                    duration: 0.9,
+                    delay: i * 0.1,
+                    ease: 'easeOut',
+                  }}
+                  className='bg-primary h-full rounded-full'
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

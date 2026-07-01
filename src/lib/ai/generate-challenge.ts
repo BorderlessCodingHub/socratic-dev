@@ -1,4 +1,5 @@
 import { askClaude } from '@/lib/ai/client'
+import type { Locale } from '@/lib/i18n'
 import { supabaseAdmin } from '../supabase/server'
 import { challengeSystem, levelGuide } from './prompts/challenge-generator'
 
@@ -39,7 +40,9 @@ export async function generateChallenge(opts: {
   stack?: string
   level: GenLevel
   userPrompt?: string
+  locale?: Locale
 }) {
+  const locale: Locale = opts.locale ?? 'en'
   const stackMap: Record<string, string> = {
     javascript: 'javascript',
     typescript: 'typescript',
@@ -60,7 +63,7 @@ export async function generateChallenge(opts: {
 
   if (opts.kind === 'design') {
     const raw = await askClaude({
-      system: challengeSystem('design'),
+      system: challengeSystem('design', locale),
       user: `Gere um desafio de system design (arquitetura) novo. nível: ${opts.level}.\n\n${levelGuide('design', opts.level)}${userTheme}${avoid}`,
       maxTokens: 2048,
       effort: 'medium',
@@ -82,7 +85,7 @@ export async function generateChallenge(opts: {
   }
 
   const raw = await askClaude({
-    system: challengeSystem('code'),
+    system: challengeSystem('code', locale),
     user: `Gere um desafio novo. stack: ${stack}. nível: ${opts.level}.\n\n${levelGuide('code', opts.level)}${userTheme}${avoid}${noTestsNote}`,
     maxTokens: opts.level === 'advanced' ? 6000 : 3500,
     effort: opts.level === 'advanced' ? 'high' : 'medium',

@@ -25,7 +25,7 @@ function CallbackHandler() {
 
   return (
     <div className='grid min-h-screen place-items-center bg-white'>
-      <Loader2 className='size-5 animate-spin text-[#6b6478]' />
+      <Loader2 className='size-5 animate-spin text-muted-foreground' />
     </div>
   )
 }
@@ -35,7 +35,7 @@ export default function AuthCallbackPage() {
     <Suspense
       fallback={
         <div className='grid min-h-screen place-items-center bg-white'>
-          <Loader2 className='size-5 animate-spin text-[#6b6478]' />
+          <Loader2 className='size-5 animate-spin text-muted-foreground' />
         </div>
       }
     >

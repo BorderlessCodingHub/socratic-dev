@@ -22,12 +22,12 @@ export function Logo({
       {showText && (
         <span
           className={cn(
-            'font-heading font-medium tracking-tight text-[#1b1916]',
+            'font-heading font-medium tracking-tight text-ink',
             lg ? 'text-[20px]' : 'text-[17px]',
           )}
         >
           socratic
-          <span className='text-gradient font-serif font-normal italic'>
+          <span className='font-serif font-normal text-primary italic'>
             .dev
           </span>
         </span>

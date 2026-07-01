@@ -1,10 +1,11 @@
 'use client'
 
-import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { BriefingPanel } from '@/features/challenges/components/briefing-panel'
+import { ChallengeSkeleton } from '@/features/challenges/components/challenge-skeleton'
 import { ChatPanel } from '@/features/challenges/components/chat-panel'
 import { ReviewModal } from '@/features/challenges/components/review-modal'
+import { WorkspaceHeader } from '@/features/challenges/components/workspace-header'
 import { useSocraticSession } from '@/features/challenges/hooks/use-socratic-session'
 import type { Challenge } from '@/features/challenges/types'
 import {
@@ -14,17 +15,10 @@ import {
   type ExcalidrawApi,
 } from '@/features/design/utils/scene'
 import { apiFetch } from '@/lib/api/client'
+import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
-import {
-  Brain,
-  Building,
-  Clock,
-  GitPullRequestArrow,
-  Loader2,
-  Wand2,
-} from 'lucide-react'
+import { Loader2, Wand2 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
@@ -32,15 +26,47 @@ import { DesignCanvas } from './design-canvas'
 
 const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
+const copy = {
+  en: {
+    intro:
+      'Hi. Read the briefing on the left and tell me: where would you start this design?',
+    replyFallback: "Couldn't respond right now.",
+    analyzeFallback: "Couldn't analyze right now.",
+    hintUnavailable: 'Hint unavailable.',
+    solutionDrawn:
+      'I drew the architecture on the canvas. Study the flow and why each piece is there.',
+    solveFallback: "Couldn't solve it right now.",
+    nothingDrawn:
+      "You haven't drawn anything yet — start the diagram and submit again.",
+    reviewFallback: "Couldn't generate the review.",
+    canvasLabel: 'Canvas — draw your architecture',
+    askAnalysis: 'Ask for analysis',
+  },
+  pt: {
+    intro:
+      'Olá. Leia o briefing à esquerda e me diga: por onde você começa esse design?',
+    replyFallback: 'Não consegui responder agora.',
+    analyzeFallback: 'Não consegui analisar agora.',
+    hintUnavailable: 'Hint indisponível.',
+    solutionDrawn:
+      'Desenhei a arquitetura no canvas. Estude o fluxo e por que cada peça está ali.',
+    solveFallback: 'Não consegui resolver agora.',
+    nothingDrawn:
+      'Você ainda não desenhou nada — comece o diagrama e submeta de novo.',
+    reviewFallback: 'Não foi possível gerar o review.',
+    canvasLabel: 'Canvas — desenhe sua arquitetura',
+    askAnalysis: 'Pedir análise',
+  },
+} as const
+
 export function DesignChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
+  const t = useT(copy)
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
   const apiRef = React.useRef<ExcalidrawApi | null>(null)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const intro =
-    challenge?.intro ||
-    'Olá. Leia o briefing à esquerda e me diga: por onde você começa esse design?'
+  const intro = challenge?.intro || t.intro
 
   const s = useSocraticSession<readonly unknown[]>({
     challenge: challenge ? { id: challenge.id } : null,
@@ -106,7 +132,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
       const data = await res.json()
       s.pushMessage({
         role: 'ai',
-        text: data.text || data.error || 'Não consegui responder agora.',
+        text: data.text || data.error || t.replyFallback,
       })
     } finally {
       s.setThinking(false)
@@ -124,7 +150,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
       const data = await res.json()
       s.pushMessage({
         role: 'ai',
-        text: data.text || data.error || 'Não consegui analisar agora.',
+        text: data.text || data.error || t.analyzeFallback,
       })
     } finally {
       s.setThinking(false)
@@ -149,7 +175,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
       s.syncRemaining(data.remaining)
       s.pushMessage({
         role: 'ai',
-        text: data.text || data.error || 'Hint indisponível.',
+        text: data.text || data.error || t.hintUnavailable,
         hintLevel: level,
       })
     } finally {
@@ -184,12 +210,12 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
         s.setWork(elements)
         s.pushMessage({
           role: 'ai',
-          text: 'Desenhei a arquitetura no canvas. Estude o fluxo e por que cada peça está ali.',
+          text: t.solutionDrawn,
         })
       } else {
         s.pushMessage({
           role: 'ai',
-          text: data.error || 'Não consegui resolver agora.',
+          text: data.error || t.solveFallback,
         })
       }
     } finally {
@@ -206,9 +232,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     const elements = currentElements()
     if (elements.length === 0) {
       setOutcome('fail')
-      setReview(
-        'Você ainda não desenhou nada — comece o diagrama e submeta de novo.',
-      )
+      setReview(t.nothingDrawn)
       s.complete(s.elapsed, 'abandoned')
       setReviewing(false)
       return
@@ -237,7 +261,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
         }),
       })
       const data = await res.json()
-      setReview(data.review || data.error || 'Não foi possível gerar o review.')
+      setReview(data.review || data.error || t.reviewFallback)
     } finally {
       setReviewing(false)
     }
@@ -248,92 +272,41 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     saveTimer.current = setTimeout(() => s.setWork(elements), 500)
   }
 
-  const minutes = String(Math.floor(s.elapsed / 60)).padStart(2, '0')
-  const seconds = String(s.elapsed % 60).padStart(2, '0')
-
-  if (!challenge) {
-    return (
-      <div className='grid h-screen place-items-center bg-white text-sm text-[#6b6478]'>
-        <span className='flex items-center gap-2'>
-          <Loader2 className='size-4 animate-spin' /> Carregando desafio…
-        </span>
-      </div>
-    )
-  }
+  if (!challenge) return <ChallengeSkeleton />
 
   return (
     <div className='relative flex h-screen flex-col overflow-hidden bg-white'>
-      <header className='z-30 flex h-14 shrink-0 items-center justify-between border-b border-[#DFE5E9] bg-white/80 px-4 backdrop-blur-xl'>
-        <div className='flex items-center gap-4'>
-          <Logo />
-          <div className='hidden items-center gap-2 border-l border-[#DFE5E9] pl-4 font-mono text-[12px] text-[#6b6478] sm:flex'>
-            <Building className='size-3.5' />
-            {challenge.title}
-          </div>
-        </div>
-        <div className='flex items-center gap-2'>
-          <div className='glass hidden h-8 items-center gap-2 rounded-full px-3 font-mono text-[12px] md:flex'>
-            <Clock className='size-3.5 opacity-70' />
-            <span>
-              {minutes}:{seconds}
-            </span>
-          </div>
-          <div className='glass hidden h-8 items-center gap-2 rounded-full px-3 text-[12px] md:flex'>
-            <Brain className='size-3.5 opacity-70' />
-            <span
-              className='text-muted-foreground'
-              title='Começa em 100. Cada hint custa. É o quanto você pensou sozinho.'
-            >
-              Independência:
-            </span>
-            <span
-              className={cn(
-                'font-semibold tabular-nums',
-                s.independence > 70
-                  ? 'text-mint'
-                  : s.independence > 40
-                    ? 'text-warning-foreground'
-                    : 'text-destructive-foreground',
-              )}
-            >
-              {s.independence}%
-            </span>
-          </div>
-          <Button
-            size='sm'
-            disabled={reviewing}
-            className='h-8 gap-1.5 rounded-lg border-transparent bg-primary pr-3 pl-3 text-primary-foreground hover:bg-primary/90'
-            onClick={submitDesign}
-          >
-            <GitPullRequestArrow className='size-3.5' />
-            Submeter
-          </Button>
-        </div>
-      </header>
+      <WorkspaceHeader
+        title={challenge.title}
+        elapsed={s.elapsed}
+        independence={s.independence}
+        submitting={reviewing}
+        onSubmit={submitDesign}
+      />
 
       <div className='grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[360px_1fr_400px] lg:grid-rows-[minmax(0,1fr)]'>
-        <aside className='min-h-0 overflow-y-auto border-r border-[#DFE5E9] bg-[#F7F9FA]'>
+        <aside className='min-h-0 overflow-y-auto border-r border-border bg-muted'>
           <BriefingPanel challenge={challenge} />
         </aside>
 
-        <section className='relative flex min-h-0 flex-col border-r border-[#DFE5E9]'>
-          <div className='flex h-10 shrink-0 items-center justify-between border-b border-[#DFE5E9] bg-[#F7F9FA] px-4'>
-            <div className='font-mono text-[12px] text-[#6b6478]'>
-              Canvas — desenhe sua arquitetura
+        <section className='relative flex min-h-0 flex-col border-r border-border'>
+          <div className='flex h-10 shrink-0 items-center justify-between border-b border-border bg-muted px-4'>
+            <div className='font-mono text-[12px] text-muted-foreground'>
+              {t.canvasLabel}
             </div>
             <Button
               size='xs'
               variant='ghost'
               onClick={askAnalysis}
               disabled={s.thinking}
-              className='gap-1.5 rounded-md text-[#6b6478] hover:text-[#1b1916]'
+              className='gap-1.5 rounded-md text-muted-foreground hover:text-ink'
             >
               {s.thinking ? (
                 <Loader2 className='size-3.5 animate-spin' />
               ) : (
                 <Wand2 className='size-3.5' />
               )}
-              Pedir análise
+              {t.askAnalysis}
             </Button>
           </div>
           <div className='relative min-h-0 flex-1'>
@@ -346,14 +319,14 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
                 onChange={onCanvasChange}
               />
             ) : (
-              <div className='grid h-full place-items-center text-[#6b6478]'>
+              <div className='grid h-full place-items-center text-muted-foreground'>
                 <Loader2 className='size-4 animate-spin' />
               </div>
             )}
           </div>
         </section>
 
-        <aside className='flex min-h-0 flex-col border-l border-[#DFE5E9] bg-[#F7F9FA]'>
+        <aside className='flex min-h-0 flex-col border-l border-border bg-muted'>
           <ChatPanel
             messages={s.messages}
             scrollRef={s.scrollRef}

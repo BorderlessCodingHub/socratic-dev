@@ -1,21 +1,32 @@
 'use client'
 
 import '@excalidraw/excalidraw/index.css'
+import { useT } from '@/lib/i18n'
 import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { ExcalidrawApi } from '../utils/scene'
+
+const copy = {
+  en: { loadingCanvas: 'Loading canvas…' },
+  pt: { loadingCanvas: 'Carregando canvas…' },
+} as const
+
+function CanvasLoading() {
+  const t = useT(copy)
+  return (
+    <div className='grid h-full place-items-center text-sm text-muted-foreground'>
+      <span className='flex items-center gap-2'>
+        <Loader2 className='size-4 animate-spin' /> {t.loadingCanvas}
+      </span>
+    </div>
+  )
+}
 
 const Excalidraw = dynamic(
   () => import('@excalidraw/excalidraw').then((m) => m.Excalidraw),
   {
     ssr: false,
-    loading: () => (
-      <div className='grid h-full place-items-center text-sm text-[#6b6478]'>
-        <span className='flex items-center gap-2'>
-          <Loader2 className='size-4 animate-spin' /> Carregando canvas…
-        </span>
-      </div>
-    ),
+    loading: () => <CanvasLoading />,
   },
 )
 

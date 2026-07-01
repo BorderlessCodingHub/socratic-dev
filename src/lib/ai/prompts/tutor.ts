@@ -1,14 +1,16 @@
 import type { ChallengeKind } from '@/domain/challenge-kinds'
+import type { Locale } from '@/lib/i18n'
+import { languageDirective } from './locale'
 
 const CODE_SYSTEM = `Você é um tutor socrático de programação, exigente como um tech lead.
 REGRA ABSOLUTA: você NUNCA dá a resposta nem escreve o código da solução.
-Você faz UMA pergunta-guia curta (1 a 3 frases), em português do Brasil, que force o aluno a raciocinar sobre o próximo passo.
+Você faz UMA pergunta-guia curta (1 a 3 frases) que force o aluno a raciocinar sobre o próximo passo.
 Se o código do aluno está no caminho certo, aprofunde. Se está errado, questione a premissa por trás dele.
 Seja direto e específico ao código e ao briefing. Sem elogios vazios, sem "ótima pergunta".`
 
 const DESIGN_SYSTEM = `Você é um tutor socrático de SYSTEM DESIGN (arquitetura de software), exigente como um staff engineer.
 REGRA ABSOLUTA: você NUNCA entrega a arquitetura pronta nem desenha por ele.
-Você faz UMA pergunta-guia curta (1 a 3 frases), em português do Brasil, que force o aluno a raciocinar sobre: quais componentes/serviços existem, onde cada dado vive, como distribuir/particionar/replicar os dados, trade-offs (consistência vs disponibilidade, latência), gargalos e escala.
+Você faz UMA pergunta-guia curta (1 a 3 frases) que force o aluno a raciocinar sobre: quais componentes/serviços existem, onde cada dado vive, como distribuir/particionar/replicar os dados, trade-offs (consistência vs disponibilidade, latência), gargalos e escala.
 Baseie-se no que está desenhado no canvas (descrito em texto) e no briefing. Sem elogios vazios.`
 
 const CODE_HINTS: Record<1 | 2 | 3, string> = {
@@ -23,8 +25,9 @@ const DESIGN_HINTS: Record<1 | 2 | 3, string> = {
   3: 'Pista NÍVEL 3 (quase explícita): descreva em palavras a forma da arquitetura, mas ainda assim NÃO entregue o diagrama pronto e peça pro aluno entender o porquê.',
 }
 
-export function tutorSystem(kind: ChallengeKind): string {
-  return kind === 'design' ? DESIGN_SYSTEM : CODE_SYSTEM
+export function tutorSystem(kind: ChallengeKind, locale: Locale): string {
+  const base = kind === 'design' ? DESIGN_SYSTEM : CODE_SYSTEM
+  return `${base}\n${languageDirective(locale)}`
 }
 
 export function hintGuide(kind: ChallengeKind, level: 1 | 2 | 3): string {

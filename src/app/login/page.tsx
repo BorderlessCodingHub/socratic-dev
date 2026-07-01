@@ -3,6 +3,7 @@
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { signUp } from '@/features/auth/actions'
+import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -10,12 +11,61 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
+const copy = {
+  en: {
+    signIn: 'Sign in',
+    createAccount: 'Create account',
+    loginSubtitle: 'Sign in to start a challenge and track your progress.',
+    signupSubtitle: 'Takes 30 seconds. No card required.',
+    githubCta: 'Sign in with GitHub',
+    or: 'or',
+    emailPlaceholder: 'you@email.com',
+    passwordPlaceholder: 'password (min. 6 characters)',
+    toggleToSignup: 'No account? Create one',
+    toggleToLogin: 'Already have an account? Sign in',
+    backToSite: '← Back to site',
+    errors: {
+      invalidCredentials: 'Invalid email or password.',
+      emailNotConfirmed: 'Email not confirmed. Check your inbox.',
+      alreadyRegistered: 'This email is already registered.',
+      tooManyRequests: 'Too many attempts. Wait a few minutes.',
+      invalidEmail: 'Invalid email address.',
+      passwordTooShort: 'Password must be at least 6 characters.',
+      authFailed: 'Authentication failed',
+      githubFailed: 'GitHub sign-in failed',
+    },
+  },
+  pt: {
+    signIn: 'Entrar',
+    createAccount: 'Criar conta',
+    loginSubtitle: 'Acesse para começar um desafio e acompanhar seu progresso.',
+    signupSubtitle: 'Leva 30 segundos. Sem cartão.',
+    githubCta: 'Entrar com GitHub',
+    or: 'ou',
+    emailPlaceholder: 'seu@email.com',
+    passwordPlaceholder: 'senha (mín. 6 caracteres)',
+    toggleToSignup: 'Não tem conta? Criar uma',
+    toggleToLogin: 'Já tem conta? Entrar',
+    backToSite: '← Voltar ao site',
+    errors: {
+      invalidCredentials: 'E-mail ou senha inválidos.',
+      emailNotConfirmed: 'E-mail não confirmado. Verifique sua caixa de entrada.',
+      alreadyRegistered: 'Este e-mail já está cadastrado.',
+      tooManyRequests: 'Muitas tentativas. Aguarde alguns minutos.',
+      invalidEmail: 'E-mail inválido.',
+      passwordTooShort: 'A senha precisa ter pelo menos 6 caracteres.',
+      authFailed: 'Falha na autenticação',
+      githubFailed: 'Falha na autenticação GitHub OAuth',
+    },
+  },
+}
+
 export default function LoginPage() {
   return (
     <Suspense
       fallback={
         <div className='grid min-h-screen place-items-center bg-white'>
-          <Loader2 className='size-5 animate-spin text-[#6b6478]' />
+          <Loader2 className='size-5 animate-spin text-muted-foreground' />
         </div>
       }
     >
@@ -28,6 +78,7 @@ function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const explicitNext = params.get('next')
+  const t = useT(copy)
 
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
@@ -39,13 +90,13 @@ function LoginForm() {
   const [loadingOAuth, setLoadingOAuth] = useState(false)
 
   function translateAuthError(msg: string): string {
-    if (/invalid login credentials/i.test(msg)) return 'E-mail ou senha inválidos.'
-    if (/email not confirmed/i.test(msg)) return 'E-mail não confirmado. Verifique sua caixa de entrada.'
-    if (/user already registered/i.test(msg)) return 'Este e-mail já está cadastrado.'
-    if (/user with this email address has already been registered/i.test(msg)) return 'Este e-mail já está cadastrado.'
-    if (/too many requests/i.test(msg)) return 'Muitas tentativas. Aguarde alguns minutos.'
-    if (/email.*invalid/i.test(msg)) return 'E-mail inválido.'
-    if (/password.*short|password.*length/i.test(msg)) return 'A senha precisa ter pelo menos 6 caracteres.'
+    if (/invalid login credentials/i.test(msg)) return t.errors.invalidCredentials
+    if (/email not confirmed/i.test(msg)) return t.errors.emailNotConfirmed
+    if (/user already registered/i.test(msg)) return t.errors.alreadyRegistered
+    if (/user with this email address has already been registered/i.test(msg)) return t.errors.alreadyRegistered
+    if (/too many requests/i.test(msg)) return t.errors.tooManyRequests
+    if (/email.*invalid/i.test(msg)) return t.errors.invalidEmail
+    if (/password.*short|password.*length/i.test(msg)) return t.errors.passwordTooShort
     return msg
   }
 
@@ -70,7 +121,7 @@ function LoginForm() {
       )?.preferred_level
       router.replace(explicitNext || (onboarded ? '/dashboard' : '/onboarding'))
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Falha na autenticação'
+      const raw = err instanceof Error ? err.message : t.errors.authFailed
       setFormError(translateAuthError(raw))
     } finally {
       setBusy(false)
@@ -93,7 +144,7 @@ function LoginForm() {
       setOauthError(
         err instanceof Error
           ? translateAuthError(err.message)
-          : 'Falha na autenticação GitHub OAuth',
+          : t.errors.githubFailed,
       )
       setLoadingOAuth(false)
     }
@@ -113,12 +164,10 @@ function LoginForm() {
           className='w-full max-w-[400px]'
         >
           <h1 className='type-h3 mb-2'>
-            {mode === 'login' ? 'Entrar' : 'Criar conta'}
+            {mode === 'login' ? t.signIn : t.createAccount}
           </h1>
-          <p className='type-body mb-8 text-[#6b6478]'>
-            {mode === 'login'
-              ? 'Acesse para começar um desafio e acompanhar seu progresso.'
-              : 'Leva 30 segundos. Sem cartão.'}
+          <p className='type-body mb-8 text-muted-foreground'>
+            {mode === 'login' ? t.loginSubtitle : t.signupSubtitle}
           </p>
 
           <div className='flex flex-col gap-6'>
@@ -128,7 +177,7 @@ function LoginForm() {
                 variant='outline'
                 size='lg'
                 loading={loadingOAuth}
-                className='rounded-xl [&_svg]:size-5!'
+                className='[&_svg]:size-5!'
               >
                 {!loadingOAuth && (
                   <svg
@@ -146,14 +195,14 @@ function LoginForm() {
                     ></path>
                   </svg>
                 )}
-                Entrar com GitHub
+                {t.githubCta}
               </Button>
-              {oauthError && <p className='text-sm text-[#c0392b]'>{oauthError}</p>}
+              {oauthError && <p className='text-sm text-destructive'>{oauthError}</p>}
             </div>
-            <div className='flex items-center gap-2 text-muted-foreground'>
-              <div className='h-px flex-1 bg-input' />
-              <span>ou</span>
-              <div className='h-px flex-1 bg-input' />
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <div className='h-px flex-1 bg-border' />
+              <span>{t.or}</span>
+              <div className='h-px flex-1 bg-border' />
             </div>
 
             <form onSubmit={submit} className='flex flex-col gap-3'>
@@ -162,8 +211,8 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder='seu@email.com'
-                className='rounded-xl border border-[#DFE5E9] bg-white px-4 py-3 text-[#1b1916] outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+                placeholder={t.emailPlaceholder}
+                className='rounded-lg border border-border bg-white px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
               />
               <input
                 type='password'
@@ -171,25 +220,21 @@ function LoginForm() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder='senha (mín. 6 caracteres)'
-                className='rounded-xl border border-[#DFE5E9] bg-white px-4 py-3 text-[#1b1916] outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+                placeholder={t.passwordPlaceholder}
+                className='rounded-lg border border-border bg-white px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
               />
-              {formError && <p className='text-sm text-[#c0392b]'>{formError}</p>}
-              {notice && <p className='text-sm text-[#6b6478]'>{notice}</p>}
-              <button
+              {formError && <p className='text-sm text-destructive'>{formError}</p>}
+              {notice && <p className='text-sm text-muted-foreground'>{notice}</p>}
+              <Button
                 type='submit'
-                disabled={busy}
-                className='group mt-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-medium tracking-tight text-primary-foreground transition-colors duration-300 hover:bg-primary/90 disabled:opacity-50'
+                variant='ink'
+                size='lg'
+                loading={busy}
+                className='group mt-2'
               >
-                {busy ? (
-                  <Loader2 className='size-4 animate-spin' />
-                ) : (
-                  <>
-                    {mode === 'login' ? 'Entrar' : 'Criar conta'}
-                    <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                  </>
-                )}
-              </button>
+                {mode === 'login' ? t.signIn : t.createAccount}
+                <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
+              </Button>
             </form>
           </div>
 
@@ -201,19 +246,17 @@ function LoginForm() {
               setOauthError(null)
               setNotice(null)
             }}
-            className='mt-5 cursor-pointer text-sm text-[#6b6478] transition-colors hover:text-[#1b1916]'
+            className='mt-5 cursor-pointer text-sm text-muted-foreground transition-colors hover:text-ink'
           >
-            {mode === 'login'
-              ? 'Não tem conta? Criar uma'
-              : 'Já tem conta? Entrar'}
+            {mode === 'login' ? t.toggleToSignup : t.toggleToLogin}
           </button>
 
           <div className='mt-8'>
             <Link
               href='/'
-              className='text-sm text-[#6b6478] transition-colors hover:text-[#1b1916]'
+              className='text-sm text-muted-foreground transition-colors hover:text-ink'
             >
-              ← Voltar ao site
+              {t.backToSite}
             </Link>
           </div>
         </motion.div>

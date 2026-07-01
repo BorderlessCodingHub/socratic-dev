@@ -1,3 +1,4 @@
+import { LocaleProvider } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
@@ -30,9 +31,9 @@ const notoSerif = Noto_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'Socratic.dev — A IA que te faz pensar',
+  title: 'Socratic.dev — The AI that makes you think',
   description:
-    'Um ambiente de código onde a IA nunca te dá a resposta — ela te faz chegar lá. Para devs que querem aprender de verdade na era da IA.',
+    'A coding environment where the AI never hands you the answer — it makes you find it. For devs who want to actually learn in the AI era.',
 }
 
 export default function RootLayout({
@@ -42,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang='pt-BR'
+      lang='en'
       suppressHydrationWarning
       className={cn(
         'h-full antialiased',
@@ -57,7 +58,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className='flex min-h-full flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary'
       >
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
         <Analytics />
       </body>
     </html>

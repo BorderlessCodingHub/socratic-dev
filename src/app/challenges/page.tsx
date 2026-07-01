@@ -1,9 +1,11 @@
 'use client'
 
 import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Challenge } from '@/features/challenges/types'
 import { levelLabel } from '@/features/challenges/utils'
+import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
@@ -19,11 +21,44 @@ import * as React from 'react'
 
 type Filter = 'all' | 'code' | 'design'
 
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'Todos' },
-  { id: 'code', label: 'Código' },
-  { id: 'design', label: 'System Design' },
-]
+const FILTERS: Filter[] = ['all', 'code', 'design']
+
+const copy = {
+  en: {
+    eyebrow: 'Library',
+    headline: 'Every challenge.',
+    flourish: 'Recycled.',
+    intro:
+      'Every challenge the AI creates lands here and joins the shared pool — less waiting, lower cost.',
+    challengeOne: 'challenge',
+    challengeMany: 'challenges',
+    filters: { all: 'All', code: 'Code', design: 'System Design' },
+    empty: 'No challenges under this filter yet.',
+    levels: {
+      beginner: 'Beginner',
+      intermediate: 'Intermediate',
+      advanced: 'Advanced',
+    },
+    open: 'Open',
+  },
+  pt: {
+    eyebrow: 'Biblioteca',
+    headline: 'Todos os desafios.',
+    flourish: 'Reaproveitados.',
+    intro:
+      'Cada desafio que a IA cria entra aqui e vira pool pra todo mundo — menos espera, menos custo.',
+    challengeOne: 'desafio',
+    challengeMany: 'desafios',
+    filters: { all: 'Todos', code: 'Código', design: 'System Design' },
+    empty: 'Nenhum desafio nesse filtro ainda.',
+    levels: {
+      beginner: 'Iniciante',
+      intermediate: 'Intermediário',
+      advanced: 'Avançado',
+    },
+    open: 'Abrir',
+  },
+}
 
 function stackLabel(c: Challenge): string {
   if (c.kind === 'design') return 'System Design'
@@ -77,6 +112,7 @@ function dedupe(list: Challenge[]): Challenge[] {
 }
 
 export default function ChallengesLibraryPage() {
+  const t = useT(copy)
   const [challenges, setChallenges] = React.useState<Challenge[] | null>(null)
   const [filter, setFilter] = React.useState<Filter>('all')
   const [page, setPage] = React.useState(0)
@@ -112,24 +148,21 @@ export default function ChallengesLibraryPage() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className='mb-2 font-mono text-[11px] tracking-[0.08em] text-[#6b6478] uppercase'>
-              Biblioteca
-            </div>
+            <p className='eyebrow mb-2'>{t.eyebrow}</p>
             <h1 className='type-h2'>
-              Todos os desafios.{' '}
+              {t.headline}{' '}
               <span className='text-gradient font-serif font-normal italic'>
-                Reaproveitados.
+                {t.flourish}
               </span>
             </h1>
             <p className='type-body mt-3 max-w-[560px]'>
-              Cada desafio que a IA cria entra aqui e vira pool pra todo mundo —
-              menos espera, menos custo.{' '}
+              {t.intro}{' '}
               {challenges && (
-                <span className='font-medium text-[#1b1916]'>
-                  {unique.length} {unique.length === 1 ? 'desafio' : 'desafios'}
-                  .
+                <span className='font-medium text-ink'>
+                  {unique.length}{' '}
+                  {unique.length === 1 ? t.challengeOne : t.challengeMany}.
                 </span>
               )}
             </p>
@@ -138,20 +171,20 @@ export default function ChallengesLibraryPage() {
           <div className='mt-8 flex flex-wrap gap-2'>
             {FILTERS.map((f) => (
               <button
-                key={f.id}
+                key={f}
                 type='button'
                 onClick={() => {
-                  setFilter(f.id)
+                  setFilter(f)
                   setPage(0)
                 }}
                 className={cn(
-                  'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
-                  filter === f.id
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-[#DFE5E9] text-[#6b6478] hover:bg-[#F7F9FA]',
+                  'cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium transition-colors duration-200',
+                  filter === f
+                    ? 'border-ink bg-ink text-white'
+                    : 'border-border text-muted-foreground hover:border-ink hover:text-ink',
                 )}
               >
-                {f.label}
+                {t.filters[f]}
               </button>
             ))}
           </div>
@@ -159,11 +192,11 @@ export default function ChallengesLibraryPage() {
           <div className='mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
             {!challenges ? (
               [0, 1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className='h-44 rounded-2xl' />
+                <Skeleton key={i} className='h-44 rounded-lg' />
               ))
             ) : visible.length === 0 ? (
-              <p className='col-span-full text-sm text-[#6b6478]'>
-                Nenhum desafio nesse filtro ainda.
+              <p className='col-span-full text-sm text-muted-foreground'>
+                {t.empty}
               </p>
             ) : (
               pageItems.map((c, i) => {
@@ -175,32 +208,40 @@ export default function ChallengesLibraryPage() {
                     key={c.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i, 8) * 0.04, duration: 0.4 }}
+                    transition={{
+                      delay: Math.min(i, 8) * 0.04,
+                      duration: 0.4,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
                   >
                     <Link
                       href={href}
-                      className='shadow-soft hover:shadow-soft-lg group flex h-full flex-col rounded-2xl border border-[#DFE5E9] bg-white p-5 transition-shadow'
+                      className='shadow-soft hover:shadow-soft-lg group flex h-full flex-col rounded-lg border border-border bg-white p-5 transition-shadow duration-300 ease-out'
                     >
                       <div className='mb-3 flex items-center gap-2'>
-                        <div className='grid size-9 place-items-center rounded-xl bg-[#dad8ea]/55 text-[#1b1916]'>
+                        <div className='grid size-9 place-items-center rounded-full bg-pastel-lavender text-ink'>
                           <Icon className='size-4.5' strokeWidth={1.5} />
                         </div>
-                        <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+                        <span className='rounded-full border border-border bg-white px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
                           {stackLabel(c)}
                         </span>
-                        <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5 font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
-                          {levelLabel(c.level)}
+                        <span className='rounded-full border border-border bg-white px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+                          {(t.levels as Record<string, string>)[c.level] ??
+                            levelLabel(c.level)}
                         </span>
                       </div>
-                      <h3 className='font-heading text-lg font-medium tracking-tight text-[#1b1916]'>
+                      <h3 className='font-heading text-lg font-light tracking-tight text-ink'>
                         {c.title}
                       </h3>
-                      <p className='mt-1.5 line-clamp-2 text-sm text-[#6b6478]'>
+                      <p className='mt-1.5 line-clamp-2 text-sm text-muted-foreground'>
                         {c.description}
                       </p>
-                      <span className='mt-auto inline-flex items-center gap-1 pt-4 text-[14px] font-medium text-iris'>
-                        Abrir
-                        <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
+                      <span className='mt-auto inline-flex items-center gap-1 pt-4 text-[14px] font-medium text-primary'>
+                        <span className='link-underline'>{t.open}</span>
+                        <ArrowRight
+                          size={16}
+                          className='transition-transform duration-200 group-hover:translate-x-0.5'
+                        />
                       </span>
                     </Link>
                   </motion.div>
@@ -210,26 +251,28 @@ export default function ChallengesLibraryPage() {
           </div>
 
           {visible.length > PAGE && (
-            <div className='mt-8 flex items-center justify-center gap-2 font-mono text-[12px] text-[#6b6478]'>
-              <button
-                type='button'
+            <div className='mt-8 flex items-center justify-center gap-2 font-mono text-[12px] text-muted-foreground'>
+              <Button
+                variant='outline'
+                size='icon-sm'
+                className='size-8 sm:size-8'
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
-                className='grid size-8 place-items-center rounded-lg border border-[#DFE5E9] transition-colors hover:bg-[#F7F9FA] disabled:opacity-40'
               >
                 <ChevronLeft className='size-4' />
-              </button>
+              </Button>
               <span>
                 {page + 1} / {totalPages}
               </span>
-              <button
-                type='button'
+              <Button
+                variant='outline'
+                size='icon-sm'
+                className='size-8 sm:size-8'
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                className='grid size-8 place-items-center rounded-lg border border-[#DFE5E9] transition-colors hover:bg-[#F7F9FA] disabled:opacity-40'
               >
                 <ChevronRight className='size-4' />
-              </button>
+              </Button>
             </div>
           )}
         </div>

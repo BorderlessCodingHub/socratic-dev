@@ -6,6 +6,7 @@ import {
 } from '@/lib/ai/generate-challenge'
 import { authActionUser } from '@/lib/api/guard'
 import { rateLimit } from '@/lib/api/guard'
+import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Challenge } from './types'
@@ -88,6 +89,7 @@ async function doGenerate(input: {
       stack: input.stack,
       level: input.level,
       userPrompt: input.userPrompt,
+      locale: await getLocale(),
     })
     if (error) return { error: error.message }
     revalidatePath('/dashboard')

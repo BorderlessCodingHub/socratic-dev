@@ -1,12 +1,14 @@
 'use client'
 
 import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { signOut } from '@/features/auth/hooks/use-user'
 import { getDashboardStats } from '@/features/dashboard/actions'
 import type { Stats } from '@/features/dashboard/types'
 import { getProfile, type Profile } from '@/features/profile/actions'
 import { getAccessToken } from '@/lib/api/client'
+import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import {
@@ -30,19 +32,75 @@ const STACK_OPTIONS = [
   { value: 'python', label: 'Python' },
   { value: 'react', label: 'React' },
 ]
-const LEVEL_OPTIONS = [
-  { value: 'beginner', label: 'Iniciante' },
-  { value: 'intermediate', label: 'Intermediário' },
-  { value: 'advanced', label: 'Avançado' },
-]
-const TRACK_OPTIONS = [
-  { value: 'code', label: 'Código' },
-  { value: 'design', label: 'System Design' },
-]
+
+const copy = {
+  en: {
+    dateLocale: 'en-US',
+    levelOptions: [
+      { value: 'beginner', label: 'Beginner' },
+      { value: 'intermediate', label: 'Intermediate' },
+      { value: 'advanced', label: 'Advanced' },
+    ],
+    trackOptions: [
+      { value: 'code', label: 'Code' },
+      { value: 'design', label: 'System Design' },
+    ],
+    avatarAlt: 'Your avatar',
+    yourProfile: 'Your profile',
+    memberSince: 'Member since',
+    statCompleted: 'Completed',
+    statIndependence: 'Independence',
+    statHints: 'Hints used',
+    preferences: 'Preferences',
+    trackLabel: 'Track',
+    trackPlaceholder: 'Pick a track',
+    stackLabel: 'Stack (code)',
+    stackPlaceholder: 'Pick a stack',
+    difficultyLabel: 'Difficulty',
+    levelPlaceholder: 'Pick a level',
+    prefsNote:
+      'Your next challenges are generated from these choices — saved automatically.',
+    newChallenge: 'New challenge',
+    viewDashboard: 'View dashboard',
+    signOut: 'Sign out',
+  },
+  pt: {
+    dateLocale: 'pt-BR',
+    levelOptions: [
+      { value: 'beginner', label: 'Iniciante' },
+      { value: 'intermediate', label: 'Intermediário' },
+      { value: 'advanced', label: 'Avançado' },
+    ],
+    trackOptions: [
+      { value: 'code', label: 'Código' },
+      { value: 'design', label: 'System Design' },
+    ],
+    avatarAlt: 'Seu avatar',
+    yourProfile: 'Seu perfil',
+    memberSince: 'Membro desde',
+    statCompleted: 'Concluídos',
+    statIndependence: 'Independência',
+    statHints: 'Hints usados',
+    preferences: 'Preferências',
+    trackLabel: 'Trilha',
+    trackPlaceholder: 'Escolher trilha',
+    stackLabel: 'Stack (código)',
+    stackPlaceholder: 'Escolher stack',
+    difficultyLabel: 'Dificuldade',
+    levelPlaceholder: 'Escolher nível',
+    prefsNote:
+      'Os próximos desafios são gerados com base nessas escolhas — salvam automaticamente.',
+    newChallenge: 'Novo desafio',
+    viewDashboard: 'Ver dashboard',
+    signOut: 'Sair',
+  },
+}
+
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function ProfileView({ user }: { user: User }) {
   const router = useRouter()
+  const t = useT(copy)
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [stats, setStats] = React.useState<Stats | null>(null)
   const [loaded, setLoaded] = React.useState(false)
@@ -112,49 +170,41 @@ export function ProfileView({ user }: { user: User }) {
 
       <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
         <div className='container-main w-full max-w-3xl'>
-          <div className='shadow-soft-lg overflow-hidden rounded-xl border border-[#DFE5E9] bg-white'>
-            <div className='relative overflow-hidden border-b border-[#DFE5E9] px-6 py-8 sm:px-10 sm:py-10'>
-              <div
-                className='absolute inset-0'
-                style={{
-                  background:
-                    'linear-gradient(146.18deg, rgba(252, 243, 235, 0.6) 12.07%, rgba(223, 229, 233, 0.6) 45.37%, rgba(220, 215, 253, 0.6) 97.58%), white',
-                }}
-              />
-              <div className='grid-pattern absolute inset-0 opacity-30' />
+          <div className='shadow-soft-lg overflow-hidden rounded-lg border border-border bg-white'>
+            <div className='border-b border-border bg-pastel-lavender/60 px-6 py-8 sm:px-10 sm:py-10'>
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className='relative z-10 flex items-center gap-4'
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className='flex items-center gap-4'
               >
                 {(user?.user_metadata as { avatar_url?: string } | undefined)
                   ?.avatar_url ? (
-                  <div className='relative size-14 shrink-0 overflow-hidden rounded-2xl ring-4 ring-white/50'>
+                  <div className='relative size-14 shrink-0 overflow-hidden rounded-full ring-4 ring-white/50'>
                     <Image
                       src={
                         (user.user_metadata as { avatar_url?: string })
                           .avatar_url!
                       }
-                      alt='Seu avatar'
+                      alt={t.avatarAlt}
                       fill
                       className='object-cover'
                     />
                   </div>
                 ) : (
-                  <div className='grid size-14 shrink-0 place-items-center rounded-2xl bg-primary font-mono text-xl font-semibold text-primary-foreground uppercase ring-4 ring-white/50'>
+                  <div className='grid size-14 shrink-0 place-items-center rounded-full bg-primary font-mono text-xl font-medium text-primary-foreground uppercase ring-4 ring-white/50'>
                     {(user?.email?.[0] ?? 'u').toUpperCase()}
                   </div>
                 )}
                 <div className='min-w-0'>
-                  <div className='mb-1 font-mono text-[11px] tracking-[0.08em] text-[#6b6478] uppercase'>
-                    Seu perfil
-                  </div>
+                  <p className='eyebrow mb-1'>{t.yourProfile}</p>
                   <h1 className='type-h3 truncate'>{user?.email ?? '—'}</h1>
                   {ready && profile && (
-                    <p className='mt-1 text-sm text-[#6b6478]'>
-                      Membro desde{' '}
-                      {new Date(profile.created_at).toLocaleDateString('pt-BR')}
+                    <p className='mt-1 text-sm text-muted-foreground'>
+                      {t.memberSince}{' '}
+                      {new Date(profile.created_at).toLocaleDateString(
+                        t.dateLocale,
+                      )}
                     </p>
                   )}
                 </div>
@@ -169,35 +219,35 @@ export function ProfileView({ user }: { user: User }) {
                   <div className='grid grid-cols-3 gap-3'>
                     <Stat
                       icon={Trophy}
-                      label='Concluídos'
+                      label={t.statCompleted}
                       value={String(stats?.total_completed ?? 0)}
                     />
                     <Stat
                       icon={GaugeCircle}
-                      label='Independência'
+                      label={t.statIndependence}
                       value={`${stats?.independence_score ?? 100}%`}
                     />
                     <Stat
                       icon={Layers}
-                      label='Hints usados'
+                      label={t.statHints}
                       value={String(stats?.total_hints ?? 0)}
                     />
                   </div>
 
-                  <div className='mt-3 rounded-2xl border border-[#DFE5E9] bg-[#F7F9FA] p-6'>
+                  <div className='mt-3 rounded-md bg-muted p-6'>
                     <div className='mb-4 flex items-center justify-between'>
-                      <div className='flex items-center gap-2 font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-                        <Code2 className='size-3.5' />
-                        Preferências
+                      <div className='eyebrow flex items-center gap-2'>
+                        <Code2 className='size-3.5' strokeWidth={1.5} />
+                        {t.preferences}
                       </div>
                       <SaveBadge state={saveState} />
                     </div>
                     <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
                       <SelectField
-                        label='Trilha'
+                        label={t.trackLabel}
                         value={track}
-                        placeholder='Escolher trilha'
-                        options={TRACK_OPTIONS}
+                        placeholder={t.trackPlaceholder}
+                        options={t.trackOptions}
                         onChange={(v) => {
                           setTrack(v)
                           savePrefs(v, stack, level)
@@ -205,9 +255,9 @@ export function ProfileView({ user }: { user: User }) {
                       />
                       {track !== 'design' && (
                         <SelectField
-                          label='Stack (código)'
+                          label={t.stackLabel}
                           value={stack}
-                          placeholder='Escolher stack'
+                          placeholder={t.stackPlaceholder}
                           options={STACK_OPTIONS}
                           onChange={(v) => {
                             setStack(v)
@@ -216,46 +266,48 @@ export function ProfileView({ user }: { user: User }) {
                         />
                       )}
                       <SelectField
-                        label='Dificuldade'
+                        label={t.difficultyLabel}
                         value={level}
-                        placeholder='Escolher nível'
-                        options={LEVEL_OPTIONS}
+                        placeholder={t.levelPlaceholder}
+                        options={t.levelOptions}
                         onChange={(v) => {
                           setLevel(v)
                           savePrefs(track, stack, v)
                         }}
                       />
                     </div>
-                    <p className='mt-4 text-[13px] text-[#6b6478]'>
-                      Os próximos desafios são gerados com base nessas escolhas
-                      — salvam automaticamente.
+                    <p className='mt-4 text-[13px] text-muted-foreground'>
+                      {t.prefsNote}
                     </p>
                   </div>
 
                   <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
-                    <Link
-                      href='/onboarding'
-                      className='group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90'
+                    <Button
+                      render={<Link href='/onboarding' />}
+                      variant='ink'
+                      size='lg'
+                      className='group'
                     >
-                      Novo desafio
+                      {t.newChallenge}
                       <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                    </Link>
-                    <Link
-                      href='/dashboard'
-                      className='inline-flex items-center justify-center rounded-xl border border-[#1b1916]/20 px-6 py-3 text-[15px] font-medium tracking-tight text-[#1b1916] transition-colors hover:bg-[#1b1916]/5'
+                    </Button>
+                    <Button
+                      render={<Link href='/dashboard' />}
+                      variant='outline'
+                      size='lg'
                     >
-                      Ver dashboard
-                    </Link>
-                    <button
-                      type='button'
+                      {t.viewDashboard}
+                    </Button>
+                    <Button
+                      variant='ghost'
                       onClick={async () => {
                         await signOut()
                         router.push('/')
                       }}
-                      className='inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[#6b6478] transition-colors hover:bg-[#1b1916]/5 hover:text-[#1b1916] sm:ml-auto'
+                      className='sm:ml-auto'
                     >
-                      <LogOut className='size-4' /> Sair
-                    </button>
+                      <LogOut className='size-4' /> {t.signOut}
+                    </Button>
                   </div>
                 </>
               )}
@@ -272,18 +324,18 @@ function ProfileSkeleton() {
     <div>
       <div className='grid grid-cols-3 gap-3'>
         {[0, 1, 2].map((i) => (
-          <div key={i} className='rounded-2xl border border-[#DFE5E9] p-5'>
-            <Skeleton className='mb-3 size-9 rounded-xl' />
+          <div key={i} className='rounded-md border border-border p-5'>
+            <Skeleton className='mb-3 size-9 rounded-full' />
             <Skeleton className='h-7 w-12' />
             <Skeleton className='mt-2 h-3 w-16' />
           </div>
         ))}
       </div>
-      <div className='mt-3 rounded-2xl border border-[#DFE5E9] p-6'>
+      <div className='mt-3 rounded-md border border-border p-6'>
         <Skeleton className='mb-4 h-3 w-40' />
         <div className='grid grid-cols-2 gap-3'>
-          <Skeleton className='h-14 rounded-xl' />
-          <Skeleton className='h-14 rounded-xl' />
+          <Skeleton className='h-14 rounded-md' />
+          <Skeleton className='h-14 rounded-md' />
         </div>
       </div>
       <div className='mt-6 flex gap-3'>
@@ -304,14 +356,14 @@ function Stat({
   value: string
 }) {
   return (
-    <div className='rounded-2xl border border-[#DFE5E9] bg-white p-5'>
-      <div className='mb-3 grid size-11 place-items-center rounded-xl bg-[#dad8ea]/55 text-[#1b1916]'>
+    <div className='rounded-md border border-border bg-white p-5'>
+      <div className='mb-3 grid size-11 place-items-center rounded-full bg-pastel-lavender text-ink'>
         <Icon className='size-5' strokeWidth={1.5} />
       </div>
-      <div className='font-heading text-3xl font-semibold tracking-tight text-[#1b1916] tabular-nums'>
+      <div className='font-heading text-3xl font-light tracking-tight text-ink tabular-nums'>
         {value}
       </div>
-      <div className='mt-1 text-[12px] text-[#6b6478]'>{label}</div>
+      <div className='mt-1 text-[12px] text-muted-foreground'>{label}</div>
     </div>
   )
 }
@@ -326,19 +378,19 @@ function SelectField({
   label: string
   value: string
   placeholder: string
-  options: { value: string; label: string }[]
+  options: readonly { value: string; label: string }[]
   onChange: (value: string) => void
 }) {
   return (
     <div>
-      <label className='mb-1.5 block font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+      <label className='mb-1.5 block font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
         {label}
       </label>
       <div className='relative'>
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className='w-full appearance-none rounded-xl border border-[#DFE5E9] bg-white px-4 py-2.5 pr-10 text-[15px] font-medium text-[#1b1916] transition-colors outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+          className='w-full appearance-none rounded-md border border-border bg-white px-4 py-2.5 pr-10 text-[15px] font-medium text-ink transition-colors outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
         >
           <option value='' disabled>
             {placeholder}
@@ -349,18 +401,32 @@ function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown className='pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-[#6b6478]' />
+        <ChevronDown className='pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground' />
       </div>
     </div>
   )
 }
 
+const badgeCopy = {
+  en: {
+    saving: 'Saving…',
+    saved: 'Saved ✓',
+    error: 'Save failed',
+  },
+  pt: {
+    saving: 'Salvando…',
+    saved: 'Salvo ✓',
+    error: 'Erro ao salvar',
+  },
+}
+
 function SaveBadge({ state }: { state: SaveState }) {
+  const t = useT(badgeCopy)
   if (state === 'idle') return null
   const map = {
-    saving: ['Salvando…', 'text-[#6b6478]'],
-    saved: ['Salvo ✓', 'text-mint'],
-    error: ['Erro ao salvar', 'text-red-600'],
+    saving: [t.saving, 'text-muted-foreground'],
+    saved: [t.saved, 'text-mint'],
+    error: [t.error, 'text-destructive'],
   } as const
   const [text, cls] = map[state]
   return <span className={`font-mono text-[11px] ${cls}`}>{text}</span>

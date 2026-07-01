@@ -1,5 +1,7 @@
 import type { ChallengeKind } from '@/domain/challenge-kinds'
 import type { LevelId } from '@/domain/levels'
+import type { Locale } from '@/lib/i18n'
+import { languageDirective } from './locale'
 
 const CODE_SYSTEM = `Você gera desafios de programação realistas para uma plataforma de tutoria socrática.
 Responda APENAS com um objeto JSON válido (sem markdown, sem comentários), com exatamente estas chaves:
@@ -11,7 +13,7 @@ Regras:
 - intro: a primeira fala do tutor socrático — uma pergunta que faça o aluno pensar. NUNCA a resposta.
 - initial_code: a(s) assinatura(s) da(s) função(ões) com "export", corpo vazio e comentários. SEM a solução. Código válido na linguagem da stack.
 - tests_source: testes no formato test('nome', () => { expect(exports.NOME(args)).toBe(valor) }). Use exports.<funcao> para acessar a solução do aluno. Cubra os edge cases adequados ao nível.
-- Tudo em português do Brasil. A DIFICULDADE deve seguir estritamente o nível pedido.`
+- A DIFICULDADE deve seguir estritamente o nível pedido.`
 
 const DESIGN_SYSTEM = `Você gera desafios de SYSTEM DESIGN (arquitetura de software) para uma plataforma de tutoria socrática, onde o aluno DESENHA a arquitetura num canvas — serviços, bancos de dados, filas, caches, APIs e como os dados fluem e são distribuídos. NÃO é design de UI/Figma e NÃO se escreve código.
 Responda APENAS com um objeto JSON válido (sem markdown, sem comentários), com exatamente estas chaves:
@@ -22,7 +24,7 @@ Regras:
 - description: 1 frase do que o aluno deve ARQUITETAR no canvas.
 - client_briefing: a PRIMEIRA LINHA deve seguir EXATAMENTE o formato "Cliente: {Nome} ({Cargo}) — {Empresa fictícia}" (ex.: "Cliente: Rafael Lima (CTO) — Fintech Pix"). Depois pule uma linha em branco e escreva 3 a 5 frases com os requisitos (escala, latência, consistência) e os PASSOS do que desenhar (componentes/serviços, onde cada dado vive, como replica/particiona, o caminho de uma request), pedindo pra ligar com setas o fluxo dos dados. Inclua o nome do cliente pelo menos uma vez no briefing.
 - intro: a primeira fala do tutor socrático — uma pergunta que faça o aluno pensar antes de desenhar. NUNCA a resposta.
-- Tudo em português do Brasil. Adeque a complexidade ao nível.`
+- Adeque a complexidade ao nível.`
 
 const CODE_LEVEL: Record<LevelId, string> = {
   beginner:
@@ -42,8 +44,13 @@ const DESIGN_LEVEL: Record<LevelId, string> = {
     'Nível AVANÇADO: alta escala — particionamento/sharding, distribuição e replicação de dados, consistência eventual, teorema CAP, multi-região e gargalos.',
 }
 
-export function challengeSystem(kind: ChallengeKind): string {
-  return kind === 'design' ? DESIGN_SYSTEM : CODE_SYSTEM
+export function challengeSystem(kind: ChallengeKind, locale: Locale): string {
+  const base = kind === 'design' ? DESIGN_SYSTEM : CODE_SYSTEM
+  const briefingNote =
+    locale === 'en'
+      ? '\nException: keep the literal "Cliente:" prefix on the first line of client_briefing exactly as specified — the app parses it. Everything after that prefix (name, role, company, briefing) must be in English.'
+      : ''
+  return `${base}\n${languageDirective(locale)}${briefingNote}`
 }
 
 export function levelGuide(kind: ChallengeKind, level: LevelId): string {

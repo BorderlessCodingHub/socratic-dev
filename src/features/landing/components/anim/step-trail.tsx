@@ -44,8 +44,8 @@ export function StepTrail() {
           ref={pathRef}
           d='M 60 30 Q 180 6 310 30 T 560 30 T 810 30 T 940 30'
           fill='none'
-          stroke='#c9c5e8'
-          strokeWidth='1.5'
+          stroke='var(--pastel-lavender)'
+          strokeWidth='1'
           strokeLinecap='round'
         />
         {[60, 310, 560, 810, 940].map((x) => (
@@ -54,7 +54,7 @@ export function StepTrail() {
             cx={x}
             cy={30}
             r={3}
-            fill='#c9c5e8'
+            fill='var(--pastel-lavender)'
           />
         ))}
       </svg>

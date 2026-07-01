@@ -1,6 +1,7 @@
 'use client'
 
 import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CustomChallengeDialog } from '@/features/challenges/components/custom-challenge-dialog'
 import {
@@ -12,6 +13,7 @@ import { getDashboardStats } from '@/features/dashboard/actions'
 import { getAccessToken } from '@/lib/api/client'
 import type { Stats } from '@/features/dashboard/types'
 import { activityLevel } from '@/features/dashboard/utils'
+import { useLocale, useT } from '@/lib/i18n'
 import type { User } from '@supabase/supabase-js'
 import {
   ArrowRight,
@@ -20,7 +22,6 @@ import {
   Code2,
   Layers,
   Lightbulb,
-  Loader2,
   Network,
   PenLine,
   Sparkles,
@@ -38,23 +39,104 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-const STATUS_LABEL: Record<string, string> = {
-  completed: 'Concluído',
-  in_progress: 'Em andamento',
-  abandoned: 'Reprovado',
+const copy = {
+  en: {
+    welcome: 'Welcome back',
+    youAre: "You're",
+    independentSuffix: '% independent',
+    keepGoing:
+      'Every challenge you solve without copy-paste counts. Socrates would approve.',
+    startPrompt: 'Start a challenge to build your progress.',
+    custom: 'Custom',
+    newChallenge: 'New challenge',
+    statStreak: 'Streak',
+    statStreakHint: 'days in a row',
+    statChallenges: 'Challenges',
+    statChallengesHint: 'completed',
+    statHintsPer: 'Hints/challenge',
+    statHintsPerHint: 'average',
+    statTotalHints: 'Total hints',
+    statTotalHintsHint: 'used',
+    journeyEyebrow: 'Your journey',
+    journeyTitle: 'Activity over the past few months',
+    dow: ['', 'Mon', '', 'Wed', '', 'Fri', ''],
+    challengeOne: 'challenge',
+    challengeMany: 'challenges',
+    less: 'Less',
+    more: 'More',
+    scoreEyebrow: 'Current score',
+    scoreTitle: 'Total independence',
+    scoreCaption: 'how much you solve on your own',
+    historyEyebrow: 'History',
+    historyTitle: 'Recent challenges',
+    of: 'of',
+    historyEmpty: "No challenges yet. Start one and it'll show up here.",
+    challengeFallback: 'Challenge',
+    status: {
+      completed: 'Completed',
+      in_progress: 'In progress',
+      abandoned: 'Failed',
+    },
+    open: 'Open',
+    resume: 'Resume',
+    quote:
+      'What comes out of your head is worth a thousand times more than what comes out of mine.',
+    quoteBy: '— Socratic tutor, just now',
+  },
+  pt: {
+    welcome: 'Bem-vindo de volta',
+    youAre: 'Você está',
+    independentSuffix: '% independente',
+    keepGoing: 'Cada desafio sem cola conta. Sócrates aprovaria.',
+    startPrompt: 'Comece um desafio para construir seu progresso.',
+    custom: 'Sob medida',
+    newChallenge: 'Novo desafio',
+    statStreak: 'Streak',
+    statStreakHint: 'dias seguidos',
+    statChallenges: 'Desafios',
+    statChallengesHint: 'concluídos',
+    statHintsPer: 'Hints/desafio',
+    statHintsPerHint: 'média',
+    statTotalHints: 'Hints totais',
+    statTotalHintsHint: 'usados',
+    journeyEyebrow: 'Sua jornada',
+    journeyTitle: 'Atividade dos últimos meses',
+    dow: ['', 'Seg', '', 'Qua', '', 'Sex', ''],
+    challengeOne: 'desafio',
+    challengeMany: 'desafios',
+    less: 'Menos',
+    more: 'Mais',
+    scoreEyebrow: 'Score atual',
+    scoreTitle: 'Independência total',
+    scoreCaption: 'quanto você resolve sozinho',
+    historyEyebrow: 'Histórico',
+    historyTitle: 'Desafios recentes',
+    of: 'de',
+    historyEmpty: 'Nenhum desafio ainda. Comece um para aparecer aqui.',
+    challengeFallback: 'Desafio',
+    status: {
+      completed: 'Concluído',
+      in_progress: 'Em andamento',
+      abandoned: 'Reprovado',
+    },
+    open: 'Abrir',
+    resume: 'Retomar',
+    quote:
+      'O que sai da sua cabeça vale mil vezes mais que o que sai da minha.',
+    quoteBy: '— Tutor Socrático, agora há pouco',
+  },
 }
 
-const IRIS = 'oklch(0.55 0.24 285)'
-
 const CELL = [
-  'bg-[#EDF0F2]',
-  'bg-iris/25',
-  'bg-iris/45',
-  'bg-iris/70',
-  'bg-iris',
+  'bg-muted',
+  'bg-primary/25',
+  'bg-primary/45',
+  'bg-primary/70',
+  'bg-primary',
 ]
 
 export function DashboardView({ user }: { user: User }) {
+  const t = useT(copy)
   const router = useRouter()
   const [stats, setStats] = React.useState<Stats | null>(null)
   const [sessions, setSessions] = React.useState<SessionRow[]>([])
@@ -137,26 +219,25 @@ export function DashboardView({ user }: { user: User }) {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className='mb-10 flex flex-col gap-6'
           >
             <div className='min-w-0'>
-              <div className='mb-2 font-mono text-[11px] tracking-[0.08em] text-[#6b6478] uppercase'>
-                Bem-vindo de volta
-              </div>
+              <p className='eyebrow mb-2'>{t.welcome}</p>
               {loaded ? (
                 <>
                   <h1 className='type-h2'>
-                    Você está{' '}
+                    {t.youAre}{' '}
                     <span className='text-gradient font-serif font-normal italic'>
-                      {score}% independente
+                      {score}
+                      {t.independentSuffix}
                     </span>
                     .
                   </h1>
                   <p className='type-body mt-3'>
                     {stats && stats.total_completed > 0
-                      ? 'Cada desafio sem cola conta. Sócrates aprovaria.'
-                      : 'Comece um desafio para construir seu progresso.'}
+                      ? t.keepGoing
+                      : t.startPrompt}
                   </p>
                 </>
               ) : (
@@ -167,43 +248,34 @@ export function DashboardView({ user }: { user: User }) {
               )}
             </div>
             <div className='flex flex-col gap-2 self-start sm:flex-row'>
-              <button
-                type='button'
+              <Button
+                variant='outline'
+                size='lg'
                 onClick={() => setCustomOpen(true)}
-                className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-iris/30 bg-iris/5 px-5 py-3 text-[15px] font-medium tracking-tight text-iris transition-colors hover:bg-iris/10'
               >
-                <PenLine className='size-4' />
-                Sob medida
-              </button>
-              <button
-                type='button'
+                <PenLine strokeWidth={1.5} />
+                {t.custom}
+              </Button>
+              <Button
+                variant='outline'
+                size='lg'
                 onClick={startDesign}
-                disabled={genDesign}
-                className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#1b1916]/20 px-5 py-3 text-[15px] font-medium tracking-tight text-[#1b1916] transition-colors hover:bg-[#1b1916]/5 disabled:cursor-not-allowed disabled:opacity-60'
+                loading={genDesign}
               >
-                {genDesign ? (
-                  <Loader2 className='size-4 animate-spin' />
-                ) : (
-                  <Network className='size-4' />
-                )}
-                {genDesign ? 'Gerando…' : 'System Design'}
-              </button>
-              <button
-                type='button'
+                <Network strokeWidth={1.5} />
+                System Design
+              </Button>
+              <Button
+                variant='ink'
+                size='lg'
                 onClick={startCode}
-                disabled={genCode}
-                className='group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[15px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60'
+                loading={genCode}
+                className='group'
               >
-                {genCode ? (
-                  <Loader2 className='size-4 animate-spin' />
-                ) : (
-                  <Sparkles className='size-4' />
-                )}
-                {genCode ? 'Gerando…' : 'Novo desafio'}
-                {!genCode && (
-                  <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                )}
-              </button>
+                <Sparkles strokeWidth={1.5} />
+                {t.newChallenge}
+                <ArrowRight className='transition-transform duration-200 group-hover:translate-x-0.5' />
+              </Button>
             </div>
           </motion.div>
 
@@ -215,30 +287,30 @@ export function DashboardView({ user }: { user: User }) {
                 <StatCard
                   i={0}
                   icon={TrendingUp}
-                  label='Streak'
+                  label={t.statStreak}
                   value={String(stats?.streak_days ?? 0)}
-                  hint='dias seguidos'
+                  hint={t.statStreakHint}
                 />
                 <StatCard
                   i={1}
                   icon={Trophy}
-                  label='Desafios'
+                  label={t.statChallenges}
                   value={String(stats?.total_completed ?? 0)}
-                  hint='concluídos'
+                  hint={t.statChallengesHint}
                 />
                 <StatCard
                   i={2}
                   icon={Lightbulb}
-                  label='Hints/desafio'
+                  label={t.statHintsPer}
                   value={String(stats?.avg_hints_per_session ?? 0)}
-                  hint='média'
+                  hint={t.statHintsPerHint}
                 />
                 <StatCard
                   i={3}
                   icon={Layers}
-                  label='Hints totais'
+                  label={t.statTotalHints}
                   value={String(stats?.total_hints ?? 0)}
-                  hint='usados'
+                  hint={t.statTotalHintsHint}
                 />
               </div>
 
@@ -250,23 +322,17 @@ export function DashboardView({ user }: { user: User }) {
               <RecentChallenges items={sessions} />
 
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.7 }}
-                className='relative mt-3 overflow-hidden rounded-2xl border border-[#DFE5E9] px-8 py-12 text-center'
-                style={{
-                  background:
-                    'linear-gradient(146.18deg, rgba(252, 243, 235, 0.6) 12.07%, rgba(223, 229, 233, 0.6) 45.37%, rgba(220, 215, 253, 0.6) 97.58%), white',
-                }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className='mt-3 rounded-lg bg-pastel-lilac/60 px-8 py-12 text-center'
               >
-                <div className='grid-pattern absolute inset-0 opacity-30' />
-                <div className='relative z-10 mx-auto max-w-xl font-serif text-2xl leading-relaxed text-[#1b1916] italic sm:text-3xl'>
-                  &ldquo;O que sai da sua cabeça vale mil vezes mais que o que
-                  sai da minha.&rdquo;
+                <div className='mx-auto max-w-xl font-serif text-2xl leading-relaxed text-ink italic sm:text-3xl'>
+                  &ldquo;{t.quote}&rdquo;
                 </div>
-                <div className='relative z-10 mt-3 font-mono text-xs text-[#6b6478]'>
-                  — Tutor Socrático, agora há pouco
+                <div className='mt-3 font-mono text-xs text-muted-foreground'>
+                  {t.quoteBy}
                 </div>
               </motion.div>
             </>
@@ -295,21 +361,21 @@ function DashboardSkeleton() {
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className='rounded-2xl border border-[#DFE5E9] bg-white p-5'
+            className='shadow-soft rounded-lg border border-border bg-white p-5'
           >
-            <Skeleton className='mb-4 size-11 rounded-xl' />
+            <Skeleton className='mb-4 size-11 rounded-full' />
             <Skeleton className='h-8 w-14' />
             <Skeleton className='mt-2 h-3 w-16' />
           </div>
         ))}
       </div>
       <div className='mb-3 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
-        <div className='rounded-2xl border border-[#DFE5E9] bg-white p-6'>
+        <div className='shadow-soft rounded-lg border border-border bg-white p-6'>
           <Skeleton className='h-3 w-24' />
           <Skeleton className='mt-2 h-5 w-40' />
-          <Skeleton className='mt-4 h-64 w-full rounded-xl' />
+          <Skeleton className='mt-4 h-64 w-full rounded-lg' />
         </div>
-        <div className='rounded-2xl border border-[#DFE5E9] bg-white p-6'>
+        <div className='shadow-soft rounded-lg border border-border bg-white p-6'>
           <Skeleton className='h-3 w-20' />
           <Skeleton className='mt-2 h-5 w-36' />
           <div className='mt-6 grid place-items-center'>
@@ -317,12 +383,12 @@ function DashboardSkeleton() {
           </div>
         </div>
       </div>
-      <div className='rounded-2xl border border-[#DFE5E9] bg-white p-6'>
+      <div className='shadow-soft rounded-lg border border-border bg-white p-6'>
         <Skeleton className='h-3 w-20' />
         <Skeleton className='mt-2 h-5 w-44' />
         <div className='mt-5 space-y-2'>
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className='h-16 w-full rounded-xl' />
+            <Skeleton key={i} className='h-16 w-full rounded-lg' />
           ))}
         </div>
       </div>
@@ -347,27 +413,26 @@ function StatCard({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.06, duration: 0.5 }}
-      className='rounded-2xl border border-[#DFE5E9] bg-white p-5'
+      transition={{ delay: i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className='shadow-soft hover:shadow-soft-lg rounded-lg border border-border bg-white p-5 transition-shadow duration-300 ease-out'
     >
       <div className='mb-4 flex items-center justify-between'>
-        <div className='grid size-11 place-items-center rounded-xl bg-[#dad8ea]/55 text-[#1b1916]'>
+        <div className='grid size-11 place-items-center rounded-full bg-pastel-lavender text-ink'>
           <Icon className='size-5' strokeWidth={1.5} />
         </div>
-        <div className='font-mono text-[10px] tracking-wider text-[#6b6478] uppercase'>
+        <div className='font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
           {label}
         </div>
       </div>
-      <div className='font-heading text-3xl font-semibold tracking-tight text-[#1b1916] tabular-nums'>
+      <div className='font-heading text-3xl font-light tracking-tight text-ink tabular-nums'>
         {value}
       </div>
-      <div className='mt-1 text-[12px] text-[#6b6478]'>{hint}</div>
+      <div className='mt-1 text-[12px] text-muted-foreground'>{hint}</div>
     </motion.div>
   )
 }
 
 const WEEKS = 18
-const DOW_LABELS = ['', 'Seg', '', 'Qua', '', 'Sex', '']
 
 function localDateKey(input: Date | string): string {
   const d = typeof input === 'string' ? new Date(input) : input
@@ -378,6 +443,7 @@ function localDateKey(input: Date | string): string {
 }
 
 function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
+  const t = useT(copy)
   const counts: Record<string, number> = {}
   for (const s of sessions) {
     if (!s.started_at) continue
@@ -404,25 +470,21 @@ function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.6 }}
-      className='flex flex-col rounded-2xl border border-[#DFE5E9] bg-white p-6'
+      transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className='shadow-soft hover:shadow-soft-lg flex flex-col rounded-lg border border-border bg-white p-6 transition-shadow duration-300 ease-out'
     >
       <div className='mb-1'>
-        <div className='font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-          Sua jornada
-        </div>
-        <h3 className='mt-1 font-heading text-xl font-semibold tracking-tight text-[#1b1916]'>
-          Atividade dos últimos meses
-        </h3>
+        <p className='eyebrow'>{t.journeyEyebrow}</p>
+        <h3 className='type-h4 mt-1'>{t.journeyTitle}</h3>
       </div>
       <div className='mt-6 flex gap-2 overflow-x-auto'>
         <div className='grid grid-rows-7 gap-1 pr-1'>
-          {DOW_LABELS.map((l, i) => (
+          {t.dow.map((l, i) => (
             <span
               key={i}
-              className='flex h-3 items-center font-mono text-[9px] text-[#6b6478]'
+              className='flex h-3 items-center font-mono text-[9px] text-muted-foreground'
             >
               {l}
             </span>
@@ -432,45 +494,42 @@ function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
           {days.map((d) => (
             <div
               key={d.key}
-              title={`${d.key}: ${d.count} ${d.count === 1 ? 'desafio' : 'desafios'}`}
+              title={`${d.key}: ${d.count} ${d.count === 1 ? t.challengeOne : t.challengeMany}`}
               className={
                 d.future
                   ? 'size-3 opacity-0'
-                  : `size-3 rounded-[2px] border border-[#DFE5E9] ${CELL[activityLevel(d.count, max)]}`
+                  : `size-3 rounded-[2px] border border-border ${CELL[activityLevel(d.count, max)]}`
               }
             />
           ))}
         </div>
       </div>
-      <div className='mt-6 flex items-center justify-end gap-1.5 font-mono text-[10px] text-[#6b6478]'>
-        <span>Menos</span>
+      <div className='mt-6 flex items-center justify-end gap-1.5 font-mono text-[10px] text-muted-foreground'>
+        <span>{t.less}</span>
         {CELL.map((c, l) => (
           <span
             key={l}
-            className={`size-3 rounded-[3px] border border-[#DFE5E9] ${c}`}
+            className={`size-3 rounded-[3px] border border-border ${c}`}
           />
         ))}
-        <span>Mais</span>
+        <span>{t.more}</span>
       </div>
     </motion.div>
   )
 }
 
 function IndependenceRing({ score }: { score: number }) {
-  const data = [{ name: 'indep', value: score, fill: IRIS }]
+  const t = useT(copy)
+  const data = [{ name: 'indep', value: score, fill: 'var(--chart-1)' }]
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.6 }}
-      className='flex flex-col rounded-2xl border border-[#DFE5E9] bg-white p-6'
+      transition={{ delay: 0.4, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className='shadow-soft hover:shadow-soft-lg flex flex-col rounded-lg border border-border bg-white p-6 transition-shadow duration-300 ease-out'
     >
-      <div className='font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-        Score atual
-      </div>
-      <h3 className='mt-1 font-heading text-xl font-semibold tracking-tight text-[#1b1916]'>
-        Independência total
-      </h3>
+      <p className='eyebrow'>{t.scoreEyebrow}</p>
+      <h3 className='type-h4 mt-1'>{t.scoreTitle}</h3>
       <div className='relative grid min-h-[200px] flex-1 place-items-center'>
         <ResponsiveContainer width='100%' height='100%'>
           <RadialBarChart
@@ -482,20 +541,20 @@ function IndependenceRing({ score }: { score: number }) {
           >
             <PolarAngleAxis type='number' domain={[0, 100]} tick={false} />
             <RadialBar
-              background={{ fill: 'oklch(0 0 0 / 0.05)' }}
+              background={{ fill: 'var(--pastel-mist)' }}
               dataKey='value'
-              fill={IRIS}
+              fill='var(--chart-1)'
               cornerRadius={20}
             />
           </RadialBarChart>
         </ResponsiveContainer>
         <div className='pointer-events-none absolute inset-0 grid place-items-center'>
           <div className='text-center'>
-            <div className='text-gradient-iris font-heading text-5xl font-semibold tabular-nums'>
+            <div className='font-heading text-5xl font-light tracking-tight text-ink tabular-nums'>
               {score}%
             </div>
-            <div className='mt-1 font-mono text-[11px] text-[#6b6478]'>
-              quanto você resolve sozinho
+            <div className='mt-1 font-mono text-[11px] text-muted-foreground'>
+              {t.scoreCaption}
             </div>
           </div>
         </div>
@@ -505,6 +564,8 @@ function IndependenceRing({ score }: { score: number }) {
 }
 
 function RecentChallenges({ items }: { items: SessionRow[] }) {
+  const t = useT(copy)
+  const { locale } = useLocale()
   const PAGE_SIZE = 6
   const [page, setPage] = React.useState(0)
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
@@ -513,50 +574,48 @@ function RecentChallenges({ items }: { items: SessionRow[] }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: 0.1, duration: 0.6 }}
-      className='rounded-2xl border border-[#DFE5E9] bg-white p-6'
+      transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className='shadow-soft hover:shadow-soft-lg rounded-lg border border-border bg-white p-6 transition-shadow duration-300 ease-out'
     >
       <div className='mb-5 flex items-end justify-between gap-4'>
         <div>
-          <div className='font-mono text-[11px] tracking-wider text-[#6b6478] uppercase'>
-            Histórico
-          </div>
-          <h3 className='mt-1 font-heading text-xl font-semibold tracking-tight text-[#1b1916]'>
-            Desafios recentes
-          </h3>
+          <p className='eyebrow'>{t.historyEyebrow}</p>
+          <h3 className='type-h4 mt-1'>{t.historyTitle}</h3>
         </div>
         {items.length > PAGE_SIZE && (
-          <div className='flex items-center gap-2 font-mono text-[11px] text-[#6b6478]'>
+          <div className='flex items-center gap-2 font-mono text-[11px] text-muted-foreground'>
             <span className='hidden sm:inline'>
-              {start + 1}–{Math.min(start + PAGE_SIZE, items.length)} de{' '}
+              {start + 1}–{Math.min(start + PAGE_SIZE, items.length)} {t.of}{' '}
               {items.length}
             </span>
-            <button
-              type='button'
+            <Button
+              variant='outline'
+              size='icon-sm'
+              className='size-8 sm:size-8'
               disabled={page === 0}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className='grid size-7 place-items-center rounded-lg border border-[#DFE5E9] transition-colors hover:bg-[#F7F9FA] disabled:opacity-40'
             >
               <ChevronLeft className='size-4' />
-            </button>
-            <button
-              type='button'
+            </Button>
+            <Button
+              variant='outline'
+              size='icon-sm'
+              className='size-8 sm:size-8'
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              className='grid size-7 place-items-center rounded-lg border border-[#DFE5E9] transition-colors hover:bg-[#F7F9FA] disabled:opacity-40'
             >
               <ChevronRight className='size-4' />
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
       {items.length === 0 ? (
-        <p className='text-sm text-[#6b6478]'>
-          Nenhum desafio ainda. Comece um para aparecer aqui.
+        <p className='text-sm text-muted-foreground'>
+          {t.historyEmpty}
         </p>
       ) : (
         <div className='space-y-2'>
@@ -567,33 +626,36 @@ function RecentChallenges({ items }: { items: SessionRow[] }) {
               <Link
                 key={c.id}
                 href={href}
-                className='group flex items-start gap-3 rounded-xl border border-[#DFE5E9] bg-[#F7F9FA] p-3.5 transition-colors hover:bg-[#F1F4F6]'
+                className='group flex items-start gap-3 rounded-lg bg-muted p-3.5 transition-colors duration-300 ease-out hover:bg-paper'
               >
-                <div className='grid size-9 shrink-0 place-items-center rounded-lg bg-[#dad8ea]/55 text-[#1b1916]'>
+                <div className='grid size-9 shrink-0 place-items-center rounded-full bg-pastel-lavender text-ink'>
                   <Code2 className='size-4' strokeWidth={1.5} />
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-start justify-between gap-2'>
-                    <div className='truncate text-[14px] font-medium text-[#1b1916]'>
-                      {c.challenges?.title ?? 'Desafio'}
+                    <div className='truncate text-[14px] font-medium text-ink'>
+                      {c.challenges?.title ?? t.challengeFallback}
                     </div>
-                    <div className='shrink-0 font-mono text-[11px] text-[#6b6478]'>
-                      {new Date(c.started_at).toLocaleDateString('pt-BR')}
+                    <div className='shrink-0 font-mono text-[11px] text-muted-foreground'>
+                      {new Date(c.started_at).toLocaleDateString(
+                        locale === 'pt' ? 'pt-BR' : 'en-US',
+                      )}
                     </div>
                   </div>
                   <div className='mt-2 flex items-center gap-3 font-mono text-[11px]'>
-                    <span className='rounded-full border border-[#DFE5E9] bg-white px-2 py-0.5 text-[#6b6478]'>
+                    <span className='rounded-full border border-border bg-white px-2 py-0.5 text-muted-foreground'>
                       {isDesign
                         ? 'System Design'
                         : c.challenges?.stack === 'javascript'
                           ? 'JavaScript'
                           : 'TypeScript'}
                     </span>
-                    <span className='text-[#6b6478]'>
-                      {STATUS_LABEL[c.status] ?? c.status}
+                    <span className='text-muted-foreground'>
+                      {(t.status as Record<string, string>)[c.status] ??
+                        c.status}
                     </span>
-                    <span className='ml-auto inline-flex items-center gap-1 text-iris opacity-0 transition-opacity group-hover:opacity-100'>
-                      {c.status === 'completed' ? 'Abrir' : 'Retomar'}
+                    <span className='ml-auto inline-flex items-center gap-1 text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
+                      {c.status === 'completed' ? t.open : t.resume}
                       <ArrowRight className='size-3' />
                     </span>
                   </div>

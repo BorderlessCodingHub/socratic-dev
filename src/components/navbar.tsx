@@ -2,23 +2,50 @@
 
 import { useUser } from '@/features/auth/hooks/use-user'
 import { buyHints, getHintBalance } from '@/features/hints/actions'
+import { useLocale, useT } from '@/lib/i18n'
 import { getAccessToken } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
 import { Lightbulb, Plus } from 'lucide-react'
 import { motion, useMotionValueEvent, useScroll } from 'motion/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import * as React from 'react'
 import { Logo } from './logo'
+import { Button } from './ui/button'
+
+const copy = {
+  en: {
+    library: 'Library',
+    how: 'How it works',
+    dashboard: 'Dashboard',
+    signIn: 'Sign in',
+    cta: 'Start a challenge',
+    profile: 'Your profile',
+    avatar: 'Your avatar',
+    hintsAvailable: 'Available hints',
+    buyHints: 'Buy +10 hints',
+  },
+  pt: {
+    library: 'Biblioteca',
+    how: 'Como funciona',
+    dashboard: 'Dashboard',
+    signIn: 'Entrar',
+    cta: 'Comece um desafio',
+    profile: 'Seu perfil',
+    avatar: 'Seu avatar',
+    hintsAvailable: 'Hints disponíveis',
+    buyHints: 'Comprar +10 hints',
+  },
+} as const
 
 function HintsChip() {
+  const t = useT(copy)
   const [remaining, setRemaining] = React.useState<number | null>(null)
   const [buying, setBuying] = React.useState(false)
 
   const refresh = React.useCallback(() => {
     getAccessToken()
-      .then((t) => getHintBalance(t))
+      .then((tk) => getHintBalance(tk))
       .then((b) => setRemaining(b.remaining))
       .catch(() => {})
   }, [])
@@ -40,13 +67,13 @@ function HintsChip() {
 
   if (remaining === null) return null
   return (
-    <div className='hidden h-9 items-center gap-1.5 rounded-full border border-[#DFE5E9] bg-white py-0 pr-1 pl-3 sm:inline-flex'>
-      <Lightbulb className='size-3.5 text-iris' />
+    <div className='border-border hidden h-9 items-center gap-1.5 rounded-full border bg-white py-0 pr-1 pl-3 sm:inline-flex'>
+      <Lightbulb className='text-primary size-3.5' strokeWidth={1.5} />
       <span
-        title='Hints disponíveis'
+        title={t.hintsAvailable}
         className={cn(
           'font-mono text-[12px]',
-          remaining <= 0 ? 'text-red-500' : 'text-[#6b6478]',
+          remaining <= 0 ? 'text-destructive' : 'text-muted-foreground',
         )}
       >
         {remaining}
@@ -55,27 +82,55 @@ function HintsChip() {
         type='button'
         onClick={buy}
         disabled={buying}
-        title='Comprar +10 hints'
-        className='ml-0.5 grid size-6 cursor-pointer place-items-center rounded-full text-iris transition-colors hover:bg-iris/10 disabled:opacity-50'
+        title={t.buyHints}
+        className='text-primary hover:bg-primary/10 ml-0.5 grid size-6 cursor-pointer place-items-center rounded-full transition-colors duration-200 disabled:opacity-50'
       >
-        <Plus className='size-3.5' />
+        <Plus className='size-3.5' strokeWidth={1.5} />
       </button>
     </div>
   )
 }
 
-const links = [
-  { href: '#problema', label: 'Problema' },
-  { href: '#metodo', label: 'Método' },
-  { href: '#recursos', label: 'Recursos' },
-  { href: '#manifesto', label: 'Manifesto' },
-]
+function LangToggle() {
+  const { locale, setLocale } = useLocale()
+  return (
+    <div className='border-border hidden h-9 items-center rounded-full border bg-white p-1 font-mono text-[11px] sm:flex'>
+      {(['en', 'pt'] as const).map((l) => (
+        <button
+          key={l}
+          type='button'
+          onClick={() => setLocale(l)}
+          aria-pressed={locale === l}
+          className={cn(
+            'cursor-pointer rounded-full px-2.5 py-1 uppercase transition-colors duration-200',
+            locale === l
+              ? 'bg-ink text-white'
+              : 'text-muted-foreground hover:text-ink',
+          )}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function NavLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className='text-muted-foreground hover:text-ink hidden px-3 py-2 text-sm font-medium transition-colors duration-200 md:inline-flex'
+    >
+      <span className='link-underline'>{label}</span>
+    </Link>
+  )
+}
 
 export function Navbar() {
+  const t = useT(copy)
   const [scrolled, setScrolled] = React.useState(false)
   const { scrollY } = useScroll()
   const { user, loading } = useUser()
-  const isHome = usePathname() === '/'
 
   useMotionValueEvent(scrollY, 'change', (v) => {
     setScrolled(v > 12)
@@ -87,48 +142,32 @@ export function Navbar() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
-        scrolled ? 'bg-white/95 backdrop-blur-xl' : 'bg-transparent',
+        'fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300',
+        scrolled
+          ? 'border-border bg-white/90 backdrop-blur'
+          : 'border-transparent bg-transparent',
       )}
     >
       <div className='container-main flex h-[72px] items-center justify-between'>
-        <Logo size='lg' />
-
-        {isHome && (
+        <div className='flex items-center gap-6'>
+          <Logo size='lg' />
           <nav className='hidden items-center gap-1 md:flex'>
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className='rounded-md px-3 py-2 text-sm font-medium text-[#6b6478] transition-colors hover:text-[#1b1916]'
-              >
-                {l.label}
-              </Link>
-            ))}
+            <NavLink href='/challenges' label={t.library} />
+            <NavLink href='/#metodo' label={t.how} />
           </nav>
-        )}
+        </div>
 
         <div className='flex items-center gap-2'>
+          <LangToggle />
           {!loading && user ? (
             <>
-              <Link
-                href='/challenges'
-                className='hidden rounded-md px-3 py-2 text-sm font-medium text-[#6b6478] transition-colors hover:text-[#1b1916] sm:inline-flex'
-              >
-                Biblioteca
-              </Link>
-              <Link
-                href='/dashboard'
-                className='hidden rounded-md px-3 py-2 text-sm font-medium text-[#6b6478] transition-colors hover:text-[#1b1916] sm:inline-flex'
-              >
-                Dashboard
-              </Link>
+              <NavLink href='/dashboard' label={t.dashboard} />
               <HintsChip />
               <Link
                 href='/profile'
-                aria-label='Seu perfil'
-                title={user.email ?? 'Seu perfil'}
-                className='grid size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-primary/20 transition-transform hover:scale-105'
+                aria-label={t.profile}
+                title={user.email ?? t.profile}
+                className='border-border grid size-9 shrink-0 overflow-hidden rounded-full border transition-transform duration-200 hover:scale-105'
               >
                 {(user.user_metadata as { avatar_url?: string } | undefined)
                   ?.avatar_url ? (
@@ -138,13 +177,13 @@ export function Navbar() {
                         user.user_metadata as { avatar_url?: string }
                       ).avatar_url!
                     }
-                    alt='Seu avatar'
+                    alt={t.avatar}
                     width={36}
                     height={36}
                     className='size-full object-cover'
                   />
                 ) : (
-                  <span className='grid size-full place-items-center bg-primary font-mono text-[13px] font-semibold text-primary-foreground uppercase'>
+                  <span className='bg-primary text-primary-foreground grid size-full place-items-center font-mono text-[13px] font-semibold uppercase'>
                     {(user.email?.[0] ?? 'u').toUpperCase()}
                   </span>
                 )}
@@ -153,11 +192,14 @@ export function Navbar() {
           ) : (
             <>
               <Link
-                href='/onboarding'
-                className='inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90'
+                href='/login'
+                className='text-muted-foreground hover:text-ink hidden px-3 py-2 text-sm font-medium transition-colors duration-200 sm:inline-flex'
               >
-                Começar agora
+                <span className='link-underline'>{t.signIn}</span>
               </Link>
+              <Button variant='ink' render={<Link href='/onboarding' />}>
+                {t.cta}
+              </Button>
             </>
           )}
         </div>
