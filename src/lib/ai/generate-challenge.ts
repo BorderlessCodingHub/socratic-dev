@@ -1,14 +1,21 @@
 import { askClaude } from '@/lib/ai/client'
 import type { Locale } from '@/lib/i18n'
 import { supabaseAdmin } from '../supabase/server'
+import { parseAiJson } from './parse-json'
 import { challengeSystem, levelGuide } from './prompts/challenge-generator'
 
 export type GenLevel = 'beginner' | 'intermediate' | 'advanced'
 
-function parseJson(raw: string): Record<string, unknown> {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-  const text = (fenced ? fenced[1] : raw).trim()
-  return JSON.parse(text)
+function parseChallenge(raw: string, locale: Locale): Record<string, unknown> {
+  try {
+    return parseAiJson(raw)
+  } catch {
+    throw new Error(
+      locale === 'pt'
+        ? 'A geração veio incompleta. Tente de novo.'
+        : 'The generation came back incomplete. Try again.',
+    )
+  }
 }
 
 async function existingTitles(
@@ -68,7 +75,7 @@ export async function generateChallenge(opts: {
       maxTokens: 2048,
       effort: 'medium',
     })
-    const json = parseJson(raw)
+    const json = parseChallenge(raw, locale)
     return supabaseAdmin
       .from('challenges')
       .insert({
@@ -90,7 +97,7 @@ export async function generateChallenge(opts: {
     maxTokens: opts.level === 'advanced' ? 6000 : 3500,
     effort: opts.level === 'advanced' ? 'high' : 'medium',
   })
-  const json = parseJson(raw)
+  const json = parseChallenge(raw, locale)
   return supabaseAdmin
     .from('challenges')
     .insert({

@@ -1,4 +1,5 @@
 import systemDesignLib from './system-design.lib.json'
+import infraLib from './infra.lib.json'
 
 type RawEl = {
   type?: string
@@ -17,6 +18,7 @@ type RawEl = {
   opacity?: number
   strokeSharpness?: string
   points?: number[][]
+  pressures?: number[]
   startArrowhead?: string | null
   endArrowhead?: string | null
   text?: string
@@ -39,21 +41,39 @@ export type LibraryComponent = {
 const TARGET_W = 210
 const MAX_H = 180
 
-const CURATED: Record<string, { index: number; title: string; dropText?: RegExp }> = {
-  service: { index: 1, title: 'Application\nserver' },
-  worker: { index: 3, title: 'server' },
-  database: { index: 6, title: 'Relational DB' },
-  storage: { index: 7, title: 'Object Storage' },
-  cache: { index: 13, title: 'Cache', dropText: /^(Key|Value)$/ },
-  gateway: { index: 14, title: 'Auth &\n IAM' },
-  lb: { index: 16, title: 'Load\nBalancer' },
-  queue: { index: 17, title: 'Message Q' },
-  external: { index: 19, title: 'cloud' },
-  cdn: { index: 20, title: 'CDN' },
-  client: { index: 23, title: 'Web Application', dropText: /^\S$|^Lorem ipsum/ },
+const SD = systemDesignLib.library as RawEl[][]
+const INFRA = infraLib.library as RawEl[][]
+
+// db-eng items carry residual captions ('host', 'Very fast Server', ...):
+// drop every text except the title.
+const DROP_ALL = /[\s\S]*/
+
+const CURATED: Record<
+  string,
+  { lib: RawEl[][]; index: number; title: string; dropText?: RegExp }
+> = {
+  service: { lib: INFRA, index: 3, title: 'Server', dropText: DROP_ALL },
+  worker: { lib: INFRA, index: 5, title: 'Server', dropText: DROP_ALL },
+  database: { lib: INFRA, index: 0, title: 'Database', dropText: DROP_ALL },
+  storage: { lib: SD, index: 7, title: 'Object Storage' },
+  cache: { lib: SD, index: 13, title: 'Cache', dropText: /^(Key|Value)$/ },
+  gateway: { lib: INFRA, index: 2, title: 'Firewall', dropText: DROP_ALL },
+  lb: { lib: INFRA, index: 1, title: 'Load\nBalancer', dropText: DROP_ALL },
+  queue: { lib: SD, index: 17, title: 'Message Q' },
+  external: { lib: INFRA, index: 4, title: 'Cloud', dropText: DROP_ALL },
+  cdn: { lib: SD, index: 20, title: 'CDN' },
+  client: { lib: SD, index: 23, title: 'Web Application', dropText: /^\S$|^Lorem ipsum/ },
 }
 
 const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase()
+
+// v1 libs use type 'draw'; 0.18+ renamed it to 'freedraw'.
+const typeOf = (el: RawEl) => (el.type === 'draw' ? 'freedraw' : el.type)
+
+const hasPoints = (el: RawEl) => {
+  const t = typeOf(el)
+  return t === 'line' || t === 'arrow' || t === 'freedraw'
+}
 
 function roundnessOf(el: RawEl): { type: number } | null {
   if (el.strokeSharpness !== 'round') return null
@@ -62,9 +82,30 @@ function roundnessOf(el: RawEl): { type: number } | null {
   return null
 }
 
+// For point-based elements x/y anchor the first point, which may not be the
+// top-left corner (points can be negative), so derive the bbox from points.
+function bboxOf(el: RawEl): [number, number, number, number] {
+  const x = el.x ?? 0
+  const y = el.y ?? 0
+  if (hasPoints(el) && Array.isArray(el.points) && el.points.length > 0) {
+    const xs = el.points.map((p) => p[0] ?? 0)
+    const ys = el.points.map((p) => p[1] ?? 0)
+    return [
+      x + Math.min(...xs),
+      y + Math.min(...ys),
+      x + Math.max(...xs),
+      y + Math.max(...ys),
+    ]
+  }
+  const w = el.width ?? 0
+  const h = el.height ?? 0
+  return [Math.min(x, x + w), Math.min(y, y + h), Math.max(x, x + w), Math.max(y, y + h)]
+}
+
 function sanitize(el: RawEl, dx: number, dy: number, s: number): Record<string, unknown> {
+  const type = typeOf(el)
   const out: Record<string, unknown> = {
-    type: el.type,
+    type,
     x: ((el.x ?? 0) - dx) * s,
     y: ((el.y ?? 0) - dy) * s,
     width: (el.width ?? 0) * s,
@@ -79,16 +120,20 @@ function sanitize(el: RawEl, dx: number, dy: number, s: number): Record<string, 
     opacity: el.opacity ?? 100,
     roundness: roundnessOf(el),
   }
-  if (el.type === 'line' || el.type === 'arrow') {
+  if (hasPoints(el)) {
     out.points = (el.points ?? [[0, 0], [el.width ?? 0, el.height ?? 0]]).map(
       (p) => [(p[0] ?? 0) * s, (p[1] ?? 0) * s],
     )
-    if (el.type === 'arrow') {
+    if (type === 'arrow') {
       out.startArrowhead = el.startArrowhead ?? null
       out.endArrowhead = el.endArrowhead ?? null
     }
+    if (type === 'freedraw') {
+      out.pressures = el.pressures ?? []
+      out.simulatePressure = !el.pressures?.length
+    }
   }
-  if (el.type === 'text') {
+  if (type === 'text') {
     out.text = el.text ?? ''
     out.fontSize = Math.max(8, (el.fontSize ?? 16) * s)
     out.fontFamily = el.fontFamily ?? 1
@@ -110,7 +155,7 @@ export function getLibraryComponent(type: string): LibraryComponent | null {
 function build(type: string): LibraryComponent | null {
   const spec = CURATED[type]
   if (!spec) return null
-  const item = (systemDesignLib.library as RawEl[][])[spec.index]
+  const item = spec.lib[spec.index]
   if (!Array.isArray(item)) return null
 
   const els = item.filter((e) => {
@@ -128,14 +173,11 @@ function build(type: string): LibraryComponent | null {
   let maxX = -Infinity
   let maxY = -Infinity
   for (const e of els) {
-    const x = e.x ?? 0
-    const y = e.y ?? 0
-    const w = e.width ?? 0
-    const h = e.height ?? 0
-    minX = Math.min(minX, x, x + w)
-    minY = Math.min(minY, y, y + h)
-    maxX = Math.max(maxX, x, x + w)
-    maxY = Math.max(maxY, y, y + h)
+    const [x0, y0, x1, y1] = bboxOf(e)
+    minX = Math.min(minX, x0)
+    minY = Math.min(minY, y0)
+    maxX = Math.max(maxX, x1)
+    maxY = Math.max(maxY, y1)
   }
   const rawW = maxX - minX
   const rawH = maxY - minY
