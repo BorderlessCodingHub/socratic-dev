@@ -1,10 +1,13 @@
 'use client'
 
-import { ArrowRight, Code2, Network } from 'lucide-react'
-import Link from 'next/link'
 import { useT } from '@/lib/i18n'
+import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+import { Halftone, glyph, paintArchitecture } from './halftone'
 import { Reveal } from './reveal'
-import { SectionBackdrop } from './section-backdrop'
+
+const paintCode = glyph('>_', 1.5)
 
 const copy = {
   en: {
@@ -14,9 +17,9 @@ const copy = {
     sub: 'Code or system design — same Socratic principle: the AI never hands it to you, it gets you there.',
     modes: [
       {
-        icon: Code2,
         tag: null as string | null,
         fill: 'bg-pastel-mist',
+        paint: paintCode,
         title: 'Code challenges',
         desc: 'A real Monaco editor, hidden tests, and a tutor that answers questions with questions. Solve it like you would at work — no cheating.',
         cta: 'Solve code',
@@ -27,9 +30,9 @@ const copy = {
         ],
       },
       {
-        icon: Network,
-        tag: 'New',
+        tag: 'New' as string | null,
         fill: 'bg-pastel-lavender',
+        paint: paintArchitecture,
         title: 'System design challenges',
         desc: 'Sketch the architecture on a canvas — services, databases, queues, and how the data flows. The AI sees your diagram and interrogates every decision.',
         cta: 'Design architecture',
@@ -48,9 +51,9 @@ const copy = {
     sub: 'Código ou system design (arquitetura) — o mesmo princípio socrático: a IA nunca entrega pronto, ela te leva até lá.',
     modes: [
       {
-        icon: Code2,
         tag: null as string | null,
         fill: 'bg-pastel-mist',
+        paint: paintCode,
         title: 'Desafios de código',
         desc: 'Editor Monaco de verdade, testes escondidos e um tutor que responde pergunta com pergunta. Resolva como no trabalho — sem cola.',
         cta: 'Resolver código',
@@ -61,9 +64,9 @@ const copy = {
         ],
       },
       {
-        icon: Network,
-        tag: 'Novo',
+        tag: 'Novo' as string | null,
         fill: 'bg-pastel-lavender',
+        paint: paintArchitecture,
         title: 'Desafios de system design',
         desc: 'Desenhe a arquitetura num canvas — serviços, bancos, filas e o fluxo dos dados. A IA enxerga seu diagrama e interroga cada decisão.',
         cta: 'Desenhar arquitetura',
@@ -79,9 +82,10 @@ const copy = {
 
 export function Modes() {
   const t = useT(copy)
+  const [hovered, setHovered] = useState<number | null>(null)
+
   return (
-    <section className='relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16 lg:py-24'>
-      <SectionBackdrop variant='warm' />
+    <section className='relative overflow-hidden px-6 py-14 sm:px-10 lg:px-16 lg:py-20'>
       <div className='relative mx-auto max-w-[860px] text-center'>
         <Reveal>
           <p className='eyebrow'>{t.eyebrow}</p>
@@ -97,41 +101,52 @@ export function Modes() {
         </Reveal>
       </div>
 
-      <div className='relative mx-auto mt-12 grid max-w-[980px] gap-4 lg:mt-16 lg:grid-cols-2'>
+      <div className='relative mx-auto mt-10 grid max-w-[980px] gap-4 lg:mt-12 lg:grid-cols-2'>
         {t.modes.map((m, i) => (
           <Reveal key={m.title} delay={i * 0.1} className='h-full'>
-            <div
-              className={`hover:shadow-soft-lg relative flex h-full flex-col rounded-lg p-7 transition-all duration-300 ease-out hover:-translate-y-[2px] sm:p-8 ${m.fill}`}
+            <Link
+              href='/onboarding'
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              className={`group/cta hover:shadow-soft-lg relative flex h-full flex-col overflow-hidden rounded-lg transition-all duration-300 ease-out hover:-translate-y-[2px] ${m.fill}`}
             >
               {m.tag && (
-                <span className='absolute top-6 right-6 rounded-full bg-lime px-2.5 py-1 font-mono text-[10px] tracking-wider text-ink uppercase'>
+                <span className='bg-lime text-ink absolute top-5 right-5 z-10 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase'>
                   {m.tag}
                 </span>
               )}
-              <div className='grid size-12 place-items-center rounded-full bg-white/60 text-ink'>
-                <m.icon className='size-6' strokeWidth={1.5} />
-              </div>
-              <h3 className='type-h3 mt-5 text-2xl lg:text-[28px]'>{m.title}</h3>
-              <p className='type-body mt-3'>{m.desc}</p>
-              <ul className='mt-5 space-y-2'>
-                {m.points.map((p) => (
-                  <li
-                    key={p}
-                    className='flex items-center gap-2.5 text-sm text-aubergine'
-                  >
-                    <span className='size-1.5 shrink-0 rounded-full bg-primary' />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href='/onboarding'
-                className='group/cta mt-7 inline-flex cursor-pointer items-center gap-1.5 text-[15px] font-medium text-ink'
+              <div
+                className={`pointer-events-none relative mx-5 mt-5 h-[150px] mix-blend-multiply transition-opacity duration-500 ${hovered === i ? 'opacity-80' : 'opacity-30'}`}
               >
-                <span className='link-underline'>{m.cta}</span>
-                <ArrowRight className='size-4 transition-transform group-hover/cta:translate-x-0.5' />
-              </Link>
-            </div>
+                <Halftone
+                  draw={m.paint}
+                  active={hovered === i}
+                  interactive
+                  spacing={8}
+                  flow={12}
+                  className='absolute inset-0'
+                />
+              </div>
+              <div className='flex flex-1 flex-col p-6 pt-4 sm:p-7 sm:pt-4'>
+                <h3 className='type-h3 text-2xl lg:text-[28px]'>{m.title}</h3>
+                <p className='type-body mt-3'>{m.desc}</p>
+                <ul className='mt-5 space-y-2'>
+                  {m.points.map((p) => (
+                    <li
+                      key={p}
+                      className='text-aubergine flex items-center gap-2.5 text-sm'
+                    >
+                      <span className='bg-primary size-1.5 shrink-0 rounded-full' />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+                <span className='text-ink mt-6 inline-flex items-center gap-1.5 text-[15px] font-medium'>
+                  <span className='link-underline'>{m.cta}</span>
+                  <ArrowRight className='size-4 transition-transform group-hover/cta:translate-x-0.5' />
+                </span>
+              </div>
+            </Link>
           </Reveal>
         ))}
       </div>

@@ -2,8 +2,14 @@
 
 import * as React from 'react'
 
+export type Painter = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => void
+
 type HalftoneProps = {
-  draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void
+  draw: Painter
   active?: boolean
   mode?: 'dots' | 'dashes'
   spacing?: number
@@ -11,6 +17,46 @@ type HalftoneProps = {
   interactive?: boolean
   color?: string
   className?: string
+}
+
+export function glyph(text: string, widthFactor: number): Painter {
+  return (ctx, w, h) => {
+    const size = Math.min(h * 0.85, w / widthFactor)
+    ctx.font = `700 ${size}px ui-monospace, Menlo, Consolas, monospace`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, w / 2, h / 2)
+  }
+}
+
+export const paintArchitecture: Painter = (ctx, w, h) => {
+  const s = Math.min(w, h * 2.6) / 560
+  ctx.translate(w / 2, h / 2)
+  ctx.scale(s, s)
+  const box = (x: number, y: number) => {
+    ctx.beginPath()
+    ctx.roundRect(x, y, 120, 70, 12)
+    ctx.fill()
+  }
+  box(-270, -110)
+  box(-270, 40)
+  box(-60, -35)
+  ctx.beginPath()
+  ctx.ellipse(200, -55, 55, 22, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillRect(145, -55, 110, 110)
+  ctx.beginPath()
+  ctx.ellipse(200, 55, 55, 22, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.lineWidth = 12
+  ctx.beginPath()
+  ctx.moveTo(-150, -75)
+  ctx.lineTo(-60, -10)
+  ctx.moveTo(-150, 75)
+  ctx.lineTo(-60, 10)
+  ctx.moveTo(60, 0)
+  ctx.lineTo(145, 0)
+  ctx.stroke()
 }
 
 function hash(x: number, y: number) {

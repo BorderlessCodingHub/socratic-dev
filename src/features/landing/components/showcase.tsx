@@ -100,8 +100,8 @@ export function Showcase() {
   return (
     <section className='space-y-4 p-3 md:space-y-6 md:p-6'>
       <Reveal>
-        <div className='bg-pastel-lilac/45 rounded-lg px-5 pt-10 pb-5 sm:px-8 sm:pt-12 lg:px-12 lg:pt-14 lg:pb-8'>
-          <div className='mb-10 grid gap-6 lg:mb-12 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'>
+        <div className='bg-pastel-lilac/45 rounded-lg px-5 pt-8 pb-4 sm:px-8 sm:pt-10 lg:px-12 lg:pt-12 lg:pb-6'>
+          <div className='mb-8 grid gap-6 lg:mb-10 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'>
             <div>
               <p className='eyebrow'>{t.loopEyebrow}</p>
               <h2 className='type-h2 mt-4 max-w-[560px]'>{t.loopTitle}</h2>
@@ -128,8 +128,8 @@ export function Showcase() {
       </Reveal>
 
       <Reveal>
-        <div className='bg-pastel-mist/50 rounded-lg px-5 pt-10 pb-5 sm:px-8 sm:pt-12 lg:px-12 lg:pt-14 lg:pb-8'>
-          <div className='mb-10 grid gap-6 lg:mb-12 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'>
+        <div className='bg-pastel-mist/50 rounded-lg px-5 pt-8 pb-4 sm:px-8 sm:pt-10 lg:px-12 lg:pt-12 lg:pb-6'>
+          <div className='mb-8 grid gap-6 lg:mb-10 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'>
             <div>
               <p className='eyebrow'>{t.scoreEyebrow}</p>
               <h2 className='type-h2 mt-4 max-w-[620px]'>{t.scoreTitle}</h2>
@@ -251,54 +251,87 @@ function WorkspaceWindow() {
   )
 }
 
+const HEAT = [
+  1, 0, 2, 3, 1, 0, 0, 2, 3, 2, 1, 0, 1, 2, 0, 3, 2, 1, 0, 1, 3, 2, 0, 1, 2,
+  3, 1, 2, 0, 3,
+]
+
+const HEAT_TONE = [
+  'bg-muted',
+  'bg-pastel-lilac',
+  'bg-primary/35',
+  'bg-primary/75',
+]
+
 function ScoreBoard() {
   const t = useT(copy)
   const bars = [82, 64, 48, 71]
 
   return (
     <div className='shadow-soft-lg border-border overflow-hidden rounded-lg border bg-white'>
-      <div className='grid lg:grid-cols-[380px_1fr]'>
-        <div className='border-border flex flex-col justify-between gap-8 border-b p-6 sm:p-8 lg:border-r lg:border-b-0'>
+      <div className='grid lg:grid-cols-[minmax(300px,380px)_1fr]'>
+        <div className='border-border flex flex-col justify-between gap-6 border-b p-6 lg:border-r lg:border-b-0 lg:p-7'>
           <div>
             <div className='eyebrow'>{t.scoreLabel}</div>
-            <div className='font-heading text-ink mt-3 text-[88px] leading-none font-light tracking-[-4px] sm:text-[112px]'>
-              73
-              <span className='text-muted-foreground text-[32px] tracking-[-1px] sm:text-[40px]'>
+            <div className='font-heading text-ink mt-2 text-[80px] leading-none font-light tracking-[-4px] sm:text-[96px]'>
+              <motion.span
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                73
+              </motion.span>
+              <span className='text-muted-foreground text-[30px] tracking-[-1px] sm:text-[36px]'>
                 /100
               </span>
             </div>
           </div>
-          <div className='flex items-center gap-3'>
-            <span className='bg-lime text-ink rounded-full px-3 py-1 font-mono text-[11px] font-medium'>
-              {t.trend}
-            </span>
-            <span className='text-muted-foreground font-mono text-[11px]'>
-              {t.sessions}
-            </span>
-          </div>
+          <span className='bg-lime text-ink w-fit rounded-full px-3 py-1 font-mono text-[11px] font-medium'>
+            {t.trend}
+          </span>
         </div>
-        <div className='space-y-5 p-6 sm:p-8'>
-          {t.bars.map((label, i) => (
-            <div key={label}>
-              <div className='text-muted-foreground mb-1.5 flex justify-between font-mono text-[11px]'>
-                <span className='tracking-[0.1em] uppercase'>{label}</span>
-                <span>{bars[i]}%</span>
+        <div className='flex flex-col justify-between gap-6 p-6 lg:p-7'>
+          <div className='space-y-4'>
+            {t.bars.map((label, i) => (
+              <div key={label}>
+                <div className='text-muted-foreground mb-1 flex justify-between font-mono text-[11px]'>
+                  <span className='tracking-[0.1em] uppercase'>{label}</span>
+                  <span>{bars[i]}%</span>
+                </div>
+                <div className='bg-muted h-2 overflow-hidden rounded-full'>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${bars[i]}%` }}
+                    viewport={{ once: true }}
+                    transition={{
+                      duration: 0.9,
+                      delay: i * 0.1,
+                      ease: 'easeOut',
+                    }}
+                    className='bg-primary h-full rounded-full'
+                  />
+                </div>
               </div>
-              <div className='bg-muted h-2 overflow-hidden rounded-full'>
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${bars[i]}%` }}
+            ))}
+          </div>
+          <div>
+            <div className='flex flex-wrap gap-[5px]'>
+              {HEAT.map((v, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{
-                    duration: 0.9,
-                    delay: i * 0.1,
-                    ease: 'easeOut',
-                  }}
-                  className='bg-primary h-full rounded-full'
+                  transition={{ duration: 0.25, delay: 0.3 + i * 0.02 }}
+                  className={`size-[14px] rounded-[4px] ${HEAT_TONE[v]}`}
                 />
-              </div>
+              ))}
             </div>
-          ))}
+            <p className='text-muted-foreground mt-2.5 font-mono text-[11px]'>
+              {t.sessions}
+            </p>
+          </div>
         </div>
       </div>
     </div>

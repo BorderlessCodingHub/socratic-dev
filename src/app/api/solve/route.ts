@@ -28,6 +28,74 @@ function parseJson(raw: string): Record<string, unknown> {
   return JSON.parse(s)
 }
 
+const DESIGN_NODE_TYPES = new Set([
+  'client',
+  'cdn',
+  'lb',
+  'gateway',
+  'service',
+  'worker',
+  'queue',
+  'cache',
+  'database',
+  'storage',
+  'search',
+  'external',
+])
+
+type DesignNode = {
+  id: string
+  label: string
+  type: string
+  note?: string
+  tier?: number
+}
+
+type DesignEdge = { from: string; to: string; label?: string; dashed?: boolean }
+
+function sanitizeDesign(rawNodes: unknown[], rawEdges: unknown[]) {
+  const nodes: DesignNode[] = []
+  const ids = new Set<string>()
+  for (const item of rawNodes) {
+    if (nodes.length >= 12) break
+    if (!item || typeof item !== 'object') continue
+    const o = item as Record<string, unknown>
+    const id = typeof o.id === 'string' ? o.id.trim() : ''
+    const label = typeof o.label === 'string' ? o.label.trim().slice(0, 24) : ''
+    if (!id || !label || ids.has(id)) continue
+    ids.add(id)
+    const node: DesignNode = {
+      id,
+      label,
+      type: DESIGN_NODE_TYPES.has(o.type as string)
+        ? (o.type as string)
+        : 'service',
+    }
+    if (typeof o.note === 'string' && o.note.trim())
+      node.note = o.note.trim().slice(0, 40)
+    if (typeof o.tier === 'number' && Number.isFinite(o.tier))
+      node.tier = Math.min(5, Math.max(0, Math.round(o.tier)))
+    nodes.push(node)
+  }
+
+  const edges: DesignEdge[] = []
+  for (const item of rawEdges) {
+    if (edges.length >= 24) break
+    if (!item || typeof item !== 'object') continue
+    const o = item as Record<string, unknown>
+    const from = typeof o.from === 'string' ? o.from.trim() : ''
+    const to = typeof o.to === 'string' ? o.to.trim() : ''
+    if (!from || !to || from === to || !ids.has(from) || !ids.has(to)) continue
+    const edge: DesignEdge = { from, to }
+    if (typeof o.label === 'string' && o.label.trim())
+      edge.label = o.label.trim().slice(0, 24)
+    if (o.dashed === true) edge.dashed = true
+    edges.push(edge)
+  }
+
+  return { nodes, edges }
+}
+
 export async function POST(req: Request) {
   try {
     const auth = await requireUser(req)
@@ -83,8 +151,10 @@ export async function POST(req: Request) {
         effort: 'medium',
       })
       const json = parseJson(raw)
-      const nodes = Array.isArray(json.nodes) ? json.nodes : []
-      const edges = Array.isArray(json.edges) ? json.edges : []
+      const { nodes, edges } = sanitizeDesign(
+        Array.isArray(json.nodes) ? json.nodes : [],
+        Array.isArray(json.edges) ? json.edges : [],
+      )
       if (nodes.length === 0)
         return jsonError('Não consegui montar o diagrama. Tente de novo.', 502)
       const remaining = await consumeHints(userId, sessionId, 3, SOLVE_COST)

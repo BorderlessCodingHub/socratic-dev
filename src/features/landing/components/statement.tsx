@@ -22,9 +22,9 @@ export function Statement() {
   return (
     <section
       id='problema'
-      className='px-6 py-20 text-center sm:px-10 sm:py-24 lg:py-32'
+      className='px-6 py-14 text-center sm:px-10 sm:py-16 lg:py-20'
     >
-      <div className='mx-auto flex max-w-[760px] flex-col items-center gap-6'>
+      <div className='mx-auto flex max-w-[760px] flex-col items-center gap-5'>
         <Reveal>
           <h2 className='type-h2 text-pretty'>
             {t.h2}{' '}

@@ -3,7 +3,12 @@
 import { useT } from '@/lib/i18n'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Halftone } from './halftone'
+import {
+  Halftone,
+  glyph,
+  paintArchitecture,
+  type Painter,
+} from './halftone'
 import { Reveal } from './reveal'
 
 const copy = {
@@ -75,18 +80,6 @@ const copy = {
   },
 } as const
 
-type Painter = (ctx: CanvasRenderingContext2D, w: number, h: number) => void
-
-function glyph(text: string, widthFactor: number): Painter {
-  return (ctx, w, h) => {
-    const size = Math.min(h * 0.85, w / widthFactor)
-    ctx.font = `700 ${size}px ui-monospace, Menlo, Consolas, monospace`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(text, w / 2, h / 2)
-  }
-}
-
 const paintApi = glyph('{ }', 2)
 const paintUi = glyph('</>', 2)
 const paintAlgo = glyph('O(n)', 2.7)
@@ -130,36 +123,6 @@ const paintDebug: Painter = (ctx, w, h) => {
   ctx.stroke()
 }
 
-const paintDesign: Painter = (ctx, w, h) => {
-  const s = Math.min(w, h * 2.6) / 560
-  ctx.translate(w / 2, h / 2)
-  ctx.scale(s, s)
-  const box = (x: number, y: number) => {
-    ctx.beginPath()
-    ctx.roundRect(x, y, 120, 70, 12)
-    ctx.fill()
-  }
-  box(-270, -110)
-  box(-270, 40)
-  box(-60, -35)
-  ctx.beginPath()
-  ctx.ellipse(200, -55, 55, 22, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.fillRect(145, -55, 110, 110)
-  ctx.beginPath()
-  ctx.ellipse(200, 55, 55, 22, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.lineWidth = 12
-  ctx.beginPath()
-  ctx.moveTo(-150, -75)
-  ctx.lineTo(-60, -10)
-  ctx.moveTo(-150, 75)
-  ctx.lineTo(-60, 10)
-  ctx.moveTo(60, 0)
-  ctx.lineTo(145, 0)
-  ctx.stroke()
-}
-
 type ArenaKey = 'api' | 'ui' | 'algo' | 'debug' | 'design'
 
 type Arena = {
@@ -175,7 +138,7 @@ const arenas: Arena[] = [
   { key: 'ui', href: '/onboarding', fill: 'bg-pastel-sage', paint: paintUi },
   { key: 'algo', href: '/onboarding', fill: 'bg-pastel-mist', paint: paintAlgo },
   { key: 'debug', href: '/onboarding', fill: 'bg-pastel-sand', soon: true, paint: paintDebug },
-  { key: 'design', href: '/onboarding', fill: 'bg-pastel-lavender', paint: paintDesign },
+  { key: 'design', href: '/onboarding', fill: 'bg-pastel-lavender', paint: paintArchitecture },
 ]
 
 function Scene({ paint, active }: { paint: Painter; active: boolean }) {
@@ -225,7 +188,7 @@ export function UseCases() {
     .join(' ')
 
   return (
-    <section className='relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16 lg:py-24'>
+    <section className='relative overflow-hidden px-6 py-14 sm:px-10 lg:px-16 lg:py-20'>
       <Reveal>
         <p className='eyebrow'>{t.eyebrow}</p>
         <h2 className='type-h2 mt-4 max-w-[680px]'>{t.title}</h2>

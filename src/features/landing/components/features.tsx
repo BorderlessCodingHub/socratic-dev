@@ -84,7 +84,7 @@ export function Features() {
   const t = useT(copy)
 
   return (
-    <section id='recursos' className='px-6 py-16 sm:px-10 lg:px-16 lg:py-24'>
+    <section id='recursos' className='px-6 py-14 sm:px-10 lg:px-16 lg:py-20'>
       <div className='max-w-[720px]'>
         <Reveal>
           <p className='eyebrow'>{t.eyebrow}</p>

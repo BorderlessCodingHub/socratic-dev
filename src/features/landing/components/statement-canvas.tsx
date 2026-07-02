@@ -37,7 +37,7 @@ const copy = {
 export function StatementCanvas() {
   const t = useT(copy)
   return (
-    <div className='mx-auto mt-14 grid w-full max-w-[880px] gap-4 px-4 text-left lg:mt-16 lg:grid-cols-2'>
+    <div className='mx-auto mt-10 grid w-full max-w-[880px] gap-4 px-4 text-left lg:grid-cols-2'>
       <ComparisonCard
         eyebrow={t.shortcut.eyebrow}
         title={t.shortcut.title}
@@ -65,37 +65,52 @@ function ComparisonCard({
 }: {
   eyebrow: string
   title: string
-  tone: 'sand' | 'sage'
+  tone: 'stone' | 'sage'
   steps: readonly string[]
   footer: string
 }) {
+  const dead = tone === 'stone'
   return (
     <div
       className={cn(
-        'flex h-full flex-col rounded-lg p-7 sm:p-8',
-        tone === 'sand' ? 'bg-pastel-sand' : 'bg-pastel-sage',
+        'flex h-full flex-col rounded-lg p-6',
+        dead ? 'bg-pastel-stone/60' : 'bg-pastel-sage',
       )}
     >
-      <p className='eyebrow mb-6'>{eyebrow}</p>
-      <h3 className='type-h4 mb-8'>{title}</h3>
-      <ol className='flex flex-col gap-3'>
+      {dead ? (
+        <p className='eyebrow mb-4'>{eyebrow}</p>
+      ) : (
+        <p className='bg-lime text-ink mb-4 w-fit rounded-full px-2.5 py-1 font-mono text-[10px] font-medium tracking-[0.14em] uppercase'>
+          {eyebrow}
+        </p>
+      )}
+      <h3 className='type-h4 mb-5'>{title}</h3>
+      <ol className='flex flex-col gap-2'>
         {steps.map((step, i) => (
           <li
             key={step}
-            className='flex items-baseline gap-3 text-[15px] text-aubergine'
+            className={cn(
+              'flex items-baseline gap-3 text-[15px]',
+              dead ? 'text-aubergine/70' : 'text-aubergine',
+            )}
           >
             <span className='font-mono text-[11px] tracking-wider text-muted-foreground'>
               0{i + 1}
             </span>
-            <span aria-hidden className='text-ink/40'>
+            <span aria-hidden className={dead ? 'text-ink/25' : 'text-mint'}>
               →
             </span>
             <span>{step}</span>
           </li>
         ))}
       </ol>
-      <div className='mt-auto pt-8'>
-        <p className='border-t border-ink/10 pt-4 font-mono text-[11px] tracking-wide text-muted-foreground'>
+      <div className='mt-auto pt-5'>
+        <p
+          className={cn(
+            'border-ink/10 border-t pt-4 font-mono text-[11px] tracking-wide',
+            dead ? 'text-muted-foreground' : 'text-mint',
+          )}
+        >
           {footer}
         </p>
       </div>
