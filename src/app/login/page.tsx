@@ -64,7 +64,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className='grid min-h-screen place-items-center bg-white'>
+        <div className='grid min-h-screen place-items-center bg-background'>
           <Loader2 className='size-5 animate-spin text-muted-foreground' />
         </div>
       }
@@ -151,7 +151,7 @@ function LoginForm() {
   }
 
   return (
-    <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
+    <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <header className='flex h-16 shrink-0 items-center px-6 sm:px-10'>
         <Logo />
       </header>
@@ -212,7 +212,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.emailPlaceholder}
-                className='rounded-lg border border-border bg-white px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+                className='rounded-lg border border-border bg-background px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
               />
               <input
                 type='password'
@@ -221,7 +221,7 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.passwordPlaceholder}
-                className='rounded-lg border border-border bg-white px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+                className='rounded-lg border border-border bg-background px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
               />
               {formError && <p className='text-sm text-destructive'>{formError}</p>}
               {notice && <p className='text-sm text-muted-foreground'>{notice}</p>}

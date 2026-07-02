@@ -111,12 +111,12 @@ export function Modes() {
               className={`group/cta hover:shadow-soft-lg relative flex h-full flex-col overflow-hidden rounded-lg transition-all duration-300 ease-out hover:-translate-y-[2px] ${m.fill}`}
             >
               {m.tag && (
-                <span className='bg-lime text-ink absolute top-5 right-5 z-10 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase'>
+                <span className='bg-lime text-ink dark:text-background absolute top-5 right-5 z-10 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase'>
                   {m.tag}
                 </span>
               )}
               <div
-                className={`pointer-events-none relative mx-5 mt-5 h-[150px] mix-blend-multiply transition-opacity duration-500 ${hovered === i ? 'opacity-80' : 'opacity-30'}`}
+                className={`pointer-events-none relative mx-5 mt-5 h-[150px] mix-blend-multiply transition-opacity duration-500 dark:mix-blend-screen ${hovered === i ? 'opacity-80' : 'opacity-30'}`}
               >
                 <Halftone
                   draw={m.paint}

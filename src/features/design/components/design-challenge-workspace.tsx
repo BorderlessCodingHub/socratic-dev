@@ -275,7 +275,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   if (!challenge) return <ChallengeSkeleton />
 
   return (
-    <div className='relative flex h-screen flex-col overflow-hidden bg-white'>
+    <div className='relative flex h-screen flex-col overflow-hidden bg-background'>
       <WorkspaceHeader
         title={challenge.title}
         elapsed={s.elapsed}

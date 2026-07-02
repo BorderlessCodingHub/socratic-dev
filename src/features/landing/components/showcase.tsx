@@ -114,7 +114,7 @@ export function Showcase() {
                     key={b}
                     className='text-aubergine flex items-start gap-2.5 text-[15px] tracking-[-0.18px]'
                   >
-                    <span className='bg-ink mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full text-white'>
+                    <span className='bg-ink text-background mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full'>
                       <Check className='size-2.5' strokeWidth={3} />
                     </span>
                     {b}
@@ -172,7 +172,7 @@ function WorkspaceWindow() {
   }, [])
 
   return (
-    <div className='shadow-soft-lg border-border overflow-hidden rounded-lg border bg-white'>
+    <div className='shadow-soft-lg border-border bg-card overflow-hidden rounded-lg border'>
       <div className='border-border bg-muted flex items-center gap-2 border-b px-4 py-3'>
         <span className='bg-pastel-stone size-2.5 rounded-full' />
         <span className='bg-pastel-sand size-2.5 rounded-full' />
@@ -222,8 +222,8 @@ function WorkspaceWindow() {
                   className={cn(
                     'rounded-2xl px-3 py-2',
                     m.from === 'user'
-                      ? 'bg-ink max-w-[80%] rounded-br-md text-white'
-                      : 'border-primary/20 bg-pastel-lilac/50 text-aubergine max-w-[88%] rounded-bl-md border',
+                      ? 'bg-ink text-background max-w-[80%] rounded-br-md'
+                      : 'border-primary/20 bg-pastel-sage/60 text-aubergine max-w-[88%] rounded-bl-md border',
                   )}
                 >
                   {m.text}
@@ -242,7 +242,7 @@ function WorkspaceWindow() {
               <span className='bg-ink/40 ml-0.5 inline-block h-3.5 w-[1.5px] animate-pulse' />
             </div>
             <div className='bg-primary grid size-9 shrink-0 place-items-center rounded-full'>
-              <ArrowRight className='size-3.5 text-white' />
+              <ArrowRight className='text-primary-foreground size-3.5' />
             </div>
           </motion.div>
         </div>
@@ -258,7 +258,7 @@ const HEAT = [
 
 const HEAT_TONE = [
   'bg-muted',
-  'bg-pastel-lilac',
+  'bg-pastel-sage',
   'bg-primary/35',
   'bg-primary/75',
 ]
@@ -268,7 +268,7 @@ function ScoreBoard() {
   const bars = [82, 64, 48, 71]
 
   return (
-    <div className='shadow-soft-lg border-border overflow-hidden rounded-lg border bg-white'>
+    <div className='shadow-soft-lg border-border bg-card overflow-hidden rounded-lg border'>
       <div className='grid lg:grid-cols-[minmax(300px,380px)_1fr]'>
         <div className='border-border flex flex-col justify-between gap-6 border-b p-6 lg:border-r lg:border-b-0 lg:p-7'>
           <div>
@@ -287,7 +287,7 @@ function ScoreBoard() {
               </span>
             </div>
           </div>
-          <span className='bg-lime text-ink w-fit rounded-full px-3 py-1 font-mono text-[11px] font-medium'>
+          <span className='bg-lime text-ink dark:text-background w-fit rounded-full px-3 py-1 font-mono text-[11px] font-medium'>
             {t.trend}
           </span>
         </div>

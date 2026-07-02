@@ -10,13 +10,13 @@ const copy = {
   en: {
     independenceTitle:
       'Starts at 100. Every hint costs. It measures how much you thought on your own.',
-    independence: 'Independence:',
+    independence: 'Independence',
     submit: 'Submit',
   },
   pt: {
     independenceTitle:
       'Começa em 100. Cada hint custa. É o quanto você pensou sozinho.',
-    independence: 'Independência:',
+    independence: 'Independência',
     submit: 'Submeter',
   },
 }
@@ -39,30 +39,37 @@ export function WorkspaceHeader({
   const seconds = String(elapsed % 60).padStart(2, '0')
 
   return (
-    <header className='z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-white/80 px-4 backdrop-blur-xl'>
-      <div className='flex items-center gap-4'>
+    <header className='z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-xl'>
+      <div className='flex min-w-0 items-center gap-4'>
         <Logo />
-        <div className='hidden items-center gap-2 border-l border-border pl-4 font-mono text-[12px] text-muted-foreground sm:flex'>
-          <Building className='size-3.5' strokeWidth={1.5} />
-          {title}
+        <div className='hidden min-w-0 items-center gap-2 border-l border-border pl-4 sm:flex'>
+          <Building
+            className='size-3.5 shrink-0 text-muted-foreground'
+            strokeWidth={1.5}
+          />
+          <span className='truncate text-[13px] font-medium text-ink'>
+            {title}
+          </span>
         </div>
       </div>
-      <div className='flex items-center gap-2'>
-        <div className='glass hidden h-8 items-center gap-2 rounded-full px-3 font-mono text-[12px] text-ink md:flex'>
-          <Clock className='size-3.5 opacity-70' strokeWidth={1.5} />
+      <div className='flex shrink-0 items-center'>
+        <div className='hidden items-center gap-2 px-4 font-mono text-[12px] tabular-nums text-ink md:flex'>
+          <Clock className='size-3.5 text-muted-foreground' strokeWidth={1.5} />
           <span>
             {minutes}:{seconds}
           </span>
         </div>
         <div
-          className='glass hidden h-8 items-center gap-2 rounded-full px-3 text-[12px] md:flex'
+          className='hidden items-center gap-2 border-l border-border px-4 font-mono md:flex'
           title={t.independenceTitle}
         >
-          <Brain className='size-3.5 opacity-70' strokeWidth={1.5} />
-          <span className='text-muted-foreground'>{t.independence}</span>
+          <Brain className='size-3.5 text-muted-foreground' strokeWidth={1.5} />
+          <span className='text-[10px] tracking-wider text-muted-foreground uppercase'>
+            {t.independence}
+          </span>
           <span
             className={cn(
-              'font-medium tabular-nums',
+              'text-[12px] font-medium tabular-nums',
               independence > 70
                 ? 'text-mint'
                 : independence > 40
@@ -73,16 +80,18 @@ export function WorkspaceHeader({
             {independence}%
           </span>
         </div>
-        <Button
-          size='sm'
-          variant='ink'
-          disabled={submitting}
-          onClick={onSubmit}
-          className='h-8 gap-1.5'
-        >
-          <GitPullRequestArrow className='size-3.5' />
-          {t.submit}
-        </Button>
+        <div className='md:border-l md:border-border md:pl-4'>
+          <Button
+            size='sm'
+            variant='ink'
+            disabled={submitting}
+            onClick={onSubmit}
+            className='h-8 gap-1.5 px-3.5'
+          >
+            <GitPullRequestArrow className='size-3.5' />
+            {t.submit}
+          </Button>
+        </div>
       </div>
     </header>
   )

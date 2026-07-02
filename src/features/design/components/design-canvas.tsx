@@ -4,6 +4,7 @@ import '@excalidraw/excalidraw/index.css'
 import { useT } from '@/lib/i18n'
 import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useEffect, useState } from 'react'
 import type { ExcalidrawApi } from '../utils/scene'
 
 const copy = {
@@ -46,6 +47,19 @@ async function loadUserLibrary(api: ExcalidrawApi) {
   }
 }
 
+function useDarkMode(): boolean {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    const el = document.documentElement
+    const update = () => setDark(el.classList.contains('dark'))
+    update()
+    const observer = new MutationObserver(update)
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+  return dark
+}
+
 export function DesignCanvas({
   initialElements,
   onApi,
@@ -55,9 +69,11 @@ export function DesignCanvas({
   onApi: (api: ExcalidrawApi) => void
   onChange: (elements: readonly unknown[]) => void
 }) {
+  const dark = useDarkMode()
   return (
     <div className='h-full w-full'>
       <Excalidraw
+        theme={dark ? 'dark' : 'light'}
         excalidrawAPI={(api) => {
           const wrapped = api as unknown as ExcalidrawApi
           onApi(wrapped)

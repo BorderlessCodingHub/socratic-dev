@@ -8,13 +8,7 @@ import { levelLabel } from '@/features/challenges/utils'
 import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Code2,
-  Network,
-} from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
 import * as React from 'react'
@@ -34,6 +28,7 @@ const copy = {
     challengeMany: 'challenges',
     filters: { all: 'All', code: 'Code', design: 'System Design' },
     empty: 'No challenges under this filter yet.',
+    emptyCta: 'Generate the first one',
     levels: {
       beginner: 'Beginner',
       intermediate: 'Intermediate',
@@ -51,6 +46,7 @@ const copy = {
     challengeMany: 'desafios',
     filters: { all: 'Todos', code: 'Código', design: 'System Design' },
     empty: 'Nenhum desafio nesse filtro ainda.',
+    emptyCta: 'Gerar o primeiro',
     levels: {
       beginner: 'Iniciante',
       intermediate: 'Intermediário',
@@ -64,6 +60,11 @@ function stackLabel(c: Challenge): string {
   if (c.kind === 'design') return 'System Design'
   if (c.stack === 'javascript') return 'JavaScript'
   return 'TypeScript'
+}
+
+function cardGlyph(c: Challenge): string {
+  if (c.kind === 'design') return '◫'
+  return c.stack === 'javascript' ? '>_' : '{ }'
 }
 
 const STOP = new Set([
@@ -136,11 +137,16 @@ export default function ChallengesLibraryPage() {
   const visible = unique.filter((c) =>
     filter === 'all' ? true : c.kind === filter,
   )
+  const counts: Record<Filter, number> = {
+    all: unique.length,
+    code: unique.filter((c) => c.kind === 'code').length,
+    design: unique.filter((c) => c.kind === 'design').length,
+  }
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE))
   const pageItems = visible.slice(page * PAGE, page * PAGE + PAGE)
 
   return (
-    <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
+    <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <Navbar />
 
       <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
@@ -149,15 +155,18 @@ export default function ChallengesLibraryPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className='grid gap-6 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'
           >
-            <p className='eyebrow mb-2'>{t.eyebrow}</p>
-            <h1 className='type-h2'>
-              {t.headline}{' '}
-              <span className='text-gradient font-serif font-normal italic'>
-                {t.flourish}
-              </span>
-            </h1>
-            <p className='type-body mt-3 max-w-[560px]'>
+            <div>
+              <p className='eyebrow mb-2'>{t.eyebrow}</p>
+              <h1 className='type-h2'>
+                {t.headline}{' '}
+                <span className='text-gradient-iris font-serif font-normal italic'>
+                  {t.flourish}
+                </span>
+              </h1>
+            </div>
+            <p className='type-body'>
               {t.intro}{' '}
               {challenges && (
                 <span className='font-medium text-ink'>
@@ -168,7 +177,7 @@ export default function ChallengesLibraryPage() {
             </p>
           </motion.div>
 
-          <div className='mt-8 flex flex-wrap gap-2'>
+          <div className='mt-10 flex flex-wrap gap-2 border-t border-border pt-6'>
             {FILTERS.map((f) => (
               <button
                 key={f}
@@ -178,13 +187,18 @@ export default function ChallengesLibraryPage() {
                   setPage(0)
                 }}
                 className={cn(
-                  'cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium transition-colors duration-200',
+                  'inline-flex cursor-pointer items-baseline gap-1.5 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors duration-200',
                   filter === f
-                    ? 'border-ink bg-ink text-white'
+                    ? 'border-ink bg-ink text-background'
                     : 'border-border text-muted-foreground hover:border-ink hover:text-ink',
                 )}
               >
                 {t.filters[f]}
+                {challenges && (
+                  <span className='font-mono text-[10px] tabular-nums opacity-55'>
+                    {counts[f]}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -195,14 +209,27 @@ export default function ChallengesLibraryPage() {
                 <Skeleton key={i} className='h-44 rounded-lg' />
               ))
             ) : visible.length === 0 ? (
-              <p className='col-span-full text-sm text-muted-foreground'>
-                {t.empty}
-              </p>
+              <div className='col-span-full flex flex-col items-center py-16 text-center'>
+                <span
+                  aria-hidden
+                  className='font-mono text-[72px] leading-none text-ink/[0.08] select-none'
+                >
+                  {'{ }'}
+                </span>
+                <p className='type-body mt-6 max-w-[380px]'>{t.empty}</p>
+                <Button
+                  variant='ink'
+                  className='group mt-6'
+                  render={<Link href='/dashboard' />}
+                >
+                  {t.emptyCta}
+                  <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
+                </Button>
+              </div>
             ) : (
               pageItems.map((c, i) => {
                 const isDesign = c.kind === 'design'
                 const href = `${isDesign ? '/design' : '/challenge'}?id=${c.id}`
-                const Icon = isDesign ? Network : Code2
                 return (
                   <motion.div
                     key={c.id}
@@ -216,31 +243,32 @@ export default function ChallengesLibraryPage() {
                   >
                     <Link
                       href={href}
-                      className='shadow-soft hover:shadow-soft-lg group flex h-full flex-col rounded-lg border border-border bg-white p-5 transition-shadow duration-300 ease-out'
+                      className='shadow-soft hover:shadow-soft-lg group relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card p-5 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5'
                     >
-                      <div className='mb-3 flex items-center gap-2'>
-                        <div className='grid size-9 place-items-center rounded-full bg-pastel-lavender text-ink'>
-                          <Icon className='size-4.5' strokeWidth={1.5} />
-                        </div>
-                        <span className='rounded-full border border-border bg-white px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+                      <span
+                        aria-hidden
+                        className='pointer-events-none absolute -top-3 -right-2 font-mono text-[80px] leading-none tracking-tighter whitespace-nowrap text-ink/[0.06] select-none'
+                      >
+                        {cardGlyph(c)}
+                      </span>
+                      <div className='relative mb-3 flex flex-wrap items-center gap-1.5'>
+                        <span className='rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
                           {stackLabel(c)}
                         </span>
-                        <span className='rounded-full border border-border bg-white px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+                        <span className='rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
                           {(t.levels as Record<string, string>)[c.level] ??
                             levelLabel(c.level)}
                         </span>
                       </div>
-                      <h3 className='font-heading text-lg font-light tracking-tight text-ink'>
-                        {c.title}
-                      </h3>
-                      <p className='mt-1.5 line-clamp-2 text-sm text-muted-foreground'>
+                      <h3 className='type-h4 relative'>{c.title}</h3>
+                      <p className='relative mt-1.5 line-clamp-2 text-sm text-muted-foreground'>
                         {c.description}
                       </p>
-                      <span className='mt-auto inline-flex items-center gap-1 pt-4 text-[14px] font-medium text-primary'>
+                      <span className='relative mt-auto inline-flex items-center gap-1 pt-4 font-mono text-[11px] tracking-[0.14em] text-primary uppercase'>
                         <span className='link-underline'>{t.open}</span>
                         <ArrowRight
-                          size={16}
-                          className='transition-transform duration-200 group-hover:translate-x-0.5'
+                          size={13}
+                          className='-translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100'
                         />
                       </span>
                     </Link>

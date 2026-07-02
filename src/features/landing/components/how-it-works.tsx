@@ -67,7 +67,7 @@ export function HowItWorks() {
       className='relative overflow-hidden px-6 py-14 sm:px-10 lg:px-16 lg:py-20'
       style={{
         background:
-          'radial-gradient(80% 60% at 50% 100%, color-mix(in srgb, var(--pastel-lavender) 30%, transparent) 0%, transparent 70%), white',
+          'radial-gradient(80% 60% at 50% 100%, color-mix(in srgb, var(--pastel-lavender) 30%, transparent) 0%, transparent 70%), var(--card)',
       }}
     >
       <div className='mx-auto max-w-[860px] text-center'>

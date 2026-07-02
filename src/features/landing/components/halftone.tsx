@@ -79,7 +79,7 @@ export function Halftone({
   spacing = 8,
   flow = 12,
   interactive = false,
-  color = '#1b1916',
+  color,
   className,
 }: HalftoneProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
@@ -96,6 +96,7 @@ export function Halftone({
   const lastFrameRef = React.useRef(0)
   const rafRef = React.useRef(0)
   const reducedRef = React.useRef(false)
+  const colorRef = React.useRef(color ?? '#1b1916')
   const mouseRef = React.useRef({ tx: -9999, ty: -9999, x: -9999, y: -9999 })
 
   const sample = React.useCallback((sx: number, sy: number) => {
@@ -116,7 +117,7 @@ export function Halftone({
       const { w, h, dpr } = sizeRef.current
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
-      ctx.fillStyle = color
+      ctx.fillStyle = colorRef.current
 
       const isActive = activeRef.current
       const isAmbient = !isActive && ambientRef.current
@@ -212,6 +213,27 @@ export function Halftone({
       '(prefers-reduced-motion: reduce)',
     ).matches
   }, [])
+
+  React.useEffect(() => {
+    if (color) {
+      colorRef.current = color
+      return
+    }
+    const resolve = () => {
+      const v = getComputedStyle(document.documentElement)
+        .getPropertyValue('--ink')
+        .trim()
+      colorRef.current = v || '#1b1916'
+      render(performance.now())
+    }
+    resolve()
+    const mo = new MutationObserver(resolve)
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+    return () => mo.disconnect()
+  }, [color, render])
 
   React.useEffect(() => {
     if (!interactive) return

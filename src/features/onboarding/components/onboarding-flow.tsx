@@ -2,10 +2,14 @@
 
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { levelById, levelByUiId } from '@/domain/levels'
 import { stackById, stackByUiId } from '@/domain/stacks'
 import { getNextChallenge } from '@/features/challenges/actions'
+import {
+  Halftone,
+  glyph,
+  paintArchitecture,
+} from '@/features/landing/components/halftone'
 import { getAccessToken } from '@/lib/api/client'
 import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
@@ -15,16 +19,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Code2,
-  Info,
   Loader2,
-  Network,
   Sparkles,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
+
+const paintCode = glyph('>_', 1.5)
+const paintBraces = glyph('{ }', 2)
 
 const copy = {
   en: {
@@ -65,6 +69,7 @@ const copy = {
         tag: 'Just starting out',
         desc: 'Variables, conditionals, loops, arrays. No pressure.',
         intensity: 1,
+        fill: 'bg-pastel-sage',
       },
       {
         id: 'junior',
@@ -72,6 +77,7 @@ const copy = {
         tag: 'Built a few projects',
         desc: 'Functions, objects, fetch, async/await. Comfortable reading docs.',
         intensity: 2,
+        fill: 'bg-pastel-mist',
       },
       {
         id: 'mid',
@@ -79,6 +85,7 @@ const copy = {
         tag: 'Ready to level up',
         desc: 'Patterns, architecture, performance. Tougher code reviews.',
         intensity: 3,
+        fill: 'bg-pastel-sand',
       },
       {
         id: 'advanced',
@@ -86,6 +93,7 @@ const copy = {
         tag: 'Big tech ambitions',
         desc: 'Algorithms, optimal complexity, edge cases. FAANG interview energy.',
         intensity: 4,
+        fill: 'bg-pastel-lavender',
       },
     ],
     tracks: [
@@ -93,37 +101,34 @@ const copy = {
         id: 'code',
         name: 'Code',
         desc: 'Solve a real problem in the editor, with tests.',
-        Icon: Code2,
+        fill: 'bg-pastel-greige',
       },
       {
         id: 'design',
         name: 'System Design',
         desc: 'Architect systems on a canvas; the AI reviews it.',
-        Icon: Network,
+        fill: 'bg-pastel-mist',
       },
     ],
     stepMeta: [
       {
-        eyebrow: '01 · Track',
         title: 'How do you want to train today?',
         subtitle: 'Code or system design (architecture) — pick your track.',
       },
       {
-        eyebrow: '02 · Level',
         title: 'Radical honesty: where are you?',
-        subtitle: 'The more honest you are, the better the AI calibrates the challenge.',
+        subtitle:
+          'The more honest you are, the better the AI calibrates the challenge.',
       },
       {
-        eyebrow: '03 · Ready',
         title: 'Time to think.',
-        subtitle: "I'll generate a real challenge, with a fictional client. No copy-paste.",
+        subtitle:
+          "I'll generate a real challenge, with a fictional client. No copy-paste.",
       },
     ],
     stepLabels: ['Track', 'Level', 'Ready'],
+    setup: 'Setup',
     backToSite: 'Back to site',
-    generatingEyebrow: 'Generating',
-    generatingTitle: 'Almost there.',
-    generatingSubtitle: 'Building a challenge based on your choices.',
     language: 'Language',
     designNotePre: "System design has no language — you'll ",
     designNoteBold: 'sketch the system architecture',
@@ -177,6 +182,7 @@ const copy = {
         tag: 'Comecei agora',
         desc: 'Variáveis, condicionais, loops, arrays. Sem traumas.',
         intensity: 1,
+        fill: 'bg-pastel-sage',
       },
       {
         id: 'junior',
@@ -184,6 +190,7 @@ const copy = {
         tag: 'Já fiz alguns projetos',
         desc: 'Funções, objetos, fetch, async/await. Confortável com docs.',
         intensity: 2,
+        fill: 'bg-pastel-mist',
       },
       {
         id: 'mid',
@@ -191,6 +198,7 @@ const copy = {
         tag: 'Quero crescer',
         desc: 'Padrões, arquitetura, performance. Code review mais duro.',
         intensity: 3,
+        fill: 'bg-pastel-sand',
       },
       {
         id: 'advanced',
@@ -198,6 +206,7 @@ const copy = {
         tag: 'Quero nível big tech',
         desc: 'Algoritmos, complexidade ótima, edge cases. Pegada de entrevista FAANG.',
         intensity: 4,
+        fill: 'bg-pastel-lavender',
       },
     ],
     tracks: [
@@ -205,37 +214,32 @@ const copy = {
         id: 'code',
         name: 'Código',
         desc: 'Resolva um problema real no editor, com testes.',
-        Icon: Code2,
+        fill: 'bg-pastel-greige',
       },
       {
         id: 'design',
         name: 'System Design',
         desc: 'Arquitete sistemas num canvas; a IA analisa.',
-        Icon: Network,
+        fill: 'bg-pastel-mist',
       },
     ],
     stepMeta: [
       {
-        eyebrow: '01 · Trilha',
         title: 'Como você quer treinar hoje?',
         subtitle: 'Código ou system design (arquitetura) — escolha a trilha.',
       },
       {
-        eyebrow: '02 · Nível',
         title: 'Honestidade radical: onde você está?',
         subtitle: 'Quanto mais real você for, melhor a IA calibra o desafio.',
       },
       {
-        eyebrow: '03 · Pronto',
         title: 'Hora de pensar.',
         subtitle: 'Vou gerar um desafio real, com cliente fictício. Sem cópia.',
       },
     ],
     stepLabels: ['Trilha', 'Nível', 'Pronto'],
+    setup: 'Setup',
     backToSite: 'Voltar ao site',
-    generatingEyebrow: 'Gerando',
-    generatingTitle: 'Quase lá.',
-    generatingSubtitle: 'Montando um desafio com base nas suas escolhas.',
     language: 'Linguagem',
     designNotePre: 'System design não tem linguagem — você vai ',
     designNoteBold: 'desenhar a arquitetura do sistema',
@@ -356,8 +360,15 @@ export function OnboardingFlow({ user }: { user: User }) {
   const meta = t.stepMeta[step]
 
   return (
-    <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
-      <header className='container-main flex h-16 w-full max-w-3xl shrink-0 items-center justify-between'>
+    <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
+      <div className='h-[2px] w-full shrink-0 bg-border'>
+        <div
+          className='h-full bg-primary transition-all duration-700 ease-out'
+          style={{ width: starting ? '100%' : `${((step + 1) / 3) * 100}%` }}
+        />
+      </div>
+
+      <header className='container-main flex h-16 w-full max-w-6xl shrink-0 items-center justify-between'>
         <Logo />
         <Link
           href='/'
@@ -367,326 +378,361 @@ export function OnboardingFlow({ user }: { user: User }) {
         </Link>
       </header>
 
-      <main className='flex flex-1 items-start py-6 md:items-center md:py-10'>
-        <div className='container-main w-full max-w-3xl'>
-          <div className='shadow-soft-lg overflow-hidden rounded-lg border border-border bg-white'>
-            <div className='border-b border-border bg-pastel-lilac/60 px-6 py-8 sm:px-10 sm:py-10'>
-              <div>
-                {starting ? (
-                  <div>
-                    <p className='eyebrow mb-2'>{t.generatingEyebrow}</p>
-                    <h1 className='type-h2'>{t.generatingTitle}</h1>
-                    <p className='type-body mt-3 max-w-[44ch]'>
-                      {t.generatingSubtitle}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className='mb-6 flex items-center gap-2'>
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} className='flex-1'>
-                          <div
-                            className={cn(
-                              'h-1 rounded-full transition-all duration-500',
-                              step >= i ? 'bg-primary' : 'bg-border',
-                            )}
-                          />
-                          <div className='mt-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-                            {t.stepLabels[i]}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className='eyebrow mb-2'>{meta.eyebrow}</p>
-                    <h1 className='type-h2'>{meta.title}</h1>
-                    <p className='type-body mt-3 max-w-[44ch]'>
-                      {meta.subtitle}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
+      {starting ? (
+        <GeneratingChallenge design={track === 'design'} />
+      ) : (
+        <>
+          <main className='flex flex-1 items-start py-8 md:py-14'>
+            <div className='container-main grid w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20'>
+              <div className='lg:sticky lg:top-14 lg:self-start'>
+                <div className='flex items-baseline gap-4'>
+                  <p className='eyebrow'>{t.setup}</p>
+                  <span className='font-mono text-[11px] tracking-[0.14em] text-muted-foreground tabular-nums'>
+                    {String(step + 1).padStart(2, '0')} / 03
+                  </span>
+                </div>
+                <h1 className='type-h2 mt-5 max-w-[16ch]'>{meta.title}</h1>
+                <p className='type-body mt-4 max-w-[38ch]'>{meta.subtitle}</p>
 
-            <div className='px-6 py-7 sm:px-10 sm:py-8'>
-              {starting ? (
-                <GeneratingChallenge />
-              ) : (
-                <>
-                  {step === 0 && (
-                    <div className='space-y-4'>
-                      <div className='grid gap-3 sm:grid-cols-2'>
-                        {t.tracks.map((tk) => (
-                          <Tile
-                            key={tk.id}
-                            selected={track === tk.id}
-                            onClick={() => setTrack(tk.id)}
-                          >
-                            <div className='grid size-12 place-items-center rounded-full bg-pastel-lavender text-ink'>
-                              <tk.Icon className='size-6' strokeWidth={1.5} />
-                            </div>
-                            <div className='flex-1'>
-                              <div className='font-heading text-lg font-medium tracking-tight text-ink'>
+                <div className='mt-10 hidden space-y-3 border-t border-border pt-6 lg:block'>
+                  {t.stepLabels.map((label, idx) => (
+                    <div
+                      key={label}
+                      className={cn(
+                        'flex items-center gap-3 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors duration-300',
+                        idx === step
+                          ? 'text-ink'
+                          : 'text-muted-foreground/50',
+                      )}
+                    >
+                      <span className='tabular-nums'>
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <span>{label}</span>
+                      {idx < step && <Check className='size-3 text-primary' />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className='pb-4'>
+                <AnimatePresence mode='wait'>
+                  <motion.div
+                    key={step}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                  >
+                    {step === 0 && (
+                      <div className='space-y-8'>
+                        <div className='grid gap-4 sm:grid-cols-2'>
+                          {t.tracks.map((tk) => (
+                            <Tile
+                              key={tk.id}
+                              selected={track === tk.id}
+                              onClick={() => setTrack(tk.id)}
+                              className={cn(tk.fill, 'p-6')}
+                            >
+                              <span
+                                className={cn(
+                                  'pointer-events-none relative block h-24 mix-blend-multiply transition-opacity duration-500 dark:mix-blend-screen',
+                                  track === tk.id
+                                    ? 'opacity-70'
+                                    : 'opacity-35 group-hover:opacity-60',
+                                )}
+                              >
+                                <Halftone
+                                  draw={
+                                    tk.id === 'code'
+                                      ? paintCode
+                                      : paintArchitecture
+                                  }
+                                  active={track === tk.id}
+                                  spacing={7}
+                                />
+                              </span>
+                              <span className='mt-6 block font-heading text-xl font-light tracking-tight text-ink'>
                                 {tk.name}
-                              </div>
-                              <div className='text-sm text-muted-foreground'>
+                              </span>
+                              <span className='mt-1 block text-sm text-muted-foreground'>
                                 {tk.desc}
-                              </div>
+                              </span>
+                            </Tile>
+                          ))}
+                        </div>
+
+                        {track === 'code' && (
+                          <div>
+                            <p className='eyebrow mb-4'>{t.language}</p>
+                            <div className='grid gap-4 sm:grid-cols-2'>
+                              {t.stacks.map((s) => (
+                                <Tile
+                                  key={s.id}
+                                  selected={stack === s.id}
+                                  onClick={() => setStack(s.id)}
+                                  className={cn(
+                                    s.chip,
+                                    'flex items-center gap-4 p-5 pr-11',
+                                  )}
+                                >
+                                  <span className='font-mono text-lg tracking-tight text-ink/50'>
+                                    {s.icon}
+                                  </span>
+                                  <span className='flex-1'>
+                                    <span className='block font-heading text-lg font-light tracking-tight text-ink'>
+                                      {s.name}
+                                    </span>
+                                    <span className='block text-sm text-muted-foreground'>
+                                      {s.desc}
+                                    </span>
+                                  </span>
+                                </Tile>
+                              ))}
                             </div>
+                          </div>
+                        )}
+
+                        {track === 'design' && (
+                          <div className='rounded-lg bg-pastel-sage p-5 text-sm text-muted-foreground'>
+                            {t.designNotePre}
+                            <span className='font-medium text-ink'>
+                              {t.designNoteBold}
+                            </span>
+                            {t.designNotePost}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {step === 1 && (
+                      <div className='space-y-4'>
+                        {t.levels.map((l) => (
+                          <Tile
+                            key={l.id}
+                            selected={level === l.id}
+                            onClick={() => setLevel(l.id)}
+                            className={cn(
+                              l.fill,
+                              'flex items-center gap-5 p-5 pr-12 sm:p-6 sm:pr-14',
+                            )}
+                          >
+                            <span className='flex shrink-0 items-center gap-1'>
+                              {Array.from({ length: 4 }).map((_, idx) => (
+                                <span
+                                  key={idx}
+                                  className={cn(
+                                    'size-[10px] rounded-[3px]',
+                                    idx < l.intensity
+                                      ? 'bg-primary/75'
+                                      : 'bg-ink/10',
+                                  )}
+                                />
+                              ))}
+                            </span>
+                            <span className='flex-1'>
+                              <span className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
+                                <span className='font-heading text-lg font-light tracking-tight text-ink'>
+                                  {l.name}
+                                </span>
+                                <span className='font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase'>
+                                  {l.tag}
+                                </span>
+                              </span>
+                              <span className='mt-1 block text-sm text-muted-foreground'>
+                                {l.desc}
+                              </span>
+                            </span>
                           </Tile>
                         ))}
                       </div>
-
-                      {track === 'code' && (
-                        <div>
-                          <p className='eyebrow mb-2'>{t.language}</p>
-                          <div className='grid gap-3 sm:grid-cols-2'>
-                            {t.stacks.map((s) => (
-                              <Tile
-                                key={s.id}
-                                selected={stack === s.id}
-                                onClick={() => setStack(s.id)}
-                              >
-                                <div
-                                  className={cn(
-                                    'grid size-12 place-items-center rounded-full font-mono text-sm font-medium text-ink',
-                                    s.chip,
-                                  )}
-                                >
-                                  {s.icon}
-                                </div>
-                                <div className='flex-1'>
-                                  <div className='font-heading text-lg font-medium tracking-tight text-ink'>
-                                    {s.name}
-                                  </div>
-                                  <div className='text-sm text-muted-foreground'>
-                                    {s.desc}
-                                  </div>
-                                </div>
-                              </Tile>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {track === 'design' && (
-                        <div className='rounded-md border border-border bg-muted p-4 text-sm text-muted-foreground'>
-                          {t.designNotePre}
-                          <span className='font-medium text-ink'>
-                            {t.designNoteBold}
-                          </span>
-                          {t.designNotePost}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {step === 1 && (
-                    <div className='space-y-3'>
-                      {t.levels.map((l) => (
-                        <Tile
-                          key={l.id}
-                          selected={level === l.id}
-                          onClick={() => setLevel(l.id)}
-                        >
-                          <div className='flex items-center gap-1'>
-                            {Array.from({ length: 4 }).map((_, idx) => (
-                              <span
-                                key={idx}
-                                className={cn(
-                                  'h-2 w-5 rounded-full',
-                                  idx < l.intensity ? 'bg-primary' : 'bg-border',
-                                )}
-                              />
-                            ))}
-                          </div>
-                          <div className='flex-1'>
-                            <div className='flex flex-wrap items-center gap-2'>
-                              <div className='font-heading text-lg font-medium tracking-tight text-ink'>
-                                {l.name}
-                              </div>
-                              <span className='rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-                                {l.tag}
-                              </span>
-                            </div>
-                            <div className='mt-0.5 text-sm text-muted-foreground'>
-                              {l.desc}
-                            </div>
-                          </div>
-                        </Tile>
-                      ))}
-                    </div>
-                  )}
-
-                  {step === 2 && (
-                    <div className='grid gap-3 sm:grid-cols-2'>
-                      <SummaryItem
-                        label={t.trackLabel}
-                        value={
-                          track === 'design'
-                            ? t.designValue
-                            : (t.stacks.find((s) => s.id === stack)?.name ??
-                              t.codeValue)
-                        }
-                      />
-                      <SummaryItem
-                        label={t.levelLabel}
-                        value={t.levels.find((l) => l.id === level)?.name ?? '—'}
-                      />
-                    </div>
-                  )}
-
-                  {error && (
-                    <div className='mt-6 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive'>
-                      {error}
-                    </div>
-                  )}
-
-                  <div className='mt-7 flex items-center justify-between'>
-                    <Button
-                      variant='ghost'
-                      onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
-                      className={cn(step === 0 && 'invisible')}
-                    >
-                      <ArrowLeft className='size-4' /> {t.back}
-                    </Button>
-
-                    {step < 2 ? (
-                      <Button
-                        variant='ink'
-                        size='lg'
-                        disabled={!canNext}
-                        onClick={() =>
-                          setStep((s) => Math.min(2, s + 1) as Step)
-                        }
-                        className='group'
-                      >
-                        {t.next}
-                        <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant='ink'
-                        size='lg'
-                        onClick={start}
-                        className='group'
-                      >
-                        <Sparkles className='size-4' />
-                        {error ? t.retry : t.generate}
-                        <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
-                      </Button>
                     )}
+
+                    {step === 2 && (
+                      <div className='grid grid-cols-2 gap-6 pt-2 sm:gap-10'>
+                        <SummaryItem
+                          label={t.trackLabel}
+                          value={
+                            track === 'design'
+                              ? t.designValue
+                              : (t.stacks.find((s) => s.id === stack)?.name ??
+                                t.codeValue)
+                          }
+                        />
+                        <SummaryItem
+                          label={t.levelLabel}
+                          value={
+                            t.levels.find((l) => l.id === level)?.name ?? '—'
+                          }
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {error && (
+                  <div className='mt-6 rounded-lg bg-destructive/5 px-4 py-3 text-sm text-destructive'>
+                    {error}
                   </div>
-                </>
+                )}
+              </div>
+            </div>
+          </main>
+
+          <div className='sticky bottom-0 z-10 border-t border-border bg-background/90 backdrop-blur'>
+            <div className='container-main flex h-16 w-full max-w-6xl items-center justify-between'>
+              <Button
+                variant='ghost'
+                onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
+                className={cn(step === 0 && 'invisible')}
+              >
+                <ArrowLeft className='size-4' /> {t.back}
+              </Button>
+
+              {step < 2 ? (
+                <Button
+                  variant='ink'
+                  size='lg'
+                  disabled={!canNext}
+                  onClick={() => setStep((s) => Math.min(2, s + 1) as Step)}
+                  className='group'
+                >
+                  {t.next}
+                  <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
+                </Button>
+              ) : (
+                <Button
+                  variant='ink'
+                  size='lg'
+                  onClick={start}
+                  className='group'
+                >
+                  <Sparkles className='size-4' />
+                  {error ? t.retry : t.generate}
+                  <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
+                </Button>
               )}
             </div>
           </div>
-        </div>
-      </main>
+        </>
+      )}
     </div>
   )
 }
 
 const genCopy = {
   en: {
+    eyebrow: 'Generating',
+    title: 'Building your challenge.',
     messages: [
-      'Inventing a fictional client…',
-      'Defining the input data format…',
-      'Writing the hidden tests…',
-      'Calibrating difficulty to your level…',
-      "Preparing the tutor's first question…",
+      'parsing your request…',
+      'inventing a fictional client…',
+      'writing the briefing…',
+      'hiding the tests…',
+      'calibrating difficulty to your level…',
     ],
-    title: 'The AI is building your challenge',
-    notePre: 'Generating with the stack and level saved to your profile. Want to change them?',
+    notePre:
+      'Generating with the stack and level saved to your profile. Want to change them?',
     noteLink: 'Update your profile',
   },
   pt: {
+    eyebrow: 'Gerando',
+    title: 'Montando seu desafio.',
     messages: [
-      'Inventando um cliente fictício…',
-      'Definindo o formato dos dados de entrada…',
-      'Escrevendo os testes escondidos…',
-      'Calibrando a dificuldade pro seu nível…',
-      'Preparando a primeira pergunta do tutor…',
+      'interpretando pedido…',
+      'inventando cliente fictício…',
+      'gerando briefing…',
+      'escondendo testes…',
+      'calibrando dificuldade pro seu nível…',
     ],
-    title: 'A IA está criando seu desafio',
     notePre: 'Gerando com a stack e o nível salvos no seu perfil. Quer mudar?',
     noteLink: 'Ajuste no perfil',
   },
 }
 
-function GeneratingChallenge() {
+function GeneratingChallenge({ design }: { design: boolean }) {
   const t = useT(genCopy)
   const [i, setI] = React.useState(0)
   React.useEffect(() => {
     const timer = setInterval(
-      () => setI((v) => (v + 1) % t.messages.length),
-      1900,
+      () => setI((v) => Math.min(v + 1, t.messages.length - 1)),
+      1700,
     )
     return () => clearInterval(timer)
   }, [t.messages.length])
 
   return (
-    <motion.div
+    <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className='py-2'
+      transition={{ duration: 0.5 }}
+      className='relative flex flex-1 items-center overflow-hidden'
     >
-      <div className='flex items-center gap-3'>
-        <div className='grid size-11 shrink-0 place-items-center rounded-full bg-pastel-lavender text-ink'>
-          <Sparkles className='size-5' strokeWidth={1.5} />
-        </div>
-        <div className='min-w-0'>
-          <div className='font-heading text-lg font-medium tracking-tight text-ink'>
-            {t.title}
+      <div className='pointer-events-none absolute inset-x-0 top-1/2 h-[420px] -translate-y-1/2 opacity-25 mix-blend-multiply dark:mix-blend-screen'>
+        <Halftone
+          draw={design ? paintArchitecture : paintBraces}
+          ambient
+          spacing={9}
+        />
+      </div>
+
+      <div className='container-main relative w-full max-w-6xl pb-16'>
+        <div className='max-w-md'>
+          <div className='flex items-center gap-3'>
+            <p className='eyebrow'>{t.eyebrow}</p>
+            <Loader2 className='size-3.5 animate-spin text-muted-foreground' />
           </div>
-          <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
-            <Loader2 className='size-3.5 shrink-0 animate-spin' />
-            <AnimatePresence mode='wait'>
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 4 }}
+          <h1 className='type-h2 mt-5'>{t.title}</h1>
+
+          <div className='mt-10 space-y-3 font-mono text-[13px]'>
+            {t.messages.slice(0, i + 1).map((m, idx) => (
+              <motion.div
+                key={m}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.3 }}
+                className={cn(
+                  'flex items-center gap-3',
+                  idx < i ? 'text-muted-foreground' : 'text-ink',
+                )}
               >
-                {t.messages[i]}
-              </motion.span>
-            </AnimatePresence>
+                <span className='grid w-4 shrink-0 place-items-center'>
+                  {idx < i ? (
+                    <Check className='size-3.5 text-mint' />
+                  ) : (
+                    <Loader2 className='size-3.5 animate-spin text-primary' />
+                  )}
+                </span>
+                <span>{m}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className='mt-14 border-t border-border pt-5 text-[12px] text-muted-foreground'>
+            {t.notePre}{' '}
+            <Link
+              href='/profile'
+              className='link-underline font-medium text-ink'
+            >
+              {t.noteLink}
+            </Link>
+            .
           </div>
         </div>
       </div>
-
-      <div className='mt-7 space-y-3'>
-        <Skeleton className='h-4 w-3/4 rounded' />
-        <Skeleton className='h-4 w-full rounded' />
-        <Skeleton className='h-4 w-5/6 rounded' />
-        <Skeleton className='mt-5 h-28 w-full rounded-md' />
-      </div>
-
-      <div className='mt-6 flex items-start gap-2 rounded-md border border-border bg-muted px-3.5 py-2.5 text-[12px] text-muted-foreground'>
-        <Info className='mt-0.5 size-3.5 shrink-0' />
-        <span>
-          {t.notePre}{' '}
-          <Link
-            href='/profile'
-            className='font-medium text-primary hover:underline'
-          >
-            {t.noteLink}
-          </Link>
-          .
-        </span>
-      </div>
-    </motion.div>
+    </motion.main>
   )
 }
 
 function Tile({
   selected,
   onClick,
+  className,
   children,
 }: {
   selected: boolean
   onClick: () => void
+  className?: string
   children: React.ReactNode
 }) {
   return (
@@ -694,32 +740,33 @@ function Tile({
       type='button'
       onClick={onClick}
       className={cn(
-        'shadow-soft flex w-full cursor-pointer items-center gap-4 rounded-md border bg-white p-5 text-left transition-colors duration-300 ease-out',
-        selected
-          ? 'border-primary ring-2 ring-primary/25'
-          : 'border-border hover:border-ink/20',
+        'group relative w-full cursor-pointer overflow-hidden rounded-lg text-left transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-soft-lg',
+        selected && 'ring-2 ring-primary',
+        className,
       )}
     >
       {children}
-      <div
+      <span
         className={cn(
-          'grid size-6 shrink-0 place-items-center rounded-full border transition-colors',
-          selected ? 'border-primary bg-primary' : 'border-border bg-white',
+          'absolute top-3 right-3 grid size-6 place-items-center rounded-full transition-all duration-300',
+          selected
+            ? 'scale-100 bg-lime text-ink opacity-100 dark:text-background'
+            : 'scale-75 opacity-0',
         )}
       >
-        {selected && <Check className='size-3.5 text-white' />}
-      </div>
+        <Check className='size-3.5' />
+      </span>
     </button>
   )
 }
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-md border border-border bg-white p-4'>
-      <div className='mb-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+    <div className='border-l border-border pl-5 sm:pl-6'>
+      <div className='font-mono text-[11px] tracking-[0.14em] text-muted-foreground uppercase'>
         {label}
       </div>
-      <div className='font-heading text-base font-medium tracking-tight text-ink'>
+      <div className='mt-3 font-heading text-3xl font-light tracking-tight text-ink sm:text-4xl'>
         {value}
       </div>
     </div>

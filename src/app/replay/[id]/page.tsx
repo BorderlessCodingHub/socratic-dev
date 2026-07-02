@@ -5,10 +5,9 @@ import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import {
-  Brain,
+  ArrowRight,
   Calendar,
   CheckCircle2,
-  Clock,
   Code2,
   GitPullRequestArrow,
   Lightbulb,
@@ -29,6 +28,7 @@ const copy = {
       intermediate: 'Intermediate',
       advanced: 'Advanced',
     },
+    eyebrow: 'Session replay',
     trainToo: 'Start training',
     publicSession: 'Public session · socratic.dev',
     completed: 'Completed',
@@ -57,6 +57,7 @@ const copy = {
       intermediate: 'Intermediário',
       advanced: 'Avançado',
     },
+    eyebrow: 'Replay da sessão',
     trainToo: 'Treinar também',
     publicSession: 'Sessão pública · socratic.dev',
     completed: 'Concluído',
@@ -216,8 +217,8 @@ export default async function ReplayPage(props: {
   const date = new Date(session.completed_at ?? session.started_at)
 
   return (
-    <div className='relative flex min-h-screen flex-col bg-white'>
-      <header className='sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur'>
+    <div className='relative flex min-h-screen flex-col bg-background'>
+      <header className='sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur'>
         <div className='container-main flex h-16 items-center justify-between'>
           <Logo />
           <Button render={<Link href='/onboarding' />} variant='ink' size='sm'>
@@ -226,35 +227,26 @@ export default async function ReplayPage(props: {
         </div>
       </header>
 
-      <main className='flex-1 pt-10 pb-20'>
+      <main className='flex-1 pt-14 pb-24'>
         <div className='container-main max-w-3xl'>
-          <div className='mb-3 inline-flex items-center gap-2 rounded-full bg-pastel-lilac px-3 py-1 font-mono text-[11px] text-primary'>
-            <Sparkles className='size-3' strokeWidth={1.5} />
-            {t.publicSession}
-          </div>
+          <p className='eyebrow'>{t.eyebrow}</p>
 
-          <h1 className='font-heading text-4xl leading-tight font-light tracking-tight text-ink sm:text-5xl'>
-            {c.title}
-          </h1>
+          <h1 className='type-h2 mt-4 text-balance'>{c.title}</h1>
 
-          <div className='mt-4 flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground'>
-            <span className='rounded-full border border-border bg-white px-2 py-0.5'>
+          <div className='mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+            <span className='inline-flex items-center gap-1.5'>
               {isDesign ? (
-                <Network className='mr-1 inline size-3' strokeWidth={1.5} />
+                <Network className='size-3' strokeWidth={1.5} />
               ) : (
-                <Code2 className='mr-1 inline size-3' strokeWidth={1.5} />
+                <Code2 className='size-3' strokeWidth={1.5} />
               )}
               {stackLabel(c.stack, c.kind)}
             </span>
-            <span className='rounded-full border border-border bg-white px-2 py-0.5'>
-              {levelLabel(c.level, t)}
-            </span>
+            <span>{levelLabel(c.level, t)}</span>
             <span
               className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
-                passed
-                  ? 'bg-mint/10 text-mint'
-                  : 'bg-warning/10 text-warning-foreground',
+                'inline-flex items-center gap-1.5',
+                passed ? 'text-mint' : 'text-warning-foreground',
               )}
             >
               {passed ? (
@@ -264,7 +256,7 @@ export default async function ReplayPage(props: {
               )}
               {passed ? t.completed : t.failed}
             </span>
-            <span className='inline-flex items-center gap-1'>
+            <span className='inline-flex items-center gap-1.5'>
               <Calendar className='size-3' strokeWidth={1.5} />
               {date.toLocaleDateString(t.dateLocale, {
                 day: '2-digit',
@@ -274,22 +266,17 @@ export default async function ReplayPage(props: {
             </span>
           </div>
 
-          <div className='mt-8 grid grid-cols-3 gap-3'>
+          <div className='mt-10 grid grid-cols-3 border-y border-border py-8'>
             <Metric
               label={t.independence}
-              icon='brain'
-              value={`${independence}%`}
+              value={String(independence)}
+              suffix='/100'
               accent='mint'
               hint={t.independenceHint}
             />
-            <Metric
-              label={t.hintsUsed}
-              icon='lightbulb'
-              value={String(data.hints.length)}
-            />
+            <Metric label={t.hintsUsed} value={String(data.hints.length)} />
             <Metric
               label={t.time}
-              icon='clock'
               value={formatTime(session.duration_seconds)}
               accent='primary'
             />
@@ -300,7 +287,7 @@ export default async function ReplayPage(props: {
             icon={<Sparkles className='size-3.5' strokeWidth={1.5} />}
           >
             {persona && (
-              <div className='mb-4 flex items-center gap-3 rounded-lg border border-border bg-white p-3'>
+              <div className='mb-5 flex items-center gap-3'>
                 <div className='grid size-11 shrink-0 place-items-center rounded-full bg-pastel-lavender font-heading text-sm font-medium text-ink'>
                   {persona.name
                     .split(/\s+/)
@@ -319,7 +306,7 @@ export default async function ReplayPage(props: {
                 </div>
               </div>
             )}
-            <p className='whitespace-pre-line text-[14px] leading-relaxed text-aubergine'>
+            <p className='type-body whitespace-pre-line'>
               {persona ? body : c.client_briefing}
             </p>
           </Section>
@@ -329,21 +316,21 @@ export default async function ReplayPage(props: {
               title={t.howHints}
               icon={<Lightbulb className='size-3.5' strokeWidth={1.5} />}
             >
-              <div className='grid grid-cols-3 gap-2 text-center text-sm'>
+              <div className='grid grid-cols-3'>
                 {([1, 2, 3] as const).map((lvl) => {
                   const n = data.hints.filter((h) => h.hint_level === lvl).length
                   return (
                     <div
                       key={lvl}
-                      className='rounded-lg border border-border bg-white p-3'
+                      className='border-l border-border px-5 first:border-l-0 first:pl-0 sm:px-8'
                     >
-                      <div className='font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-                        {t.hintLevel(lvl)}
-                      </div>
-                      <div className='mt-1 font-heading text-xl font-light tabular-nums text-ink'>
+                      <div className='font-heading text-[32px] leading-none font-light tabular-nums text-ink sm:text-[40px]'>
                         {n}
                       </div>
-                      <div className='text-[11px] text-muted-foreground'>
+                      <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+                        {t.hintLevel(lvl)}
+                      </div>
+                      <div className='mt-1 font-mono text-[11px] text-muted-foreground'>
                         −{n * lvl * 4} indep.
                       </div>
                     </div>
@@ -358,7 +345,7 @@ export default async function ReplayPage(props: {
               title={t.finalCode}
               icon={<Code2 className='size-3.5' strokeWidth={1.5} />}
             >
-              <pre className='overflow-x-auto rounded-lg bg-ink p-5 font-mono text-[12.5px] leading-relaxed text-white/80'>
+              <pre className='overflow-x-auto rounded-lg bg-terminal p-5 font-mono text-[12.5px] leading-relaxed text-white/80'>
                 <code>{data.submission.code}</code>
               </pre>
             </Section>
@@ -369,30 +356,35 @@ export default async function ReplayPage(props: {
               title={t.socraticReview}
               icon={<GitPullRequestArrow className='size-3.5' strokeWidth={1.5} />}
             >
-              <div className='rounded-lg bg-muted p-5 text-[14px] leading-relaxed text-aubergine'>
+              <div className='type-body'>
                 <FormattedText text={data.submission.review_response} />
               </div>
             </Section>
           )}
 
-          <div className='mt-12 rounded-lg bg-pastel-greige p-6 text-center'>
-            <div className='mb-1.5 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
-              {t.proofTitle}
-            </div>
-            <p className='text-[14px] text-aubergine'>
+          <div className='from-pastel-greige/50 via-pastel-mist/40 to-pastel-lavender/60 mt-16 overflow-hidden rounded-lg bg-gradient-to-b px-6 py-14 text-center sm:px-10 sm:py-16'>
+            <p className='eyebrow'>{t.proofTitle}</p>
+            <h2 className='type-h3 mt-4'>
+              <span className='font-serif italic'>{t.proofBodyStrong}</span>
+            </h2>
+            <p className='type-body mx-auto mt-4 max-w-[520px]'>
               {t.proofBodyPre}
-              <strong>{t.proofBodyStrong}</strong>
             </p>
             <Button
               render={<Link href='/onboarding' />}
               variant='ink'
-              className='mt-4'
+              size='lg'
+              className='group mt-8'
             >
               {t.startMyOwn}
+              <ArrowRight className='transition-transform duration-200 group-hover:translate-x-0.5' />
             </Button>
           </div>
 
-          <div className='mt-8 text-center font-mono text-[10px] text-muted-foreground'>
+          <div className='mt-10 text-center font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+            {t.publicSession}
+          </div>
+          <div className='mt-2 text-center font-mono text-[10px] text-muted-foreground'>
             {t.sessionId} <span className='text-ink'>{session.id}</span>
           </div>
         </div>
@@ -411,8 +403,8 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <section className='mt-10'>
-      <div className='mb-3 inline-flex items-center gap-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+    <section className='mt-14 border-t border-border pt-8'>
+      <div className='eyebrow mb-5 flex items-center gap-2'>
         {icon}
         {title}
       </div>
@@ -423,38 +415,40 @@ function Section({
 
 function Metric({
   label,
-  icon,
   value,
+  suffix,
   accent,
   hint,
 }: {
   label: string
-  icon?: 'brain' | 'clock' | 'lightbulb'
   value: string
+  suffix?: string
   accent?: 'mint' | 'primary'
   hint?: string
 }) {
   return (
     <div
       title={hint}
-      className='rounded-lg border border-border bg-white p-3.5'
+      className='border-l border-border px-5 first:border-l-0 first:pl-0 sm:px-8'
     >
-      <div className='mb-1 inline-flex items-center gap-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-        {icon === 'brain' && <Brain className='size-3' strokeWidth={1.5} />}
-        {icon === 'clock' && <Clock className='size-3' strokeWidth={1.5} />}
-        {icon === 'lightbulb' && (
-          <Lightbulb className='size-3' strokeWidth={1.5} />
+      <div className='flex items-baseline'>
+        <span
+          className={cn(
+            'font-heading text-[32px] leading-none font-light tracking-[-0.03em] tabular-nums text-ink sm:text-[52px]',
+            accent === 'mint' && 'text-mint',
+            accent === 'primary' && 'text-primary',
+          )}
+        >
+          {value}
+        </span>
+        {suffix && (
+          <span className='ml-1 font-mono text-xs text-muted-foreground'>
+            {suffix}
+          </span>
         )}
-        {label}
       </div>
-      <div
-        className={cn(
-          'font-heading text-2xl font-light tabular-nums text-ink',
-          accent === 'mint' && 'text-mint',
-          accent === 'primary' && 'text-primary',
-        )}
-      >
-        {value}
+      <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+        {label}
       </div>
     </div>
   )

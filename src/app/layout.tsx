@@ -1,4 +1,5 @@
 import { LocaleProvider } from '@/lib/i18n'
+import { ThemeProvider, themeInitScript } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
@@ -58,7 +59,10 @@ export default function RootLayout({
         suppressHydrationWarning
         className='flex min-h-full flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary'
       >
-        <LocaleProvider>{children}</LocaleProvider>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <ThemeProvider>
+          <LocaleProvider>{children}</LocaleProvider>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

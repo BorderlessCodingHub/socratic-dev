@@ -82,6 +82,7 @@
   --color-pastel-sand: var(--pastel-sand);
   --color-pastel-lavender: var(--pastel-lavender);
   --color-pastel-lilac: var(--pastel-lilac);
+  --color-terminal: var(--terminal);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -237,6 +238,7 @@
   --warning-foreground: oklch(0.55 0.14 75);
 
   /* Encord brand palette (encord.com) */
+  --terminal: #131210;
   --ink: #1b1916;
   --aubergine: #2c2330;
   --paper: #f0f0ed;
@@ -244,8 +246,8 @@
   --lime: #a6e40e;
   --lime-dark: #7aaa0a;
   --lime-light: #c4f53a;
-  --iris: #691df2;
-  --violet: #5a10d4;
+  --iris: #7aaa0a;
+  --violet: #5f850a;
   --mint: #7aaa0a;
   --ember: #e07a5f;
 
@@ -271,17 +273,17 @@
   --muted-foreground: #6b6478;
   --popover: #ffffff;
   --popover-foreground: #1b1916;
-  --primary: #691df2;
+  --primary: #7aaa0a;
   --primary-foreground: #ffffff;
-  --ring: color-mix(in oklab, #691df2 45%, transparent);
+  --ring: color-mix(in oklab, #7aaa0a 45%, transparent);
   --secondary: #f0f0ed;
   --secondary-foreground: #1b1916;
 
-  --chart-1: #691df2;
-  --chart-2: #7aaa0a;
+  --chart-1: #7aaa0a;
+  --chart-2: #4a7bd9;
   --chart-3: #e07a5f;
-  --chart-4: #4a7bd9;
-  --chart-5: #b05fd0;
+  --chart-4: #a6e40e;
+  --chart-5: #2c2330;
 
   --code: oklch(0.97 0.004 285);
   --code-foreground: var(--foreground);
@@ -293,9 +295,9 @@
   --sidebar-accent-foreground: #1b1916;
   --sidebar-border: #dfe5e9;
   --sidebar-foreground: #2c2330;
-  --sidebar-primary: #691df2;
+  --sidebar-primary: #7aaa0a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-ring: color-mix(in oklab, #691df2 45%, transparent);
+  --sidebar-ring: color-mix(in oklab, #7aaa0a 45%, transparent);
 }
 
 .dark {
@@ -307,48 +309,63 @@
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.85 0.13 75);
 
-  --iris: oklch(0.68 0.22 285);
-  --violet: oklch(0.6 0.25 295);
-  --mint: oklch(0.78 0.17 165);
-  --ember: oklch(0.7 0.2 35);
+  --ink: #ece9e4;
+  --aubergine: #d8d4de;
+  --paper: #181714;
+  --greige: #22201c;
+  --lime: #a6e40e;
+  --lime-dark: #7aaa0a;
+  --lime-light: #c4f53a;
+  --iris: #a6e40e;
+  --violet: #c4f53a;
+  --mint: #a6e40e;
+  --ember: #e8926f;
 
-  --accent: oklch(0.22 0.02 280);
-  --accent-foreground: oklch(0.95 0.01 280);
-  --background: oklch(0.09 0.01 280);
-  --border: oklch(1 0 0 / 0.08);
-  --card: oklch(0.12 0.012 280);
-  --card-foreground: oklch(0.96 0.005 280);
+  --pastel-greige: #262420;
+  --pastel-sage: #232a1a;
+  --pastel-stone: #292b2c;
+  --pastel-mist: #20262a;
+  --pastel-sand: #2a251e;
+  --pastel-lavender: #262432;
+  --pastel-lilac: #232030;
+
+  --accent: #26241f;
+  --accent-foreground: #ece9e4;
+  --background: #121110;
+  --border: #2c2a26;
+  --card: #191816;
+  --card-foreground: #ece9e4;
   --destructive: oklch(0.65 0.22 25);
-  --foreground: oklch(0.97 0.005 280);
-  --input: oklch(1 0 0 / 0.1);
-  --muted: oklch(1 0 0 / 0.04);
-  --muted-foreground: oklch(0.65 0.02 280);
-  --popover: oklch(0.14 0.012 280);
-  --popover-foreground: oklch(0.96 0.005 280);
-  --primary: oklch(0.68 0.22 285);
-  --primary-foreground: oklch(0.99 0.005 280);
-  --ring: oklch(0.68 0.22 285 / 0.7);
-  --secondary: oklch(1 0 0 / 0.05);
-  --secondary-foreground: oklch(0.96 0.005 280);
+  --foreground: #ece9e4;
+  --input: #2c2a26;
+  --muted: #1c1b18;
+  --muted-foreground: #9d97a5;
+  --popover: #1c1b18;
+  --popover-foreground: #ece9e4;
+  --primary: #a6e40e;
+  --primary-foreground: #1b1916;
+  --ring: color-mix(in oklab, #a6e40e 55%, transparent);
+  --secondary: #22201c;
+  --secondary-foreground: #ece9e4;
 
-  --chart-1: oklch(0.68 0.22 285);
-  --chart-2: oklch(0.78 0.17 165);
-  --chart-3: oklch(0.7 0.2 35);
-  --chart-4: oklch(0.75 0.18 235);
-  --chart-5: oklch(0.65 0.2 320);
+  --chart-1: #a6e40e;
+  --chart-2: #6f9fe8;
+  --chart-3: #e8926f;
+  --chart-4: #7aaa0a;
+  --chart-5: #d8d4de;
 
-  --code: oklch(0.11 0.012 280);
+  --code: #191816;
   --code-foreground: var(--foreground);
   --code-highlight: oklch(1 0 0 / 0.06);
 
-  --sidebar: oklch(0.1 0.012 280);
-  --sidebar-accent: oklch(1 0 0 / 0.05);
-  --sidebar-accent-foreground: oklch(0.96 0.005 280);
-  --sidebar-border: oklch(1 0 0 / 0.06);
-  --sidebar-foreground: oklch(0.75 0.02 280);
-  --sidebar-primary: oklch(0.68 0.22 285);
-  --sidebar-primary-foreground: oklch(0.99 0.005 280);
-  --sidebar-ring: oklch(0.68 0.22 285 / 0.7);
+  --sidebar: #161514;
+  --sidebar-accent: #26241f;
+  --sidebar-accent-foreground: #ece9e4;
+  --sidebar-border: #2c2a26;
+  --sidebar-foreground: #d8d4de;
+  --sidebar-primary: #a6e40e;
+  --sidebar-primary-foreground: #1b1916;
+  --sidebar-ring: color-mix(in oklab, #a6e40e 55%, transparent);
 }
 
 @layer base {
@@ -383,6 +400,12 @@
   ::-webkit-scrollbar-thumb:hover {
     background: oklch(0 0 0 / 0.24);
   }
+  .dark ::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 0.16);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: oklch(1 0 0 / 0.28);
+  }
 }
 
 @layer utilities {
@@ -397,10 +420,10 @@
   .text-gradient {
     background: linear-gradient(
       110deg,
-      #691df2 0%,
-      #5a10d4 38%,
-      #8b4df5 65%,
-      #691df2 100%
+      #7aaa0a 0%,
+      #5f850a 38%,
+      #a6e40e 65%,
+      #7aaa0a 100%
     );
     background-size: 200% auto;
     -webkit-background-clip: text;
@@ -417,7 +440,7 @@
   }
 
   .text-gradient-iris {
-    background: linear-gradient(135deg, #691df2 0%, #5a10d4 100%);
+    background: linear-gradient(135deg, #7aaa0a 0%, #5f850a 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -443,6 +466,13 @@
       0 10px 30px -12px oklch(0 0 0 / 0.14);
   }
 
+  .dark .glass,
+  .dark .glass-strong {
+    background: oklch(0.19 0.006 80 / 0.8);
+    border: 1px solid oklch(1 0 0 / 0.08);
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.3);
+  }
+
   .noise {
     position: relative;
   }
@@ -466,7 +496,7 @@
   .glow-iris {
     box-shadow:
       0 1px 2px oklch(0 0 0 / 0.06),
-      0 12px 30px -10px color-mix(in oklab, #691df2 35%, transparent);
+      0 12px 30px -10px color-mix(in oklab, #7aaa0a 35%, transparent);
   }
 
   /* Encord-style soft elevation for white cards */
@@ -493,9 +523,9 @@
       linear-gradient(var(--card), var(--card)) padding-box,
       linear-gradient(
           135deg,
-          color-mix(in oklab, #691df2 45%, transparent),
-          color-mix(in oklab, #5a10d4 28%, transparent),
-          color-mix(in oklab, #691df2 8%, transparent)
+          color-mix(in oklab, #7aaa0a 45%, transparent),
+          color-mix(in oklab, #5f850a 28%, transparent),
+          color-mix(in oklab, #7aaa0a 8%, transparent)
         )
         border-box;
     border: 1px solid transparent;

@@ -156,7 +156,7 @@ export default function ScenePreviewPage() {
               setFixture(name)
               load(name)
             }}
-            className={`cursor-pointer rounded-full border px-3 py-1 font-mono text-[11px] ${fixture === name ? 'border-ink bg-ink text-white' : 'border-border text-muted-foreground'}`}
+            className={`cursor-pointer rounded-full border px-3 py-1 font-mono text-[11px] ${fixture === name ? 'border-ink bg-ink text-background' : 'border-border text-muted-foreground'}`}
           >
             {name}
           </button>

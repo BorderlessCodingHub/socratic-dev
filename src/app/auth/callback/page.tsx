@@ -24,7 +24,7 @@ function CallbackHandler() {
   }, [next, router])
 
   return (
-    <div className='grid min-h-screen place-items-center bg-white'>
+    <div className='grid min-h-screen place-items-center bg-background'>
       <Loader2 className='size-5 animate-spin text-muted-foreground' />
     </div>
   )
@@ -34,7 +34,7 @@ export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className='grid min-h-screen place-items-center bg-white'>
+        <div className='grid min-h-screen place-items-center bg-background'>
           <Loader2 className='size-5 animate-spin text-muted-foreground' />
         </div>
       }

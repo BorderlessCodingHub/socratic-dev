@@ -6,20 +6,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { signOut } from '@/features/auth/hooks/use-user'
 import { getDashboardStats } from '@/features/dashboard/actions'
 import type { Stats } from '@/features/dashboard/types'
+import { Halftone, glyph } from '@/features/landing/components/halftone'
 import { getProfile, type Profile } from '@/features/profile/actions'
 import { getAccessToken } from '@/lib/api/client'
-import { useT } from '@/lib/i18n'
+import { useLocale, useT, type Locale } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
+import { useTheme, type ThemeSetting } from '@/lib/theme'
 import type { User } from '@supabase/supabase-js'
-import {
-  ArrowRight,
-  ChevronDown,
-  Code2,
-  GaugeCircle,
-  Layers,
-  LogOut,
-  Trophy,
-} from 'lucide-react'
+import { ArrowRight, ChevronDown, LogOut } from 'lucide-react'
 import { motion } from 'motion/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -31,6 +25,11 @@ const STACK_OPTIONS = [
   { value: 'typescript', label: 'TypeScript' },
   { value: 'python', label: 'Python' },
   { value: 'react', label: 'React' },
+]
+
+const LANGUAGE_OPTIONS: readonly { value: Locale; label: string }[] = [
+  { value: 'en', label: 'EN' },
+  { value: 'pt', label: 'PT' },
 ]
 
 const copy = {
@@ -52,16 +51,27 @@ const copy = {
     statIndependence: 'Independence',
     statHints: 'Hints used',
     preferences: 'Preferences',
-    trackLabel: 'Track',
-    trackPlaceholder: 'Pick a track',
-    stackLabel: 'Stack (code)',
-    stackPlaceholder: 'Pick a stack',
-    difficultyLabel: 'Difficulty',
-    levelPlaceholder: 'Pick a level',
     prefsNote:
       'Your next challenges are generated from these choices — saved automatically.',
-    newChallenge: 'New challenge',
-    viewDashboard: 'View dashboard',
+    trackLabel: 'Track',
+    trackDesc: 'What kind of challenges you get next.',
+    trackPlaceholder: 'Pick a track',
+    stackLabel: 'Stack',
+    stackDesc: 'Language for code challenges.',
+    stackPlaceholder: 'Pick a stack',
+    difficultyLabel: 'Difficulty',
+    difficultyDesc: 'How hard the next one should be.',
+    levelPlaceholder: 'Pick a level',
+    appearanceLabel: 'Appearance',
+    appearanceDesc: 'Light, dark, or follow your system.',
+    themeOptions: [
+      { value: 'light', label: 'Light' },
+      { value: 'dark', label: 'Dark' },
+      { value: 'system', label: 'System' },
+    ],
+    languageLabel: 'Language',
+    languageDesc: 'Interface language.',
+    redoSetup: 'Redo setup',
     signOut: 'Sign out',
   },
   pt: {
@@ -82,16 +92,27 @@ const copy = {
     statIndependence: 'Independência',
     statHints: 'Hints usados',
     preferences: 'Preferências',
-    trackLabel: 'Trilha',
-    trackPlaceholder: 'Escolher trilha',
-    stackLabel: 'Stack (código)',
-    stackPlaceholder: 'Escolher stack',
-    difficultyLabel: 'Dificuldade',
-    levelPlaceholder: 'Escolher nível',
     prefsNote:
       'Os próximos desafios são gerados com base nessas escolhas — salvam automaticamente.',
-    newChallenge: 'Novo desafio',
-    viewDashboard: 'Ver dashboard',
+    trackLabel: 'Trilha',
+    trackDesc: 'O tipo de desafio que você recebe.',
+    trackPlaceholder: 'Escolher trilha',
+    stackLabel: 'Stack',
+    stackDesc: 'Linguagem dos desafios de código.',
+    stackPlaceholder: 'Escolher stack',
+    difficultyLabel: 'Dificuldade',
+    difficultyDesc: 'O quão difícil deve ser o próximo.',
+    levelPlaceholder: 'Escolher nível',
+    appearanceLabel: 'Aparência',
+    appearanceDesc: 'Claro, escuro ou seguir o sistema.',
+    themeOptions: [
+      { value: 'light', label: 'Claro' },
+      { value: 'dark', label: 'Escuro' },
+      { value: 'system', label: 'Sistema' },
+    ],
+    languageLabel: 'Idioma',
+    languageDesc: 'Idioma da interface.',
+    redoSetup: 'Refazer setup',
     signOut: 'Sair',
   },
 }
@@ -101,6 +122,8 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 export function ProfileView({ user }: { user: User }) {
   const router = useRouter()
   const t = useT(copy)
+  const { theme, setTheme } = useTheme()
+  const { locale, setLocale } = useLocale()
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [stats, setStats] = React.useState<Stats | null>(null)
   const [loaded, setLoaded] = React.useState(false)
@@ -163,158 +186,278 @@ export function ProfileView({ user }: { user: User }) {
   }, [user])
 
   const ready = !!user && loaded
+  const avatarUrl = (user?.user_metadata as { avatar_url?: string } | undefined)
+    ?.avatar_url
 
   return (
-    <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
+    <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <Navbar />
 
       <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
         <div className='container-main w-full max-w-3xl'>
-          <div className='shadow-soft-lg overflow-hidden rounded-lg border border-border bg-white'>
-            <div className='border-b border-border bg-pastel-lavender/60 px-6 py-8 sm:px-10 sm:py-10'>
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className='flex items-center gap-4'
-              >
-                {(user?.user_metadata as { avatar_url?: string } | undefined)
-                  ?.avatar_url ? (
-                  <div className='relative size-14 shrink-0 overflow-hidden rounded-full ring-4 ring-white/50'>
-                    <Image
-                      src={
-                        (user.user_metadata as { avatar_url?: string })
-                          .avatar_url!
-                      }
-                      alt={t.avatarAlt}
-                      fill
-                      className='object-cover'
-                    />
-                  </div>
-                ) : (
-                  <div className='grid size-14 shrink-0 place-items-center rounded-full bg-primary font-mono text-xl font-medium text-primary-foreground uppercase ring-4 ring-white/50'>
-                    {(user?.email?.[0] ?? 'u').toUpperCase()}
-                  </div>
-                )}
-                <div className='min-w-0'>
-                  <p className='eyebrow mb-1'>{t.yourProfile}</p>
-                  <h1 className='type-h3 truncate'>{user?.email ?? '—'}</h1>
-                  {ready && profile && (
-                    <p className='mt-1 text-sm text-muted-foreground'>
-                      {t.memberSince}{' '}
-                      {new Date(profile.created_at).toLocaleDateString(
-                        t.dateLocale,
-                      )}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
+          <motion.header
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className='relative overflow-hidden rounded-lg bg-pastel-greige px-6 py-10 sm:px-10 sm:py-12'
+          >
+            <div className='pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-25 mix-blend-multiply dark:mix-blend-screen'>
+              <Halftone
+                draw={glyph('{ }', 2)}
+                ambient
+                spacing={7}
+                className='absolute inset-0'
+              />
             </div>
-
-            <div className='px-6 py-7 sm:px-10 sm:py-8'>
-              {!ready ? (
-                <ProfileSkeleton />
+            <div className='relative flex items-center gap-5 sm:gap-6'>
+              {avatarUrl ? (
+                <div className='relative size-20 shrink-0 overflow-hidden rounded-full border border-border sm:size-24'>
+                  <Image
+                    src={avatarUrl}
+                    alt={t.avatarAlt}
+                    fill
+                    className='object-cover'
+                  />
+                </div>
               ) : (
-                <>
-                  <div className='grid grid-cols-3 gap-3'>
-                    <Stat
-                      icon={Trophy}
-                      label={t.statCompleted}
-                      value={String(stats?.total_completed ?? 0)}
-                    />
-                    <Stat
-                      icon={GaugeCircle}
-                      label={t.statIndependence}
-                      value={`${stats?.independence_score ?? 100}%`}
-                    />
-                    <Stat
-                      icon={Layers}
-                      label={t.statHints}
-                      value={String(stats?.total_hints ?? 0)}
-                    />
-                  </div>
+                <div className='grid size-20 shrink-0 place-items-center rounded-full border border-border bg-background font-heading text-3xl font-light text-ink uppercase sm:size-24 sm:text-4xl'>
+                  {(user?.email?.[0] ?? 'u').toUpperCase()}
+                </div>
+              )}
+              <div className='min-w-0'>
+                <p className='eyebrow mb-2'>{t.yourProfile}</p>
+                <h1 className='type-h3 truncate'>{user?.email ?? '—'}</h1>
+                {ready && profile && (
+                  <p className='mt-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+                    {t.memberSince}{' '}
+                    {new Date(profile.created_at).toLocaleDateString(
+                      t.dateLocale,
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.header>
 
-                  <div className='mt-3 rounded-md bg-muted p-6'>
-                    <div className='mb-4 flex items-center justify-between'>
-                      <div className='eyebrow flex items-center gap-2'>
-                        <Code2 className='size-3.5' strokeWidth={1.5} />
-                        {t.preferences}
-                      </div>
-                      <SaveBadge state={saveState} />
-                    </div>
-                    <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                      <SelectField
-                        label={t.trackLabel}
-                        value={track}
-                        placeholder={t.trackPlaceholder}
-                        options={t.trackOptions}
-                        onChange={(v) => {
-                          setTrack(v)
-                          savePrefs(v, stack, level)
-                        }}
-                      />
-                      {track !== 'design' && (
-                        <SelectField
-                          label={t.stackLabel}
-                          value={stack}
-                          placeholder={t.stackPlaceholder}
-                          options={STACK_OPTIONS}
-                          onChange={(v) => {
-                            setStack(v)
-                            savePrefs(track, v, level)
-                          }}
-                        />
-                      )}
-                      <SelectField
-                        label={t.difficultyLabel}
-                        value={level}
-                        placeholder={t.levelPlaceholder}
-                        options={t.levelOptions}
-                        onChange={(v) => {
-                          setLevel(v)
-                          savePrefs(track, stack, v)
-                        }}
-                      />
-                    </div>
-                    <p className='mt-4 text-[13px] text-muted-foreground'>
+          {!ready ? (
+            <ProfileSkeleton />
+          ) : (
+            <>
+              <section className='mt-12 grid grid-cols-3'>
+                <StatCol
+                  value={String(stats?.total_completed ?? 0)}
+                  label={t.statCompleted}
+                />
+                <StatCol
+                  value={`${stats?.independence_score ?? 100}%`}
+                  label={t.statIndependence}
+                />
+                <StatCol
+                  value={String(stats?.total_hints ?? 0)}
+                  label={t.statHints}
+                />
+              </section>
+
+              <section className='mt-14'>
+                <div className='flex items-end justify-between gap-4 border-b border-border pb-4'>
+                  <div>
+                    <p className='eyebrow'>{t.preferences}</p>
+                    <p className='mt-2 max-w-md text-sm text-muted-foreground'>
                       {t.prefsNote}
                     </p>
                   </div>
+                  <SaveBadge state={saveState} />
+                </div>
 
-                  <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center'>
-                    <Button
-                      render={<Link href='/onboarding' />}
-                      variant='ink'
-                      size='lg'
-                      className='group'
-                    >
-                      {t.newChallenge}
-                      <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-                    </Button>
-                    <Button
-                      render={<Link href='/dashboard' />}
-                      variant='outline'
-                      size='lg'
-                    >
-                      {t.viewDashboard}
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      onClick={async () => {
-                        await signOut()
-                        router.push('/')
+                <SettingRow label={t.trackLabel} description={t.trackDesc}>
+                  <SelectControl
+                    ariaLabel={t.trackLabel}
+                    value={track}
+                    placeholder={t.trackPlaceholder}
+                    options={t.trackOptions}
+                    onChange={(v) => {
+                      setTrack(v)
+                      savePrefs(v, stack, level)
+                    }}
+                  />
+                </SettingRow>
+
+                {track !== 'design' && (
+                  <SettingRow label={t.stackLabel} description={t.stackDesc}>
+                    <SelectControl
+                      ariaLabel={t.stackLabel}
+                      value={stack}
+                      placeholder={t.stackPlaceholder}
+                      options={STACK_OPTIONS}
+                      onChange={(v) => {
+                        setStack(v)
+                        savePrefs(track, v, level)
                       }}
-                      className='sm:ml-auto'
-                    >
-                      <LogOut className='size-4' /> {t.signOut}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+                    />
+                  </SettingRow>
+                )}
+
+                <SettingRow
+                  label={t.difficultyLabel}
+                  description={t.difficultyDesc}
+                >
+                  <SelectControl
+                    ariaLabel={t.difficultyLabel}
+                    value={level}
+                    placeholder={t.levelPlaceholder}
+                    options={t.levelOptions}
+                    onChange={(v) => {
+                      setLevel(v)
+                      savePrefs(track, stack, v)
+                    }}
+                  />
+                </SettingRow>
+
+                <SettingRow
+                  label={t.appearanceLabel}
+                  description={t.appearanceDesc}
+                >
+                  <Segmented
+                    value={theme}
+                    options={t.themeOptions}
+                    onChange={(v) => setTheme(v as ThemeSetting)}
+                  />
+                </SettingRow>
+
+                <SettingRow
+                  label={t.languageLabel}
+                  description={t.languageDesc}
+                >
+                  <Segmented
+                    value={locale}
+                    options={LANGUAGE_OPTIONS}
+                    onChange={(v) => setLocale(v as Locale)}
+                  />
+                </SettingRow>
+              </section>
+
+              <div className='mt-10 flex flex-col-reverse gap-5 sm:flex-row sm:items-center sm:justify-between'>
+                <Link
+                  href='/onboarding'
+                  className='group/link inline-flex items-center gap-1.5 text-sm font-medium text-ink'
+                >
+                  <span className='link-underline'>{t.redoSetup}</span>
+                  <ArrowRight className='size-3.5 transition-transform group-hover/link:translate-x-0.5' />
+                </Link>
+                <Button
+                  variant='ghost'
+                  className='self-start text-destructive hover:text-destructive sm:self-auto'
+                  onClick={async () => {
+                    await signOut()
+                    router.push('/')
+                  }}
+                >
+                  <LogOut className='size-4' /> {t.signOut}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </main>
+    </div>
+  )
+}
+
+function StatCol({ value, label }: { value: string; label: string }) {
+  return (
+    <div className='border-l border-border pl-5 first:border-l-0 first:pl-0 sm:pl-8'>
+      <div className='font-heading text-[44px] leading-none font-light tracking-tight text-ink tabular-nums sm:text-[56px]'>
+        {value}
+      </div>
+      <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+        {label}
+      </div>
+    </div>
+  )
+}
+
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className='flex flex-col gap-3 border-b border-border py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-8'>
+      <div className='min-w-0'>
+        <div className='font-medium text-ink'>{label}</div>
+        <div className='mt-0.5 text-sm text-muted-foreground'>
+          {description}
+        </div>
+      </div>
+      <div className='shrink-0'>{children}</div>
+    </div>
+  )
+}
+
+function SelectControl({
+  ariaLabel,
+  value,
+  placeholder,
+  options,
+  onChange,
+}: {
+  ariaLabel: string
+  value: string
+  placeholder: string
+  options: readonly { value: string; label: string }[]
+  onChange: (value: string) => void
+}) {
+  return (
+    <div className='relative'>
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className='w-full appearance-none rounded-full border border-border bg-background py-2 pr-9 pl-4 text-sm font-medium text-ink transition-colors outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 sm:w-[200px]'
+      >
+        <option value='' disabled>
+          {placeholder}
+        </option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className='pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted-foreground' />
+    </div>
+  )
+}
+
+function Segmented({
+  value,
+  options,
+  onChange,
+}: {
+  value: string
+  options: readonly { value: string; label: string }[]
+  onChange: (value: string) => void
+}) {
+  return (
+    <div className='inline-flex rounded-full border border-border p-0.5'>
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type='button'
+          onClick={() => onChange(o.value)}
+          className={`rounded-full px-3.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors ${
+            value === o.value
+              ? 'bg-ink text-background'
+              : 'text-muted-foreground hover:text-ink'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   )
 }
@@ -322,86 +465,36 @@ export function ProfileView({ user }: { user: User }) {
 function ProfileSkeleton() {
   return (
     <div>
-      <div className='grid grid-cols-3 gap-3'>
+      <div className='mt-12 grid grid-cols-3'>
         {[0, 1, 2].map((i) => (
-          <div key={i} className='rounded-md border border-border p-5'>
-            <Skeleton className='mb-3 size-9 rounded-full' />
-            <Skeleton className='h-7 w-12' />
-            <Skeleton className='mt-2 h-3 w-16' />
+          <div
+            key={i}
+            className='border-l border-border pl-5 first:border-l-0 first:pl-0 sm:pl-8'
+          >
+            <Skeleton className='h-11 w-16 sm:h-14' />
+            <Skeleton className='mt-3 h-3 w-20' />
           </div>
         ))}
       </div>
-      <div className='mt-3 rounded-md border border-border p-6'>
-        <Skeleton className='mb-4 h-3 w-40' />
-        <div className='grid grid-cols-2 gap-3'>
-          <Skeleton className='h-14 rounded-md' />
-          <Skeleton className='h-14 rounded-md' />
-        </div>
+      <div className='mt-14 border-b border-border pb-4'>
+        <Skeleton className='h-3 w-28' />
+        <Skeleton className='mt-3 h-3.5 w-64' />
       </div>
-      <div className='mt-6 flex gap-3'>
-        <Skeleton className='h-11 w-36 rounded-full' />
-        <Skeleton className='h-11 w-32 rounded-full' />
-      </div>
-    </div>
-  )
-}
-
-function Stat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  label: string
-  value: string
-}) {
-  return (
-    <div className='rounded-md border border-border bg-white p-5'>
-      <div className='mb-3 grid size-11 place-items-center rounded-full bg-pastel-lavender text-ink'>
-        <Icon className='size-5' strokeWidth={1.5} />
-      </div>
-      <div className='font-heading text-3xl font-light tracking-tight text-ink tabular-nums'>
-        {value}
-      </div>
-      <div className='mt-1 text-[12px] text-muted-foreground'>{label}</div>
-    </div>
-  )
-}
-
-function SelectField({
-  label,
-  value,
-  placeholder,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  placeholder: string
-  options: readonly { value: string; label: string }[]
-  onChange: (value: string) => void
-}) {
-  return (
-    <div>
-      <label className='mb-1.5 block font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-        {label}
-      </label>
-      <div className='relative'>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className='w-full appearance-none rounded-md border border-border bg-white px-4 py-2.5 pr-10 text-[15px] font-medium text-ink transition-colors outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className='flex items-center justify-between border-b border-border py-5'
         >
-          <option value='' disabled>
-            {placeholder}
-          </option>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className='pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground' />
+          <div>
+            <Skeleton className='h-4 w-24' />
+            <Skeleton className='mt-2 h-3 w-44' />
+          </div>
+          <Skeleton className='h-9 w-[180px] rounded-full' />
+        </div>
+      ))}
+      <div className='mt-10 flex items-center justify-between'>
+        <Skeleton className='h-4 w-24' />
+        <Skeleton className='h-9 w-28 rounded-full' />
       </div>
     </div>
   )
@@ -429,5 +522,7 @@ function SaveBadge({ state }: { state: SaveState }) {
     error: [t.error, 'text-destructive'],
   } as const
   const [text, cls] = map[state]
-  return <span className={`font-mono text-[11px] ${cls}`}>{text}</span>
+  return (
+    <span className={`shrink-0 font-mono text-[11px] ${cls}`}>{text}</span>
+  )
 }

@@ -146,7 +146,7 @@ const arenas: Arena[] = [
 function Scene({ paint, active }: { paint: Painter; active: boolean }) {
   return (
     <div
-      className={`pointer-events-none absolute inset-x-5 top-4 h-[175px] mix-blend-multiply transition-opacity duration-500 ease-out ${active ? 'opacity-85' : 'opacity-[0.22]'}`}
+      className={`pointer-events-none absolute mix-blend-multiply transition-all duration-500 ease-out dark:mix-blend-screen ${active ? 'inset-x-5 top-2 bottom-[262px] opacity-85' : 'inset-0 opacity-[0.22]'}`}
     >
       <Halftone
         draw={paint}
@@ -297,7 +297,7 @@ export function UseCases() {
           const at = t.arenas[arena.key]
           const body = (
             <>
-              <div className='pointer-events-none relative mb-4 h-[110px] opacity-40 mix-blend-multiply'>
+              <div className='pointer-events-none relative mb-4 h-[110px] opacity-40 mix-blend-multiply dark:mix-blend-screen'>
                 <Halftone
                   draw={arena.paint}
                   spacing={7}

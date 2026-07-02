@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Halftone, glyph } from '@/features/landing/components/halftone'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import {
@@ -36,6 +37,7 @@ const copy = {
       'Starts at 100. Every hint costs. It measures how much you thought on your own.',
     hintsUsed: 'Hints used',
     time: 'Time',
+    reviewTitle: 'The review',
     reviewAgain: 'Keep working',
     linkCopied: 'Link copied',
     share: 'Share',
@@ -71,6 +73,7 @@ const copy = {
       'Começa em 100. Cada hint custa. É o quanto você pensou sozinho.',
     hintsUsed: 'Hints usados',
     time: 'Tempo',
+    reviewTitle: 'O review',
     reviewAgain: 'Revisar de novo',
     linkCopied: 'Link copiado',
     share: 'Compartilhar',
@@ -157,30 +160,30 @@ export function ReviewModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 24, scale: 0.97 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className='shadow-soft-lg relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-border bg-white'
+        className='shadow-soft-lg relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-border bg-card'
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className='absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border border-border bg-white text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-ink'
+          className='absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-ink'
           aria-label={t.close}
         >
           <X className='size-4' />
         </button>
 
-        <div className='shrink-0 px-8 pt-10 pb-5'>
+        <div className='shrink-0 px-8 pt-10 pb-7'>
           <div
             className={cn(
               'mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1 font-mono text-[11px]',
               passed
-                ? 'bg-mint/10 text-mint'
+                ? 'bg-lime text-ink dark:text-background'
                 : 'bg-warning/10 text-warning-foreground',
             )}
           >
             <GitPullRequestArrow className='size-3' strokeWidth={1.5} />
             {passed ? t.badgePass : t.badgeFail}
           </div>
-          <h2 className='mb-2 font-heading text-3xl leading-tight font-light tracking-[-0.02em] text-ink'>
+          <h2 className='type-h3 max-w-[24ch] text-balance'>
             {passed ? (
               <>
                 {t.headPassPre}
@@ -199,54 +202,84 @@ export function ReviewModal({
               </>
             )}
           </h2>
-          <p className='text-muted-foreground'>
+          <p className='mt-3 text-[14px] leading-relaxed text-muted-foreground'>
             {passed ? t.subPass : t.subFail}
           </p>
         </div>
 
-        <div className='min-h-0 flex-1 overflow-y-auto px-8 pb-6'>
+        <div className='shrink-0 border-t border-border px-8 py-6'>
+          <div className='flex items-end'>
+            <div className='pr-6 sm:pr-10' title={t.independenceHint}>
+              <div className='flex items-baseline'>
+                <span className='font-heading text-[72px] leading-[0.85] font-light tracking-[-0.04em] tabular-nums text-ink sm:text-[84px]'>
+                  {independence}
+                </span>
+                <span className='ml-1.5 font-mono text-sm text-muted-foreground'>
+                  /100
+                </span>
+              </div>
+              <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+                {t.independence}
+              </div>
+            </div>
+            <div className='border-l border-border px-6 sm:px-10'>
+              <div className='font-heading text-[28px] leading-none font-light tabular-nums text-ink'>
+                {hintsUsed}
+              </div>
+              <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+                {t.hintsUsed}
+              </div>
+            </div>
+            <div className='border-l border-border pl-6 sm:pl-10'>
+              <div className='font-heading text-[28px] leading-none font-light tabular-nums text-ink'>
+                {formatTime(elapsed)}
+              </div>
+              <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+                {t.time}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className='min-h-0 flex-1 overflow-y-auto border-t border-border px-8 pt-6 pb-8'>
           {tests && <TestBanner passed={tests.passed} total={tests.total} />}
+          <h3 className='type-h4 mb-3'>{t.reviewTitle}</h3>
           {reviewing || !review ? (
-            <div className='flex items-center gap-2 py-8 text-sm text-muted-foreground'>
-              <Loader2 className='size-4 animate-spin' /> {t.generating}
+            <div className='relative overflow-hidden rounded-lg bg-muted px-6 py-10'>
+              <div className='pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply dark:mix-blend-screen'>
+                <Halftone
+                  draw={glyph('{ }', 2)}
+                  ambient
+                  spacing={9}
+                  className='absolute inset-0'
+                />
+              </div>
+              <div className='relative flex items-center gap-2 text-sm text-muted-foreground'>
+                <Loader2 className='size-4 animate-spin' /> {t.generating}
+              </div>
             </div>
           ) : (
-            <div className='rounded-lg bg-muted p-5 text-[14px] leading-relaxed text-aubergine'>
+            <div className='type-body'>
               <FormattedText text={review} />
             </div>
           )}
         </div>
 
-        <div className='shrink-0 border-t border-border bg-muted px-8 py-6'>
-          <div className='mb-5 grid grid-cols-3 gap-3'>
-            <Metric
-              label={t.independence}
-              value={`${independence}%`}
-              accent='mint'
-              hint={t.independenceHint}
-            />
-            <Metric label={t.hintsUsed} value={String(hintsUsed)} />
-            <Metric label={t.time} value={formatTime(elapsed)} accent='primary' />
-          </div>
-          <div className='flex flex-col gap-2 sm:flex-row'>
+        <div className='shrink-0 border-t border-border px-8 py-5'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
             <Button
               size='lg'
               variant='ghost'
               onClick={onClose}
-              className='text-muted-foreground hover:text-ink sm:flex-1'
+              className='text-muted-foreground hover:text-ink'
             >
               {t.reviewAgain}
             </Button>
             {canShare && (
-              <Button
-                size='lg'
-                variant='outline'
-                onClick={copyShareLink}
-                className='sm:flex-1'
-              >
+              <Button size='lg' variant='ink' onClick={copyShareLink}>
                 {copied ? (
                   <>
-                    <CheckCircle2 className='size-4 text-mint' />
+                    <CheckCircle2 className='size-4' />
                     {t.linkCopied}
                   </>
                 ) : (
@@ -262,9 +295,8 @@ export function ReviewModal({
               variant={passed ? 'ink' : 'default'}
               onClick={handleComplete}
               className={cn(
-                'sm:flex-1',
                 !passed &&
-                  'border-warning-foreground bg-warning-foreground text-white hover:bg-warning-foreground/90',
+                  'border-warning-foreground bg-warning-foreground text-background hover:bg-warning-foreground/90',
               )}
             >
               {passed ? (
@@ -316,7 +348,7 @@ function Celebration({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className='fixed inset-0 z-[60] grid place-items-center bg-white/95 backdrop-blur-sm'
+      className='fixed inset-0 z-[60] grid place-items-center bg-background/95 backdrop-blur-sm'
     >
       <motion.div
         initial={{ scale: 0.6, opacity: 0 }}
@@ -340,8 +372,8 @@ function Celebration({
           className={cn(
             'mb-6 grid size-24 place-items-center rounded-full',
             passed
-              ? 'bg-ink text-white'
-              : 'bg-warning-foreground text-white',
+              ? 'bg-ink text-background'
+              : 'bg-warning-foreground text-background',
           )}
         >
           {passed ? (
@@ -369,7 +401,7 @@ function TestBanner({ passed, total }: { passed: number; total: number }) {
   const t = useT(copy)
   if (total === 0) {
     return (
-      <div className='mb-4 rounded-lg bg-muted px-4 py-3 text-[13px] text-muted-foreground'>
+      <div className='mb-6 rounded-lg bg-muted px-4 py-3 text-[13px] text-muted-foreground'>
         {t.noTests}
       </div>
     )
@@ -378,9 +410,9 @@ function TestBanner({ passed, total }: { passed: number; total: number }) {
   return (
     <div
       className={cn(
-        'mb-4 flex items-center gap-2.5 rounded-lg px-4 py-3 text-[13px] font-medium',
+        'mb-6 flex items-center gap-2.5 rounded-lg px-4 py-3 text-[13px] font-medium',
         solved
-          ? 'bg-mint/10 text-mint'
+          ? 'bg-lime text-ink dark:text-background'
           : 'bg-warning/10 text-warning-foreground',
       )}
     >
@@ -392,35 +424,6 @@ function TestBanner({ passed, total }: { passed: number; total: number }) {
       {solved
         ? t.testsSolved(passed, total)
         : t.testsNotSolved(passed, total)}
-    </div>
-  )
-}
-
-function Metric({
-  label,
-  value,
-  accent,
-  hint,
-}: {
-  label: string
-  value: string
-  accent?: 'mint' | 'primary'
-  hint?: string
-}) {
-  return (
-    <div className='rounded-lg border border-border bg-white p-3' title={hint}>
-      <div className='mb-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-        {label}
-      </div>
-      <div
-        className={cn(
-          'font-heading text-lg font-light tabular-nums text-ink',
-          accent === 'mint' && 'text-mint',
-          accent === 'primary' && 'text-primary',
-        )}
-      >
-        {value}
-      </div>
     </div>
   )
 }

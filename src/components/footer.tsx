@@ -76,7 +76,7 @@ export function Footer() {
           </p>
           <Link
             href='/onboarding'
-            className='bg-ink hover:bg-primary group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-colors duration-300'
+            className='bg-ink hover:bg-primary text-background group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300'
           >
             {t.cta}
             <ArrowRight className='size-3.5 transition-transform group-hover:translate-x-0.5' />
@@ -120,7 +120,7 @@ export function Footer() {
                   className={cn(
                     'cursor-pointer rounded-full border px-3 py-1 font-mono text-[11px] uppercase transition-colors duration-200',
                     locale === l
-                      ? 'border-ink bg-ink text-white'
+                      ? 'border-ink bg-ink text-background'
                       : 'border-border text-muted-foreground hover:text-ink',
                   )}
                 >
@@ -141,7 +141,7 @@ export function Footer() {
         </p>
       </div>
 
-      <div className='border-border relative border-t bg-white/40'>
+      <div className='border-border bg-background/40 relative border-t'>
         <div className='container-main flex flex-col items-center gap-2 py-5 sm:flex-row sm:justify-between'>
           <span className='text-muted-foreground text-[13px]'>
             © 2026 Socratic.dev

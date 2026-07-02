@@ -27,24 +27,24 @@ export function Testimonial() {
     <section id='manifesto' className='p-3 md:p-6'>
       <Reveal>
         <figure className='bg-ink rounded-lg px-6 py-12 lg:px-[60px] lg:py-[64px]'>
-          <blockquote className='type-quote mb-10 max-w-[820px] lg:mb-14'>
+          <blockquote className='type-quote text-background! mb-10 max-w-[820px] lg:mb-14'>
             {t.quote}
           </blockquote>
           <figcaption className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
             <div className='flex items-center gap-4'>
-              <span className='bg-lime text-ink font-heading grid size-[64px] shrink-0 place-items-center rounded-full text-2xl font-light lg:size-[80px]'>
+              <span className='bg-lime text-ink dark:text-background font-heading grid size-[64px] shrink-0 place-items-center rounded-full text-2xl font-light lg:size-[80px]'>
                 Σ
               </span>
               <div>
-                <p className='text-xl font-normal tracking-[-0.56px] text-white lg:text-[28px]'>
+                <p className='text-background text-xl font-normal tracking-[-0.56px] lg:text-[28px]'>
                   {t.name}
                 </p>
-                <p className='font-mono mt-1 text-xs tracking-wide text-white/50'>
+                <p className='font-mono text-background/50 mt-1 text-xs tracking-wide'>
                   {t.role}
                 </p>
               </div>
             </div>
-            <div className='font-mono text-xs tracking-wide text-white/50'>
+            <div className='font-mono text-background/50 text-xs tracking-wide'>
               {t.footnote}
             </div>
           </figcaption>

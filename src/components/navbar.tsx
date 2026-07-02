@@ -67,7 +67,7 @@ function HintsChip() {
 
   if (remaining === null) return null
   return (
-    <div className='border-border hidden h-9 items-center gap-1.5 rounded-full border bg-white py-0 pr-1 pl-3 sm:inline-flex'>
+    <div className='border-border bg-background hidden h-9 items-center gap-1.5 rounded-full border py-0 pr-1 pl-3 sm:inline-flex'>
       <Lightbulb className='text-primary size-3.5' strokeWidth={1.5} />
       <span
         title={t.hintsAvailable}
@@ -94,7 +94,7 @@ function HintsChip() {
 function LangToggle() {
   const { locale, setLocale } = useLocale()
   return (
-    <div className='border-border hidden h-9 items-center rounded-full border bg-white p-1 font-mono text-[11px] sm:flex'>
+    <div className='border-border bg-background hidden h-9 items-center rounded-full border p-1 font-mono text-[11px] sm:flex'>
       {(['en', 'pt'] as const).map((l) => (
         <button
           key={l}
@@ -104,7 +104,7 @@ function LangToggle() {
           className={cn(
             'cursor-pointer rounded-full px-2.5 py-1 uppercase transition-colors duration-200',
             locale === l
-              ? 'bg-ink text-white'
+              ? 'bg-ink text-background'
               : 'text-muted-foreground hover:text-ink',
           )}
         >
@@ -144,7 +144,7 @@ export function Navbar() {
       className={cn(
         'fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300',
         scrolled
-          ? 'border-border bg-white/90 backdrop-blur'
+          ? 'border-border bg-background/90 backdrop-blur'
           : 'border-transparent bg-transparent',
       )}
     >

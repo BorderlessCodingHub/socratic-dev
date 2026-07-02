@@ -86,7 +86,7 @@ export function ReactPreview({
   }, [code, t])
 
   return (
-    <div className='flex h-[55%] min-h-[200px] shrink-0 flex-col border-t border-white/10 bg-ink'>
+    <div className='flex h-[55%] min-h-[200px] shrink-0 flex-col border-t border-white/10 bg-terminal'>
       <div className='flex h-9 shrink-0 items-center justify-between border-b border-white/10 px-4 font-mono text-[11px] tracking-wider text-white/50 uppercase'>
         <span className='flex items-center gap-1.5'>
           <Eye className='size-3.5' strokeWidth={1.5} /> Preview

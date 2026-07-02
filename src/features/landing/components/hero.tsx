@@ -53,7 +53,7 @@ export function Hero() {
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className='from-pastel-greige via-pastel-mist/70 to-pastel-lavender/60 relative flex min-h-[400px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br lg:min-h-[460px]'
       >
-        <div className='pointer-events-none absolute inset-0 opacity-45 mix-blend-multiply'>
+        <div className='pointer-events-none absolute inset-0 opacity-45 mix-blend-multiply dark:mix-blend-screen'>
           <Halftone
             draw={paintAmbient}
             active
@@ -75,14 +75,14 @@ export function Hero() {
           <div className='flex flex-col justify-center gap-3 sm:flex-row'>
             <Link
               href='/onboarding'
-              className='bg-ink hover:bg-primary group inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-base font-medium tracking-tight text-white transition-colors duration-300'
+              className='bg-ink hover:bg-primary group inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-base font-medium tracking-tight text-background transition-colors duration-300'
             >
               {t.primary}
               <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
             </Link>
             <Link
               href='/challenges'
-              className='bg-lime text-ink hover:bg-lime-dark inline-flex items-center justify-center rounded-full px-5 py-2.5 text-base font-medium tracking-tight transition-colors duration-300 hover:text-white'
+              className='bg-lime text-ink dark:text-background hover:bg-lime-dark inline-flex items-center justify-center rounded-full px-5 py-2.5 text-base font-medium tracking-tight transition-colors duration-300 hover:text-white'
             >
               {t.secondary}
             </Link>

@@ -45,7 +45,7 @@ export function FinalCta() {
     <section className='p-3 md:p-6'>
       <Reveal>
         <div className='from-pastel-greige/50 via-pastel-mist/40 to-pastel-lavender/60 relative flex min-h-[400px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-b px-6 py-16 text-center sm:px-10 lg:min-h-[480px] lg:py-20'>
-          <div className='pointer-events-none absolute inset-0 opacity-45 mix-blend-multiply'>
+          <div className='pointer-events-none absolute inset-0 opacity-45 mix-blend-multiply dark:mix-blend-screen'>
             <Halftone
               draw={paintCtaField}
               active

@@ -13,20 +13,17 @@ import { getDashboardStats } from '@/features/dashboard/actions'
 import { getAccessToken } from '@/lib/api/client'
 import type { Stats } from '@/features/dashboard/types'
 import { activityLevel } from '@/features/dashboard/utils'
+import { Halftone, glyph } from '@/features/landing/components/halftone'
 import { useLocale, useT } from '@/lib/i18n'
 import type { User } from '@supabase/supabase-js'
 import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Code2,
-  Layers,
-  Lightbulb,
   Network,
   PenLine,
   Sparkles,
   TrendingUp,
-  Trophy,
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
@@ -81,7 +78,7 @@ const copy = {
     resume: 'Resume',
     quote:
       'What comes out of your head is worth a thousand times more than what comes out of mine.',
-    quoteBy: '— Socratic tutor, just now',
+    quoteBy: 'Socratic tutor, just now',
   },
   pt: {
     welcome: 'Bem-vindo de volta',
@@ -123,17 +120,19 @@ const copy = {
     resume: 'Retomar',
     quote:
       'O que sai da sua cabeça vale mil vezes mais que o que sai da minha.',
-    quoteBy: '— Tutor Socrático, agora há pouco',
+    quoteBy: 'Tutor Socrático, agora há pouco',
   },
 }
 
 const CELL = [
   'bg-muted',
-  'bg-primary/25',
-  'bg-primary/45',
-  'bg-primary/70',
+  'bg-pastel-sage',
+  'bg-primary/35',
+  'bg-primary/75',
   'bg-primary',
 ]
+
+const EASE = [0.16, 1, 0.3, 1] as const
 
 export function DashboardView({ user }: { user: User }) {
   const t = useT(copy)
@@ -211,130 +210,156 @@ export function DashboardView({ user }: { user: User }) {
   const score = stats?.independence_score ?? 100
 
   return (
-    <div className='relative flex min-h-screen flex-1 flex-col bg-white'>
+    <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <Navbar />
 
       <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
         <div className='container-main max-w-6xl'>
-          <motion.div
+          <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className='mb-10 flex flex-col gap-6'
+            transition={{ duration: 0.6, ease: EASE }}
+            className='relative mb-12 overflow-hidden rounded-lg bg-pastel-greige/60 px-6 py-10 sm:px-10 lg:px-12 lg:py-12'
           >
-            <div className='min-w-0'>
-              <p className='eyebrow mb-2'>{t.welcome}</p>
-              {loaded ? (
-                <>
-                  <h1 className='type-h2'>
-                    {t.youAre}{' '}
-                    <span className='text-gradient font-serif font-normal italic'>
-                      {score}
-                      {t.independentSuffix}
-                    </span>
-                    .
-                  </h1>
-                  <p className='type-body mt-3'>
-                    {stats && stats.total_completed > 0
-                      ? t.keepGoing
-                      : t.startPrompt}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Skeleton className='h-11 w-[22rem] max-w-full lg:h-14' />
-                  <Skeleton className='mt-4 h-5 w-64 max-w-full' />
-                </>
-              )}
+            <div className='pointer-events-none absolute inset-y-0 right-0 hidden w-[44%] opacity-20 mix-blend-multiply sm:block dark:mix-blend-screen'>
+              <Halftone
+                draw={glyph('>_', 1.5)}
+                ambient
+                spacing={9}
+                className='absolute inset-0'
+              />
             </div>
-            <div className='flex flex-col gap-2 self-start sm:flex-row'>
-              <Button
-                variant='outline'
-                size='lg'
-                onClick={() => setCustomOpen(true)}
-              >
-                <PenLine strokeWidth={1.5} />
-                {t.custom}
-              </Button>
-              <Button
-                variant='outline'
-                size='lg'
-                onClick={startDesign}
-                loading={genDesign}
-              >
-                <Network strokeWidth={1.5} />
-                System Design
-              </Button>
-              <Button
-                variant='ink'
-                size='lg'
-                onClick={startCode}
-                loading={genCode}
-                className='group'
-              >
-                <Sparkles strokeWidth={1.5} />
-                {t.newChallenge}
-                <ArrowRight className='transition-transform duration-200 group-hover:translate-x-0.5' />
-              </Button>
+            <div className='relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between'>
+              <div className='min-w-0'>
+                <p className='eyebrow mb-3'>{t.welcome}</p>
+                {loaded ? (
+                  <>
+                    <h1 className='type-h2 text-balance'>
+                      {t.youAre}{' '}
+                      <span className='font-serif font-normal italic text-primary'>
+                        {score}
+                        {t.independentSuffix}
+                      </span>
+                      .
+                    </h1>
+                    <div className='mt-5 flex flex-wrap items-center gap-3'>
+                      {stats && stats.streak_days > 0 && (
+                        <span className='inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1 font-mono text-[11px] font-medium tracking-wider text-ink uppercase dark:text-background'>
+                          <TrendingUp className='size-3.5' strokeWidth={1.5} />
+                          {stats.streak_days} {t.statStreakHint}
+                        </span>
+                      )}
+                      <p className='type-body'>
+                        {stats && stats.total_completed > 0
+                          ? t.keepGoing
+                          : t.startPrompt}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Skeleton className='h-11 w-[22rem] max-w-full lg:h-14' />
+                    <Skeleton className='mt-4 h-5 w-64 max-w-full' />
+                  </>
+                )}
+              </div>
+              <div className='flex flex-col gap-2 sm:flex-row lg:shrink-0 lg:justify-end'>
+                <Button
+                  variant='outline'
+                  size='lg'
+                  onClick={() => setCustomOpen(true)}
+                >
+                  <PenLine strokeWidth={1.5} />
+                  {t.custom}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='lg'
+                  onClick={startDesign}
+                  loading={genDesign}
+                >
+                  <Network strokeWidth={1.5} />
+                  System Design
+                </Button>
+                <Button
+                  variant='ink'
+                  size='lg'
+                  onClick={startCode}
+                  loading={genCode}
+                  className='group'
+                >
+                  <Sparkles strokeWidth={1.5} />
+                  {t.newChallenge}
+                  <ArrowRight className='transition-transform duration-200 group-hover:translate-x-0.5' />
+                </Button>
+              </div>
             </div>
-          </motion.div>
+          </motion.section>
 
           {!loaded ? (
             <DashboardSkeleton />
           ) : (
             <>
-              <div className='mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4'>
-                <StatCard
+              <div className='mb-14 grid grid-cols-2 gap-y-10 lg:grid-cols-4'>
+                <StatCol
                   i={0}
-                  icon={TrendingUp}
                   label={t.statStreak}
                   value={String(stats?.streak_days ?? 0)}
                   hint={t.statStreakHint}
                 />
-                <StatCard
+                <StatCol
                   i={1}
-                  icon={Trophy}
                   label={t.statChallenges}
                   value={String(stats?.total_completed ?? 0)}
                   hint={t.statChallengesHint}
                 />
-                <StatCard
+                <StatCol
                   i={2}
-                  icon={Lightbulb}
                   label={t.statHintsPer}
                   value={String(stats?.avg_hints_per_session ?? 0)}
                   hint={t.statHintsPerHint}
                 />
-                <StatCard
+                <StatCol
                   i={3}
-                  icon={Layers}
                   label={t.statTotalHints}
                   value={String(stats?.total_hints ?? 0)}
                   hint={t.statTotalHintsHint}
                 />
               </div>
 
-              <div className='mb-3 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
-                <ActivityHeatmap sessions={sessions} />
-                <IndependenceRing score={score} />
-              </div>
+              <motion.section
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.6, ease: EASE }}
+                className='mb-14 border-t border-border pt-10'
+              >
+                <div className='grid gap-12 lg:grid-cols-[1.7fr_1fr] lg:gap-0'>
+                  <ActivityHeatmap sessions={sessions} />
+                  <IndependenceRing score={score} />
+                </div>
+              </motion.section>
 
               <RecentChallenges items={sessions} />
 
-              <motion.div
+              <motion.figure
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className='mt-3 rounded-lg bg-pastel-lilac/60 px-8 py-12 text-center'
+                transition={{ duration: 0.7, ease: EASE }}
+                className='mt-14 rounded-lg bg-ink px-6 py-12 lg:px-14 lg:py-14'
               >
-                <div className='mx-auto max-w-xl font-serif text-2xl leading-relaxed text-ink italic sm:text-3xl'>
+                <blockquote className='max-w-[720px] font-serif text-2xl font-light italic leading-snug text-background lg:text-[32px]'>
                   &ldquo;{t.quote}&rdquo;
-                </div>
-                <div className='mt-3 font-mono text-xs text-muted-foreground'>
-                  {t.quoteBy}
-                </div>
-              </motion.div>
+                </blockquote>
+                <figcaption className='mt-8 flex items-center gap-3'>
+                  <span className='grid size-10 shrink-0 place-items-center rounded-full bg-lime font-heading text-lg font-light text-ink dark:text-background'>
+                    Σ
+                  </span>
+                  <span className='font-mono text-xs tracking-wide text-background/50'>
+                    {t.quoteBy}
+                  </span>
+                </figcaption>
+              </motion.figure>
             </>
           )}
         </div>
@@ -357,38 +382,43 @@ export function DashboardView({ user }: { user: User }) {
 function DashboardSkeleton() {
   return (
     <>
-      <div className='mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4'>
+      <div className='mb-14 grid grid-cols-2 gap-y-10 lg:grid-cols-4'>
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className='shadow-soft rounded-lg border border-border bg-white p-5'
+            className='border-l border-border px-5 first:border-l-0 lg:px-8'
           >
-            <Skeleton className='mb-4 size-11 rounded-full' />
-            <Skeleton className='h-8 w-14' />
-            <Skeleton className='mt-2 h-3 w-16' />
+            <Skeleton className='h-12 w-16' />
+            <Skeleton className='mt-3 h-3 w-20' />
+            <Skeleton className='mt-2 h-3 w-14' />
           </div>
         ))}
       </div>
-      <div className='mb-3 grid gap-3 lg:grid-cols-[1.6fr_1fr]'>
-        <div className='shadow-soft rounded-lg border border-border bg-white p-6'>
-          <Skeleton className='h-3 w-24' />
-          <Skeleton className='mt-2 h-5 w-40' />
-          <Skeleton className='mt-4 h-64 w-full rounded-lg' />
-        </div>
-        <div className='shadow-soft rounded-lg border border-border bg-white p-6'>
-          <Skeleton className='h-3 w-20' />
-          <Skeleton className='mt-2 h-5 w-36' />
-          <div className='mt-6 grid place-items-center'>
-            <Skeleton className='size-44 rounded-full' />
+      <div className='mb-14 border-t border-border pt-10'>
+        <div className='grid gap-12 lg:grid-cols-[1.7fr_1fr] lg:gap-0'>
+          <div className='lg:pr-10'>
+            <Skeleton className='h-3 w-24' />
+            <Skeleton className='mt-3 h-6 w-56 max-w-full' />
+            <Skeleton className='mt-8 h-36 w-full' />
+          </div>
+          <div className='border-t border-border pt-10 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-10'>
+            <Skeleton className='h-3 w-20' />
+            <Skeleton className='mt-3 h-6 w-40 max-w-full' />
+            <div className='mt-8 grid place-items-center'>
+              <Skeleton className='size-40 rounded-full' />
+            </div>
           </div>
         </div>
       </div>
-      <div className='shadow-soft rounded-lg border border-border bg-white p-6'>
+      <div className='border-t border-border pt-10'>
         <Skeleton className='h-3 w-20' />
-        <Skeleton className='mt-2 h-5 w-44' />
-        <div className='mt-5 space-y-2'>
+        <Skeleton className='mt-3 h-6 w-48 max-w-full' />
+        <div className='mt-8'>
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className='h-16 w-full rounded-lg' />
+            <div key={i} className='border-t border-border py-5'>
+              <Skeleton className='h-5 w-2/3' />
+              <Skeleton className='mt-2 h-3 w-40' />
+            </div>
           ))}
         </div>
       </div>
@@ -396,15 +426,13 @@ function DashboardSkeleton() {
   )
 }
 
-function StatCard({
+function StatCol({
   i,
-  icon: Icon,
   label,
   value,
   hint,
 }: {
   i: number
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
   label: string
   value: string
   hint: string
@@ -413,21 +441,18 @@ function StatCard({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className='shadow-soft hover:shadow-soft-lg rounded-lg border border-border bg-white p-5 transition-shadow duration-300 ease-out'
+      transition={{ delay: i * 0.06, duration: 0.5, ease: EASE }}
+      className='border-l border-border px-5 first:border-l-0 lg:px-8'
     >
-      <div className='mb-4 flex items-center justify-between'>
-        <div className='grid size-11 place-items-center rounded-full bg-pastel-lavender text-ink'>
-          <Icon className='size-5' strokeWidth={1.5} />
-        </div>
-        <div className='font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
-          {label}
-        </div>
-      </div>
-      <div className='font-heading text-3xl font-light tracking-tight text-ink tabular-nums'>
+      <div className='font-heading text-5xl font-light leading-none tracking-tight text-ink tabular-nums lg:text-[56px]'>
         {value}
       </div>
-      <div className='mt-1 text-[12px] text-muted-foreground'>{hint}</div>
+      <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
+        {label}
+      </div>
+      <div className='mt-1 font-mono text-[11px] text-muted-foreground/70'>
+        {hint}
+      </div>
     </motion.div>
   )
 }
@@ -469,22 +494,15 @@ function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className='shadow-soft hover:shadow-soft-lg flex flex-col rounded-lg border border-border bg-white p-6 transition-shadow duration-300 ease-out'
-    >
-      <div className='mb-1'>
-        <p className='eyebrow'>{t.journeyEyebrow}</p>
-        <h3 className='type-h4 mt-1'>{t.journeyTitle}</h3>
-      </div>
-      <div className='mt-6 flex gap-2 overflow-x-auto'>
+    <div className='lg:pr-12'>
+      <p className='eyebrow'>{t.journeyEyebrow}</p>
+      <h2 className='type-h4 mt-2'>{t.journeyTitle}</h2>
+      <div className='mt-8 flex gap-2 overflow-x-auto pb-1'>
         <div className='grid grid-rows-7 gap-1 pr-1'>
           {t.dow.map((l, i) => (
             <span
               key={i}
-              className='flex h-3 items-center font-mono text-[9px] text-muted-foreground'
+              className='flex h-[14px] items-center font-mono text-[9px] text-muted-foreground'
             >
               {l}
             </span>
@@ -497,24 +515,21 @@ function ActivityHeatmap({ sessions }: { sessions: SessionRow[] }) {
               title={`${d.key}: ${d.count} ${d.count === 1 ? t.challengeOne : t.challengeMany}`}
               className={
                 d.future
-                  ? 'size-3 opacity-0'
-                  : `size-3 rounded-[2px] border border-border ${CELL[activityLevel(d.count, max)]}`
+                  ? 'size-[14px] opacity-0'
+                  : `size-[14px] rounded-[4px] ${CELL[activityLevel(d.count, max)]}`
               }
             />
           ))}
         </div>
       </div>
-      <div className='mt-6 flex items-center justify-end gap-1.5 font-mono text-[10px] text-muted-foreground'>
+      <div className='mt-6 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground'>
         <span>{t.less}</span>
         {CELL.map((c, l) => (
-          <span
-            key={l}
-            className={`size-3 rounded-[3px] border border-border ${c}`}
-          />
+          <span key={l} className={`size-[14px] rounded-[4px] ${c}`} />
         ))}
         <span>{t.more}</span>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -522,15 +537,10 @@ function IndependenceRing({ score }: { score: number }) {
   const t = useT(copy)
   const data = [{ name: 'indep', value: score, fill: 'var(--chart-1)' }]
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className='shadow-soft hover:shadow-soft-lg flex flex-col rounded-lg border border-border bg-white p-6 transition-shadow duration-300 ease-out'
-    >
+    <div className='flex flex-col border-t border-border pt-10 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12'>
       <p className='eyebrow'>{t.scoreEyebrow}</p>
-      <h3 className='type-h4 mt-1'>{t.scoreTitle}</h3>
-      <div className='relative grid min-h-[200px] flex-1 place-items-center'>
+      <h2 className='type-h4 mt-2'>{t.scoreTitle}</h2>
+      <div className='relative grid min-h-[220px] flex-1 place-items-center'>
         <ResponsiveContainer width='100%' height='100%'>
           <RadialBarChart
             innerRadius='70%'
@@ -559,7 +569,7 @@ function IndependenceRing({ score }: { score: number }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -573,17 +583,17 @@ function RecentChallenges({ items }: { items: SessionRow[] }) {
   const pageItems = items.slice(start, start + PAGE_SIZE)
 
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className='shadow-soft hover:shadow-soft-lg rounded-lg border border-border bg-white p-6 transition-shadow duration-300 ease-out'
+      transition={{ delay: 0.1, duration: 0.6, ease: EASE }}
+      className='border-t border-border pt-10'
     >
-      <div className='mb-5 flex items-end justify-between gap-4'>
+      <div className='flex items-end justify-between gap-4'>
         <div>
           <p className='eyebrow'>{t.historyEyebrow}</p>
-          <h3 className='type-h4 mt-1'>{t.historyTitle}</h3>
+          <h2 className='type-h3 mt-2'>{t.historyTitle}</h2>
         </div>
         {items.length > PAGE_SIZE && (
           <div className='flex items-center gap-2 font-mono text-[11px] text-muted-foreground'>
@@ -614,57 +624,56 @@ function RecentChallenges({ items }: { items: SessionRow[] }) {
       </div>
 
       {items.length === 0 ? (
-        <p className='text-sm text-muted-foreground'>
+        <p className='mt-8 border-t border-border pt-8 text-sm text-muted-foreground'>
           {t.historyEmpty}
         </p>
       ) : (
-        <div className='space-y-2'>
+        <div className='mt-8'>
           {pageItems.map((c) => {
             const isDesign = c.challenges?.kind === 'design'
             const href = `${isDesign ? '/design' : '/challenge'}?id=${c.challenge_id}`
+            const stackLabel = isDesign
+              ? 'System Design'
+              : c.challenges?.stack === 'javascript'
+                ? 'JavaScript'
+                : 'TypeScript'
             return (
               <Link
                 key={c.id}
                 href={href}
-                className='group flex items-start gap-3 rounded-lg bg-muted p-3.5 transition-colors duration-300 ease-out hover:bg-paper'
+                className='group flex flex-col gap-2 border-t border-border py-5 sm:flex-row sm:items-center sm:gap-6'
               >
-                <div className='grid size-9 shrink-0 place-items-center rounded-full bg-pastel-lavender text-ink'>
-                  <Code2 className='size-4' strokeWidth={1.5} />
-                </div>
                 <div className='min-w-0 flex-1'>
-                  <div className='flex items-start justify-between gap-2'>
-                    <div className='truncate text-[14px] font-medium text-ink'>
-                      {c.challenges?.title ?? t.challengeFallback}
-                    </div>
-                    <div className='shrink-0 font-mono text-[11px] text-muted-foreground'>
-                      {new Date(c.started_at).toLocaleDateString(
-                        locale === 'pt' ? 'pt-BR' : 'en-US',
-                      )}
-                    </div>
+                  <div className='truncate font-heading text-lg font-light tracking-tight text-ink transition-colors duration-200 group-hover:text-primary'>
+                    {c.challenges?.title ?? t.challengeFallback}
                   </div>
-                  <div className='mt-2 flex items-center gap-3 font-mono text-[11px]'>
-                    <span className='rounded-full border border-border bg-white px-2 py-0.5 text-muted-foreground'>
-                      {isDesign
-                        ? 'System Design'
-                        : c.challenges?.stack === 'javascript'
-                          ? 'JavaScript'
-                          : 'TypeScript'}
-                    </span>
-                    <span className='text-muted-foreground'>
-                      {(t.status as Record<string, string>)[c.status] ??
-                        c.status}
-                    </span>
-                    <span className='ml-auto inline-flex items-center gap-1 text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
-                      {c.status === 'completed' ? t.open : t.resume}
-                      <ArrowRight className='size-3' />
-                    </span>
+                  <div className='mt-1.5 font-mono text-[11px] tracking-wide text-muted-foreground'>
+                    {new Date(c.started_at).toLocaleDateString(
+                      locale === 'pt' ? 'pt-BR' : 'en-US',
+                    )}{' '}
+                    · {stackLabel}
                   </div>
+                </div>
+                <div className='flex shrink-0 items-center gap-4'>
+                  <span
+                    className={`rounded-full px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase ${
+                      c.status === 'completed'
+                        ? 'bg-lime text-ink dark:text-background'
+                        : 'border border-border text-muted-foreground'
+                    }`}
+                  >
+                    {(t.status as Record<string, string>)[c.status] ?? c.status}
+                  </span>
+                  <span className='inline-flex items-center gap-1 font-mono text-[11px] text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
+                    {c.status === 'completed' ? t.open : t.resume}
+                    <ArrowRight className='size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+                  </span>
                 </div>
               </Link>
             )
           })}
         </div>
       )}
-    </motion.div>
+    </motion.section>
   )
 }

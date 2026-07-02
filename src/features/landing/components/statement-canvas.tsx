@@ -80,7 +80,7 @@ function ComparisonCard({
       {dead ? (
         <p className='eyebrow mb-4'>{eyebrow}</p>
       ) : (
-        <p className='bg-lime text-ink mb-4 w-fit rounded-full px-2.5 py-1 font-mono text-[10px] font-medium tracking-[0.14em] uppercase'>
+        <p className='bg-lime text-ink dark:text-background mb-4 w-fit rounded-full px-2.5 py-1 font-mono text-[10px] font-medium tracking-[0.14em] uppercase'>
           {eyebrow}
         </p>
       )}

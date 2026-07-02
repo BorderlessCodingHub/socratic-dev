@@ -118,7 +118,8 @@ function nodeSize(n: PlacedNode): { w: number; h: number; fontSize: number } {
     const maxLen = Math.max(...lines.map((l) => l.length))
     const textW = maxLen * fontSize * 0.62 + 24
     const w = Math.round(Math.min(460, Math.max(comp.width, textW)))
-    return { w, h: Math.round(comp.height), fontSize }
+    const labelH = lines.length * fontSize * 1.3 + 8
+    return { w, h: Math.round(comp.height + labelH), fontSize }
   }
   const s = SPEC[n.kind]
   const fontSize = n.note ? 16 : 20
@@ -129,17 +130,20 @@ function nodeSize(n: PlacedNode): { w: number; h: number; fontSize: number } {
   return { w, h: n.note ? s.h + 14 : s.h, fontSize }
 }
 
-// Stamp a curated library component: clone with node-scoped ids, a shared
-// group, the layout offset applied and the title text swapped for the label.
+// Stamp a curated library component: clone with node-scoped ids and a shared
+// group, icon at the top of the layout box, hand-written label centered below
+// (consistent placement — the source items each anchor titles differently).
 function stampSkeleton(
   n: PlacedNode,
   b: Box,
   comp: LibraryComponent,
 ): Record<string, unknown>[] {
   const offX = b.x + (b.w - comp.width) / 2
-  const offY = b.y + (b.h - comp.height) / 2
+  const offY = b.y
   const g = [`g-${n.id}`]
-  return comp.elements.map((el, i) => {
+  const out: Record<string, unknown>[] = []
+  comp.elements.forEach((el, i) => {
+    if (i === comp.titleIndex) return
     const clone: Record<string, unknown> = { ...el }
     clone.id = i === comp.bindIndex ? n.id : `${n.id}-k${i}`
     clone.groupIds = g
@@ -148,29 +152,29 @@ function stampSkeleton(
     if (Array.isArray(el.points)) {
       clone.points = (el.points as number[][]).map((p) => [...p])
     }
-    if (i === comp.titleIndex) {
-      const fontSize = Math.round(
-        Math.min(20, Math.max(14, (el.fontSize as number) ?? 16)),
-      )
-      const noteFits = n.note ? n.note.length * fontSize * 0.55 <= b.w + 60 : false
-      const text = n.note && noteFits ? `${n.label}\n${n.note}` : n.label
-      const lines = text.split('\n')
-      const estW = Math.max(...lines.map((l) => l.length)) * fontSize * 0.62
-      const estH = lines.length * fontSize * 1.25
-      const cx = (el.x as number) + ((el.width as number) ?? 0) / 2 + offX
-      const cy = (el.y as number) + ((el.height as number) ?? 0) / 2 + offY
-      Object.assign(clone, {
-        text,
-        fontSize,
-        width: estW,
-        height: estH,
-        x: cx - estW / 2,
-        y: cy - estH / 2,
-        textAlign: 'center',
-      })
-    }
-    return clone
+    out.push(clone)
   })
+
+  const fontSize = 16
+  const text = n.note ? `${n.label}\n${n.note}` : n.label
+  const lines = text.split('\n')
+  const estW = Math.max(...lines.map((l) => l.length)) * fontSize * 0.62
+  const estH = lines.length * fontSize * 1.3
+  out.push({
+    type: 'text',
+    id: `${n.id}-label`,
+    text,
+    fontSize,
+    fontFamily: 1,
+    textAlign: 'center',
+    strokeColor: STROKE,
+    width: estW,
+    height: estH,
+    x: b.x + b.w / 2 - estW / 2,
+    y: offY + comp.height + 6,
+    groupIds: g,
+  })
+  return out
 }
 
 function nodeSkeleton(n: PlacedNode, b: Box): Record<string, unknown>[] {
@@ -386,7 +390,8 @@ function routeArrows(converted: readonly unknown[]): void {
   const compKeyOfEl = new Map<string, string>()
   const rects = new Map<string, Rect>()
   for (const e of els) {
-    if (e.type === 'arrow' || e.type === 'text') continue
+    if (e.type === 'arrow') continue
+    if (e.type === 'text' && (e.containerId || !e.groupIds?.length)) continue
     const key = e.groupIds?.[0] ?? e.id
     if (!key) continue
     let r = rects.get(key)

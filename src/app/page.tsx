@@ -14,12 +14,12 @@ import { UseCases } from '@/features/landing/components/usecases'
 
 export default function HomePage() {
   return (
-    <div className='relative flex flex-1 flex-col overflow-x-hidden bg-white'>
+    <div className='relative flex flex-1 flex-col overflow-x-hidden bg-background'>
       <Navbar />
       <main className='flex-1 pt-[88px] pb-8 md:pt-20'>
         <div className='container-main'>
           {/* Continuous bordered frame — sections separated by hairline dividers */}
-          <div className='divide-border border-border divide-y overflow-hidden rounded-lg border bg-white'>
+          <div className='divide-border border-border divide-y overflow-hidden rounded-lg border bg-card'>
             <Hero />
             <LogoCloud />
             <Statement />

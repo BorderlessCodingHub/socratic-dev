@@ -1,13 +1,14 @@
 'use client'
 
 import { useT } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
 import { Building, Sparkles } from 'lucide-react'
 import type { Challenge } from '../types'
 import { levelLabel } from '../utils'
 
 const copy = {
   en: {
-    eyebrow: 'Client briefing',
+    eyebrow: 'Client brief',
     houseRule: 'House rule',
     houseRuleBody:
       "The tutor won't give you the answer. It asks questions. If you want a direct hint, you pay in independence points.",
@@ -52,7 +53,6 @@ const AVATAR_COLORS = [
   'bg-pastel-lavender',
   'bg-pastel-sage',
   'bg-pastel-sand',
-  'bg-pastel-mist',
   'bg-pastel-lilac',
   'bg-pastel-greige',
 ]
@@ -63,9 +63,34 @@ function avatarClass(name: string): string {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
+type Block =
+  | { kind: 'h'; text: string }
+  | { kind: 'ul'; items: string[] }
+  | { kind: 'p'; text: string }
+
+function parseBlocks(body: string): Block[] {
+  const blocks: Block[] = []
+  for (const raw of body.split('\n')) {
+    const line = raw.trim()
+    if (!line) continue
+    const bullet = line.match(/^[-•*]\s+(.*)$/)
+    if (bullet) {
+      const last = blocks[blocks.length - 1]
+      if (last?.kind === 'ul') last.items.push(bullet[1])
+      else blocks.push({ kind: 'ul', items: [bullet[1]] })
+    } else if (line.length < 64 && line.endsWith(':')) {
+      blocks.push({ kind: 'h', text: line.slice(0, -1) })
+    } else {
+      blocks.push({ kind: 'p', text: line })
+    }
+  }
+  return blocks
+}
+
 export function BriefingPanel({ challenge }: { challenge: Challenge }) {
   const t = useT(copy)
   const { persona, body } = parsePersona(challenge.client_briefing)
+  const blocks = parseBlocks(persona ? body : challenge.client_briefing)
 
   return (
     <div className='p-6'>
@@ -79,36 +104,57 @@ export function BriefingPanel({ challenge }: { challenge: Challenge }) {
       </h2>
 
       <div className='mb-6 flex items-center gap-2 font-mono text-[11px] text-muted-foreground'>
-        <span className='rounded-full border border-border bg-white px-2 py-0.5'>
+        <span className='rounded-full border border-border px-2.5 py-0.5'>
           {stackLabel(challenge)}
         </span>
-        <span className='rounded-full border border-border bg-white px-2 py-0.5'>
+        <span className='rounded-full border border-border px-2.5 py-0.5'>
           {levelLabel(challenge.level)}
         </span>
       </div>
 
-      <div className='space-y-4 text-sm leading-relaxed'>
-        {persona && (
-          <div className='flex items-center gap-3 rounded-lg border border-border bg-white p-3'>
-            <div
-              className={`grid size-11 shrink-0 place-items-center rounded-full font-heading text-sm font-medium text-ink ${avatarClass(persona.name)}`}
-            >
-              {initials(persona.name)}
+      {persona && (
+        <div className='mb-6 flex items-center gap-3 rounded-lg bg-pastel-mist p-3'>
+          <div
+            className={`grid size-11 shrink-0 place-items-center rounded-full font-heading text-sm font-light text-ink ${avatarClass(persona.name)}`}
+          >
+            {initials(persona.name)}
+          </div>
+          <div className='min-w-0'>
+            <div className='truncate font-heading text-[15px] font-medium text-ink'>
+              {persona.name}
             </div>
-            <div className='min-w-0'>
-              <div className='truncate font-heading text-[15px] font-medium text-ink'>
-                {persona.name}
-              </div>
-              <div className='truncate text-[12px] text-muted-foreground'>
-                {persona.role} · {persona.company}
-              </div>
+            <div className='truncate font-mono text-[11px] text-muted-foreground'>
+              {persona.role} · {persona.company}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <p className='whitespace-pre-line text-aubergine'>
-          {persona ? body : challenge.client_briefing}
-        </p>
+      <div className='space-y-3 text-sm leading-relaxed text-aubergine'>
+        {blocks.map((b, i) =>
+          b.kind === 'h' ? (
+            <h3
+              key={i}
+              className={cn(
+                'font-heading text-lg font-light tracking-tight text-ink',
+                i > 0 && 'mt-5 border-t border-border pt-5',
+              )}
+            >
+              {b.text}
+            </h3>
+          ) : b.kind === 'ul' ? (
+            <ul key={i} className='space-y-1.5'>
+              {b.items.map((item, j) => (
+                <li key={j} className='flex gap-2.5'>
+                  <span className='mt-[10px] h-px w-3 shrink-0 bg-ink/40' />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p key={i}>{b.text}</p>
+          ),
+        )}
 
         <div className='mt-6 rounded-lg bg-pastel-lilac p-4'>
           <div className='mb-1.5 flex items-center gap-2 font-mono text-[11px] tracking-wider text-primary uppercase'>
