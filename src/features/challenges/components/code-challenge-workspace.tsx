@@ -9,7 +9,13 @@ import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
-import { Loader2, PlayCircle, Terminal } from 'lucide-react'
+import {
+  CheckCircle2,
+  Loader2,
+  PlayCircle,
+  Terminal,
+  XCircle,
+} from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -39,6 +45,11 @@ const copy = {
     pythonNote:
       'Python is evaluated by the AI on submit. Click "Submit" to get Socratic feedback.',
     run: 'Run',
+    statusRunning: 'running',
+    statusPassed: (n: number, total: number) => `${n}/${total} passed`,
+    statusFailed: (n: number, total: number) => `${n}/${total} failed`,
+    statusError: 'error',
+    toggleTerminal: 'Toggle terminal',
   },
   pt: {
     loadingEditor: 'Carregando editor...',
@@ -53,6 +64,11 @@ const copy = {
     pythonNote:
       'Python é avaliado pela IA ao submeter. Clique em "Submeter" para receber o feedback socrático.',
     run: 'Rodar',
+    statusRunning: 'rodando',
+    statusPassed: (n: number, total: number) => `${n}/${total} passaram`,
+    statusFailed: (n: number, total: number) => `${n}/${total} falharam`,
+    statusError: 'erro',
+    toggleTerminal: 'Abrir/fechar terminal',
   },
 }
 
@@ -239,6 +255,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
       total = r.tests.length
       passed = r.tests.filter((t) => t.passed).length
       setResult(r)
+      if (passed < total) setShowPanel(true)
     }
     setSubmitTests({ passed, total })
     const solved = total === 0 || passed === total
@@ -285,6 +302,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     )
     setResult(r)
     setRunning(false)
+    if (!r.ok) setShowPanel(true)
   }
 
   if (!challenge) return <ChallengeSkeleton />
@@ -313,6 +331,13 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
               <span className='text-[11px] text-warning-foreground/80'>unsaved</span>
             </div>
             <div className='flex items-center gap-1.5'>
+              {language !== 'react' && (
+                <RunStatusChip
+                  running={running}
+                  result={result}
+                  onClick={() => setShowPanel((v) => !v)}
+                />
+              )}
               <Button
                 size='xs'
                 variant='ghost'
@@ -410,6 +435,59 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function RunStatusChip({
+  running,
+  result,
+  onClick,
+}: {
+  running: boolean
+  result: RunResult | null
+  onClick: () => void
+}) {
+  const t = useT(copy)
+  if (running)
+    return (
+      <button
+        type='button'
+        onClick={onClick}
+        aria-label={t.toggleTerminal}
+        className='flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground'
+      >
+        <Loader2 className='size-3 animate-spin' /> {t.statusRunning}
+      </button>
+    )
+  if (!result) return null
+  const total = result.tests.length
+  const passed = result.tests.filter((x) => x.passed).length
+  const failed = total - passed
+  if (total === 0 && !result.error) return null
+  const solved = total > 0 && failed === 0 && !result.error
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      aria-label={t.toggleTerminal}
+      className={cn(
+        'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] transition-colors',
+        solved
+          ? 'border-mint/30 bg-mint/10 text-mint hover:bg-mint/20'
+          : 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20',
+      )}
+    >
+      {solved ? (
+        <CheckCircle2 className='size-3' />
+      ) : (
+        <XCircle className='size-3' />
+      )}
+      {total === 0
+        ? t.statusError
+        : solved
+          ? t.statusPassed(passed, total)
+          : t.statusFailed(failed, total)}
+    </button>
   )
 }
 

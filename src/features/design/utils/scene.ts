@@ -1,3 +1,5 @@
+import { getLibraryComponent, type LibraryComponent } from './library-components'
+
 type SceneEl = {
   type?: string
   text?: string
@@ -19,6 +21,13 @@ export type ExcalidrawApi = {
   getAppState: () => Record<string, unknown>
   getFiles: () => Record<string, unknown>
   updateScene: (scene: { elements: readonly unknown[] }) => void
+  updateLibrary: (opts: {
+    libraryItems: unknown
+    merge?: boolean
+    prompt?: boolean
+    openLibraryMenu?: boolean
+    defaultStatus?: 'published' | 'unpublished'
+  }) => Promise<unknown>
   scrollToContent: (
     target?: readonly unknown[],
     opts?: { fitToContent?: boolean; animate?: boolean },
@@ -38,6 +47,8 @@ const STROKE = '#1b1916'
 
 type Kind =
   | 'client'
+  | 'cdn'
+  | 'lb'
   | 'gateway'
   | 'service'
   | 'worker'
@@ -46,9 +57,12 @@ type Kind =
   | 'cache'
   | 'database'
   | 'storage'
+  | 'search'
 
 const SPEC: Record<Kind, { w: number; h: number; fill: string; tier: number }> = {
   client:   { w: 240, h: 110, fill: '#F7F9FA', tier: 0 },
+  cdn:      { w: 270, h: 130, fill: '#DFE5E9', tier: 1 },
+  lb:       { w: 250, h: 110, fill: '#EAE7E4', tier: 1 },
   gateway:  { w: 250, h: 110, fill: '#EAE7E4', tier: 1 },
   service:  { w: 260, h: 110, fill: '#EEEBFF', tier: 2 },
   worker:   { w: 250, h: 110, fill: '#EEEBFF', tier: 2 },
@@ -57,15 +71,16 @@ const SPEC: Record<Kind, { w: number; h: number; fill: string; tier: number }> =
   cache:    { w: 210, h: 130, fill: '#DAD8EA', tier: 3 },
   database: { w: 230, h: 150, fill: '#E8EFDB', tier: 4 },
   storage:  { w: 230, h: 120, fill: '#E8EFDB', tier: 4 },
+  search:   { w: 240, h: 120, fill: '#E8EFDB', tier: 4 },
 }
 
 const ALIAS: Record<string, Kind> = {
   user: 'client', users: 'client', mobile: 'client', web: 'client',
   frontend: 'client', browser: 'client', app: 'client',
-  lb: 'gateway', loadbalancer: 'gateway', 'load-balancer': 'gateway',
-  proxy: 'gateway', 'api-gateway': 'gateway', apigateway: 'gateway', nginx: 'gateway',
+  loadbalancer: 'lb', 'load-balancer': 'lb', nginx: 'lb',
+  proxy: 'gateway', 'api-gateway': 'gateway', apigateway: 'gateway',
   api: 'service', server: 'service', backend: 'service', microservice: 'service',
-  cdn: 'external', 'third-party': 'external', saas: 'external',
+  'third-party': 'external', saas: 'external',
   broker: 'queue', kafka: 'queue', rabbitmq: 'queue', sqs: 'queue',
   pubsub: 'queue', 'message-queue': 'queue',
   redis: 'cache', memcached: 'cache',
@@ -73,6 +88,8 @@ const ALIAS: Record<string, Kind> = {
   mongo: 'database', mongodb: 'database', nosql: 'database',
   s3: 'storage', blob: 'storage', bucket: 'storage', files: 'storage',
   'object-storage': 'storage',
+  elasticsearch: 'search', elastic: 'search', opensearch: 'search',
+  solr: 'search', 'search-engine': 'search',
   job: 'worker', cron: 'worker', consumer: 'worker', batch: 'worker',
 }
 
@@ -85,14 +102,24 @@ function kindOf(type?: string): Kind {
 // How much wider the shape must be than the text so the label fits its
 // usable inner area (diamond/ellipse have less horizontal room than rects).
 const TEXT_FACTOR: Record<Kind, number> = {
-  client: 1, gateway: 1.06, service: 1, worker: 1, external: 1.9,
-  queue: 1.12, cache: 2, database: 1.05, storage: 1.05,
+  client: 1, cdn: 1.9, lb: 1.06, gateway: 1.06, service: 1, worker: 1,
+  external: 1.9, queue: 1.12, cache: 2, database: 1.05, storage: 1.05,
+  search: 1.05,
 }
 
 type PlacedNode = SceneNode & { kind: Kind }
 type Box = { x: number; y: number; w: number; h: number; fontSize: number }
 
 function nodeSize(n: PlacedNode): { w: number; h: number; fontSize: number } {
+  const comp = getLibraryComponent(n.kind)
+  if (comp) {
+    const fontSize = 16
+    const lines = n.note ? [n.label, n.note] : [n.label]
+    const maxLen = Math.max(...lines.map((l) => l.length))
+    const textW = maxLen * fontSize * 0.62 + 24
+    const w = Math.round(Math.min(460, Math.max(comp.width, textW)))
+    return { w, h: Math.round(comp.height), fontSize }
+  }
   const s = SPEC[n.kind]
   const fontSize = n.note ? 16 : 20
   const lines = n.note ? [n.label, n.note] : [n.label]
@@ -100,6 +127,50 @@ function nodeSize(n: PlacedNode): { w: number; h: number; fontSize: number } {
   const textW = maxLen * fontSize * 0.62 + 52
   const w = Math.round(Math.min(460, Math.max(s.w, textW * TEXT_FACTOR[n.kind])))
   return { w, h: n.note ? s.h + 14 : s.h, fontSize }
+}
+
+// Stamp a curated library component: clone with node-scoped ids, a shared
+// group, the layout offset applied and the title text swapped for the label.
+function stampSkeleton(
+  n: PlacedNode,
+  b: Box,
+  comp: LibraryComponent,
+): Record<string, unknown>[] {
+  const offX = b.x + (b.w - comp.width) / 2
+  const offY = b.y + (b.h - comp.height) / 2
+  const g = [`g-${n.id}`]
+  return comp.elements.map((el, i) => {
+    const clone: Record<string, unknown> = { ...el }
+    clone.id = i === comp.bindIndex ? n.id : `${n.id}-k${i}`
+    clone.groupIds = g
+    clone.x = (el.x as number) + offX
+    clone.y = (el.y as number) + offY
+    if (Array.isArray(el.points)) {
+      clone.points = (el.points as number[][]).map((p) => [...p])
+    }
+    if (i === comp.titleIndex) {
+      const fontSize = Math.round(
+        Math.min(20, Math.max(14, (el.fontSize as number) ?? 16)),
+      )
+      const noteFits = n.note ? n.note.length * fontSize * 0.55 <= b.w + 60 : false
+      const text = n.note && noteFits ? `${n.label}\n${n.note}` : n.label
+      const lines = text.split('\n')
+      const estW = Math.max(...lines.map((l) => l.length)) * fontSize * 0.62
+      const estH = lines.length * fontSize * 1.25
+      const cx = (el.x as number) + ((el.width as number) ?? 0) / 2 + offX
+      const cy = (el.y as number) + ((el.height as number) ?? 0) / 2 + offY
+      Object.assign(clone, {
+        text,
+        fontSize,
+        width: estW,
+        height: estH,
+        x: cx - estW / 2,
+        y: cy - estH / 2,
+        textAlign: 'center',
+      })
+    }
+    return clone
+  })
 }
 
 function nodeSkeleton(n: PlacedNode, b: Box): Record<string, unknown>[] {
@@ -131,6 +202,7 @@ function nodeSkeleton(n: PlacedNode, b: Box): Record<string, unknown>[] {
       ]
     }
     case 'external':
+    case 'cdn':
       return [
         { type: 'ellipse', x, y: y + h * 0.3, width: w * 0.46, height: h * 0.62, backgroundColor: fill, groupIds: g, ...base },
         { type: 'ellipse', x: x + w * 0.54, y: y + h * 0.28, width: w * 0.46, height: h * 0.64, backgroundColor: fill, groupIds: g, ...base },
@@ -141,6 +213,7 @@ function nodeSkeleton(n: PlacedNode, b: Box): Record<string, unknown>[] {
         { type: 'diamond', id: n.id, x, y, width: w, height: h, backgroundColor: fill, roundness: { type: 2 }, label, ...base },
       ]
     case 'gateway':
+    case 'lb':
       return [
         { type: 'rectangle', id: n.id, x, y, width: w, height: h, backgroundColor: fill, roundness: { type: 3 }, label, groupIds: g, ...base },
         { type: 'rectangle', x: x + 7, y: y + 7, width: w - 14, height: h - 14, backgroundColor: 'transparent', roundness: { type: 3 }, groupIds: g, ...base, strokeWidth: 1 },
@@ -360,7 +433,12 @@ export async function buildSceneElements(
   const skeleton: Record<string, unknown>[] = []
   for (const lk of layerKeys) {
     for (const n of layers.get(lk)!) {
-      skeleton.push(...nodeSkeleton(n, box.get(n.id)!))
+      const comp = getLibraryComponent(n.kind)
+      skeleton.push(
+        ...(comp
+          ? stampSkeleton(n, box.get(n.id)!, comp)
+          : nodeSkeleton(n, box.get(n.id)!)),
+      )
     }
   }
 
@@ -396,17 +474,23 @@ export function summarizeElements(elements: readonly unknown[]): string {
 
   const labelByContainer = new Map<string, string>()
   const looseTexts: { text: string; cx: number; cy: number }[] = []
+  // Stamped library components carry a standalone title text sharing the
+  // group id — treat it as the component label, not as a loose annotation.
+  const groupTexts: { gid: string; text: string; cx: number; cy: number }[] = []
   for (const e of els) {
     if (e.type === 'text' && e.text?.trim()) {
       const txt = e.text.trim()
+      const entry = {
+        text: txt,
+        cx: (e.x ?? 0) + (e.width ?? 0) / 2,
+        cy: (e.y ?? 0) + (e.height ?? 0) / 2,
+      }
       if (e.containerId) {
         labelByContainer.set(e.containerId, txt)
+      } else if (e.groupIds?.[0]) {
+        groupTexts.push({ gid: e.groupIds[0], ...entry })
       } else {
-        looseTexts.push({
-          text: txt,
-          cx: (e.x ?? 0) + (e.width ?? 0) / 2,
-          cy: (e.y ?? 0) + (e.height ?? 0) / 2,
-        })
+        looseTexts.push(entry)
       }
     }
   }
@@ -454,6 +538,22 @@ export function summarizeElements(elements: readonly unknown[]): string {
       if (note) c.note = note
     }
   }
+  for (const t of groupTexts) {
+    const c = compByKey.get(t.gid)
+    if (!c) {
+      looseTexts.push(t)
+      continue
+    }
+    const [first, ...rest] = t.text.split('\n')
+    if (!c.label) {
+      c.label = first.trim()
+      const note = rest.join(' ').trim()
+      if (note) c.note = c.note ? `${c.note}; ${note}` : note
+    } else {
+      c.note = c.note ? `${c.note}; ${t.text}` : t.text
+    }
+  }
+
   const comps = [...compByKey.values()]
   for (const c of comps) {
     c.cx = (c.minX + c.maxX) / 2

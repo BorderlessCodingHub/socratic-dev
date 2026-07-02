@@ -18,14 +18,43 @@ function stripFences(raw: string): string {
   return (f ? f[1] : raw).trim()
 }
 
+function repairJson(s: string): string {
+  let out = ''
+  const stack: string[] = []
+  let inString = false
+  let escaped = false
+  for (const ch of s) {
+    out += ch
+    if (inString) {
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
+      else if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') inString = true
+    else if (ch === '{') stack.push('}')
+    else if (ch === '[') stack.push(']')
+    else if (ch === '}' || ch === ']') stack.pop()
+  }
+  if (inString) out += '"'
+  out = out.replace(/,\s*$/, '')
+  while (stack.length) out += stack.pop()
+  return out
+}
+
 function parseJson(raw: string): Record<string, unknown> {
   let s = raw.trim()
-  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i)
   if (fence) s = fence[1].trim()
   const start = s.indexOf('{')
+  if (start === -1) throw new SyntaxError('no JSON object found')
   const end = s.lastIndexOf('}')
-  if (start !== -1 && end > start) s = s.slice(start, end + 1)
-  return JSON.parse(s)
+  s = end > start ? s.slice(start, end + 1) : s.slice(start)
+  try {
+    return JSON.parse(s)
+  } catch {
+    return JSON.parse(repairJson(s))
+  }
 }
 
 const DESIGN_NODE_TYPES = new Set([
@@ -147,16 +176,24 @@ export async function POST(req: Request) {
       const raw = await askClaude({
         system: solvePasteSystem('design', locale),
         user,
-        maxTokens: 1800,
+        maxTokens: 3200,
         effort: 'medium',
       })
-      const json = parseJson(raw)
+      const diagramError =
+        locale === 'pt'
+          ? 'Não consegui montar o diagrama. Tente de novo.'
+          : "Couldn't build the diagram. Try again."
+      let json: Record<string, unknown>
+      try {
+        json = parseJson(raw)
+      } catch {
+        return jsonError(diagramError, 502)
+      }
       const { nodes, edges } = sanitizeDesign(
         Array.isArray(json.nodes) ? json.nodes : [],
         Array.isArray(json.edges) ? json.edges : [],
       )
-      if (nodes.length === 0)
-        return jsonError('Não consegui montar o diagrama. Tente de novo.', 502)
+      if (nodes.length === 0) return jsonError(diagramError, 502)
       const remaining = await consumeHints(userId, sessionId, 3, SOLVE_COST)
       return Response.json({ nodes, edges, remaining })
     }

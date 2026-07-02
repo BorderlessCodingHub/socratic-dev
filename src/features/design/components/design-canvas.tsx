@@ -30,6 +30,22 @@ const Excalidraw = dynamic(
   },
 )
 
+async function loadUserLibrary(api: ExcalidrawApi) {
+  try {
+    const res = await fetch('/design-library.excalidrawlib')
+    if (!res.ok) return
+    const data = (await res.json()) as {
+      library?: unknown[]
+      libraryItems?: unknown[]
+    }
+    const items = data.libraryItems ?? data.library
+    if (!Array.isArray(items) || items.length === 0) return
+    await api.updateLibrary({ libraryItems: items, merge: true })
+  } catch {
+    // library is optional — never break the canvas
+  }
+}
+
 export function DesignCanvas({
   initialElements,
   onApi,
@@ -42,7 +58,11 @@ export function DesignCanvas({
   return (
     <div className='h-full w-full'>
       <Excalidraw
-        excalidrawAPI={(api) => onApi(api as unknown as ExcalidrawApi)}
+        excalidrawAPI={(api) => {
+          const wrapped = api as unknown as ExcalidrawApi
+          onApi(wrapped)
+          void loadUserLibrary(wrapped)
+        }}
         onChange={(elements) => onChange(elements)}
         initialData={
           {
