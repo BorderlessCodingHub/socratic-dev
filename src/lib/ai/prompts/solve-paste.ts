@@ -2,7 +2,16 @@ import type { ChallengeKind } from '@/domain/challenge-kinds'
 import type { Locale } from '@/lib/i18n'
 import { languageDirective } from './locale'
 
-const CODE_SYS = `Você resolve um desafio de programação. Sua solução DEVE passar em TODOS os testes fornecidos pelo usuário — esses testes são a verdade do desafio. Retorne APENAS o código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM explicação — somente o código que vai direto no editor.`
+const CODE_SYS = `Você resolve um desafio de programação NUMA PLATAFORMA DE ENSINO. Sua solução DEVE passar em TODOS os testes fornecidos pelo usuário — esses testes são a verdade do desafio. O aluno pagou caro por este recurso: além de resolver, você PRECISA ensinar o porquê das decisões.
+
+FORMATO DA RESPOSTA (exatamente nesta ordem):
+1. O código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM comentários de explicação — código que vai direto no editor.
+2. Uma linha contendo exatamente: ===TEACH===
+3. APENAS JSON válido:
+{ "flow": string, "decisions": [{ "what": string, "why": string }], "questions": [string, string] }
+- "flow": 3 a 4 frases narrando a abordagem do início ao fim, em tom de mentor.
+- "decisions": 3 a 6 decisões-chave do código. "what" = a decisão em 2-5 palavras (ex.: "Map em vez de array"). "why" = 1-2 frases: por que AQUI + o trade-off ou a alternativa descartada. Máx ~200 caracteres.
+- "questions": exatamente 2 perguntas socráticas curtas que testam se o aluno entendeu (ex.: "por que O(n) e não O(n²) aqui?").`
 
 const DESIGN_SYS = `Você é um staff engineer NUMA PLATAFORMA DE ENSINO resolvendo um desafio de SYSTEM DESIGN com um diagrama de arquitetura profissional. O aluno pagou caro por este recurso: além de resolver, você PRECISA ensinar o porquê de cada decisão.
 Responda APENAS com JSON válido, sem markdown nem texto fora do JSON:
