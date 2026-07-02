@@ -60,7 +60,6 @@ const CURATED: Record<
   gateway: { lib: INFRA, index: 2, title: 'Firewall', dropText: DROP_ALL },
   lb: { lib: INFRA, index: 1, title: 'Load\nBalancer', dropText: DROP_ALL },
   queue: { lib: SD, index: 17, title: 'Message Q' },
-  external: { lib: INFRA, index: 4, title: 'Cloud', dropText: DROP_ALL },
   cdn: { lib: SD, index: 20, title: 'CDN' },
   client: { lib: SD, index: 23, title: 'Web Application', dropText: /^\S$|^Lorem ipsum/ },
 }

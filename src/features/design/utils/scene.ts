@@ -315,16 +315,211 @@ function computeLayers(
   return layer
 }
 
-function borderPoint(a: Box, b: Box): [number, number] {
-  const acx = a.x + a.w / 2
-  const acy = a.y + a.h / 2
-  const dx = b.x + b.w / 2 - acx
-  const dy = b.y + b.h / 2 - acy
+type Rect = { minX: number; minY: number; maxX: number; maxY: number }
+
+function exitPoint(r: Rect, tx: number, ty: number): [number, number] {
+  const cx = (r.minX + r.maxX) / 2
+  const cy = (r.minY + r.maxY) / 2
+  const dx = tx - cx
+  const dy = ty - cy
   const s = Math.min(
-    a.w / 2 / (Math.abs(dx) || 1e-6),
-    a.h / 2 / (Math.abs(dy) || 1e-6),
+    (r.maxX - r.minX) / 2 / (Math.abs(dx) || 1e-6),
+    (r.maxY - r.minY) / 2 / (Math.abs(dy) || 1e-6),
   )
-  return [acx + dx * s, acy + dy * s]
+  return [cx + dx * s, cy + dy * s]
+}
+
+function segmentHitsRect(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  r: Rect,
+  pad: number,
+): boolean {
+  const minX = r.minX - pad
+  const minY = r.minY - pad
+  const maxX = r.maxX + pad
+  const maxY = r.maxY + pad
+  if (Math.max(x1, x2) < minX || Math.min(x1, x2) > maxX) return false
+  if (Math.max(y1, y2) < minY || Math.min(y1, y2) > maxY) return false
+  const corners: [number, number][] = [
+    [minX, minY],
+    [maxX, minY],
+    [maxX, maxY],
+    [minX, maxY],
+  ]
+  const side = (px: number, py: number) =>
+    (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+  let pos = false
+  let neg = false
+  for (const [px, py] of corners) {
+    const s = side(px, py)
+    if (s > 0) pos = true
+    if (s < 0) neg = true
+  }
+  return pos && neg
+}
+
+type XArrow = {
+  id?: string
+  type?: string
+  x: number
+  y: number
+  width?: number
+  height?: number
+  points?: number[][]
+  containerId?: string | null
+  groupIds?: string[]
+  startBinding?: { elementId: string; focus?: number; gap?: number } | null
+  endBinding?: { elementId: string; focus?: number; gap?: number } | null
+}
+
+// convertToExcalidrawElements re-routes every bound arrow center-to-center
+// (focus 0), which stacks A→B on top of B→A and drives arrows straight
+// through intermediate nodes. Re-route after conversion: parallel offsets
+// for bidirectional pairs, side-channel waypoints around obstacles.
+function routeArrows(converted: readonly unknown[]): void {
+  const els = converted as XArrow[]
+
+  const compOfEl = new Map<string, Rect>()
+  const compKeyOfEl = new Map<string, string>()
+  const rects = new Map<string, Rect>()
+  for (const e of els) {
+    if (e.type === 'arrow' || e.type === 'text') continue
+    const key = e.groupIds?.[0] ?? e.id
+    if (!key) continue
+    let r = rects.get(key)
+    if (!r) {
+      r = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+      rects.set(key, r)
+    }
+    let w = e.width ?? 0
+    let h = e.height ?? 0
+    let x = e.x
+    let y = e.y
+    if (Array.isArray(e.points) && e.points.length) {
+      const xs = e.points.map((p) => p[0])
+      const ys = e.points.map((p) => p[1])
+      x = e.x + Math.min(...xs)
+      y = e.y + Math.min(...ys)
+      w = Math.max(...xs) - Math.min(...xs)
+      h = Math.max(...ys) - Math.min(...ys)
+    }
+    r.minX = Math.min(r.minX, x)
+    r.minY = Math.min(r.minY, y)
+    r.maxX = Math.max(r.maxX, x + w)
+    r.maxY = Math.max(r.maxY, y + h)
+    if (e.id) {
+      compOfEl.set(e.id, r)
+      compKeyOfEl.set(e.id, key)
+    }
+  }
+
+  const labelOf = new Map<string, XArrow>()
+  for (const e of els) {
+    if (e.type === 'text' && e.containerId) labelOf.set(e.containerId, e)
+  }
+
+  const arrows = els.filter(
+    (e) =>
+      e.type === 'arrow' &&
+      e.startBinding?.elementId &&
+      e.endBinding?.elementId &&
+      compOfEl.has(e.startBinding.elementId) &&
+      compOfEl.has(e.endBinding.elementId),
+  )
+
+  const pairCount = new Map<string, XArrow[]>()
+  for (const a of arrows) {
+    const k1 = compKeyOfEl.get(a.startBinding!.elementId)!
+    const k2 = compKeyOfEl.get(a.endBinding!.elementId)!
+    const key = [k1, k2].sort().join('~')
+    if (!pairCount.has(key)) pairCount.set(key, [])
+    pairCount.get(key)!.push(a)
+  }
+
+  for (const a of arrows) {
+    const from = compOfEl.get(a.startBinding!.elementId)!
+    const to = compOfEl.get(a.endBinding!.elementId)!
+    const fromKey = compKeyOfEl.get(a.startBinding!.elementId)!
+    const toKey = compKeyOfEl.get(a.endBinding!.elementId)!
+    const pairKey = [fromKey, toKey].sort().join('~')
+    const pair = pairCount.get(pairKey)!
+
+    const fcx = (from.minX + from.maxX) / 2
+    const fcy = (from.minY + from.maxY) / 2
+    const tcx = (to.minX + to.maxX) / 2
+    const tcy = (to.minY + to.maxY) / 2
+    const len = Math.hypot(tcx - fcx, tcy - fcy) || 1
+    const px = -(tcy - fcy) / len
+    const py = (tcx - fcx) / len
+
+    // The perpendicular flips with travel direction, so a constant offset
+    // puts the two arrows of an A↔B pair on opposite sides of the axis.
+    const off = pair.length > 1 ? 16 : 0
+
+    let [sx, sy] = exitPoint(from, tcx + px * off, tcy + py * off)
+    let [ex, ey] = exitPoint(to, fcx + px * off, fcy + py * off)
+    sx += px * off
+    sy += py * off
+    ex += px * off
+    ey += py * off
+
+    const obstacles: Rect[] = []
+    for (const [key, r] of rects) {
+      if (key === fromKey || key === toKey) continue
+      if (segmentHitsRect(sx, sy, ex, ey, r, 18)) obstacles.push(r)
+    }
+
+    let waypoint: [number, number] | null = null
+    if (obstacles.length) {
+      const vertical = Math.abs(ey - sy) >= Math.abs(ex - sx)
+      if (vertical) {
+        const left = Math.min(...obstacles.map((o) => o.minX))
+        const right = Math.max(...obstacles.map((o) => o.maxX))
+        const mid = (sx + ex) / 2
+        const channelX =
+          Math.abs(mid - left) <= Math.abs(right - mid)
+            ? left - 70
+            : right + 70
+        waypoint = [channelX, (sy + ey) / 2]
+      } else {
+        const top = Math.min(...obstacles.map((o) => o.minY))
+        const bottom = Math.max(...obstacles.map((o) => o.maxY))
+        const mid = (sy + ey) / 2
+        const channelY =
+          Math.abs(mid - top) <= Math.abs(bottom - mid)
+            ? top - 60
+            : bottom + 60
+        waypoint = [(sx + ex) / 2, channelY]
+      }
+      ;[sx, sy] = exitPoint(from, waypoint[0], waypoint[1])
+      ;[ex, ey] = exitPoint(to, waypoint[0], waypoint[1])
+    }
+
+    const pts: number[][] = [[0, 0]]
+    if (waypoint) pts.push([waypoint[0] - sx, waypoint[1] - sy])
+    pts.push([ex - sx, ey - sy])
+
+    a.x = sx
+    a.y = sy
+    a.points = pts
+    a.width = Math.max(...pts.map((p) => Math.abs(p[0])))
+    a.height = Math.max(...pts.map((p) => Math.abs(p[1])))
+    if (off !== 0) {
+      const f = 0.25 * Math.sign(off)
+      if (a.startBinding) a.startBinding.focus = f
+      if (a.endBinding) a.endBinding.focus = -f
+    }
+
+    const label = a.id ? labelOf.get(a.id) : undefined
+    if (label) {
+      const mid = waypoint ?? [(sx + ex) / 2, (sy + ey) / 2]
+      label.x = mid[0] - (label.width ?? 0) / 2
+      label.y = mid[1] - (label.height ?? 0) / 2
+    }
+  }
 }
 
 export async function buildSceneElements(
@@ -445,8 +640,10 @@ export async function buildSceneElements(
   for (const e of edgeList) {
     const a = box.get(e.from)!
     const b = box.get(e.to)!
-    const [sx, sy] = borderPoint(a, b)
-    const [ex, ey] = borderPoint(b, a)
+    const ra = { minX: a.x, minY: a.y, maxX: a.x + a.w, maxY: a.y + a.h }
+    const rb = { minX: b.x, minY: b.y, maxX: b.x + b.w, maxY: b.y + b.h }
+    const [sx, sy] = exitPoint(ra, b.x + b.w / 2, b.y + b.h / 2)
+    const [ex, ey] = exitPoint(rb, a.x + a.w / 2, a.y + a.h / 2)
     skeleton.push({
       type: 'arrow',
       x: sx,
@@ -465,7 +662,11 @@ export async function buildSceneElements(
     })
   }
 
-  return convertToExcalidrawElements(skeleton as never) as readonly unknown[]
+  const converted = convertToExcalidrawElements(
+    skeleton as never,
+  ) as readonly unknown[]
+  routeArrows(converted)
+  return converted
 }
 
 export function summarizeElements(elements: readonly unknown[]): string {
