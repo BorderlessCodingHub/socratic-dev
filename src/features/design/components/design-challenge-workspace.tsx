@@ -35,6 +35,8 @@ const copy = {
     hintUnavailable: 'Hint unavailable.',
     solutionDrawn:
       'I drew the architecture on the canvas. Study the flow and why each piece is there.',
+    teachWhy: 'Why each piece is here:',
+    teachThink: 'Now you — before moving on:',
     solveFallback: "Couldn't solve it right now.",
     nothingDrawn:
       "You haven't drawn anything yet — start the diagram and submit again.",
@@ -50,6 +52,8 @@ const copy = {
     hintUnavailable: 'Hint indisponível.',
     solutionDrawn:
       'Desenhei a arquitetura no canvas. Estude o fluxo e por que cada peça está ali.',
+    teachWhy: 'Por que cada peça está aqui:',
+    teachThink: 'Agora você — antes de seguir:',
     solveFallback: 'Não consegui resolver agora.',
     nothingDrawn:
       'Você ainda não desenhou nada — comece o diagrama e submeta de novo.',
@@ -208,9 +212,34 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
           animate: true,
         })
         s.setWork(elements)
+        const teach = data.teach as
+          | {
+              flow?: string
+              components?: { id: string; why: string }[]
+              questions?: string[]
+            }
+          | undefined
+        const labelOf = new Map(
+          (data.nodes as { id: string; label?: string }[]).map((n) => [
+            n.id,
+            n.label ?? n.id,
+          ]),
+        )
+        const parts: string[] = []
+        if (teach?.flow) parts.push(teach.flow)
+        if (teach?.components?.length) {
+          parts.push('', `**${t.teachWhy}**`)
+          for (const c of teach.components) {
+            parts.push(`- **${labelOf.get(c.id) ?? c.id}** — ${c.why}`)
+          }
+        }
+        if (teach?.questions?.length) {
+          parts.push('', `**${t.teachThink}**`)
+          for (const q of teach.questions) parts.push(`- ${q}`)
+        }
         s.pushMessage({
           role: 'ai',
-          text: t.solutionDrawn,
+          text: parts.length ? parts.join('\n') : t.solutionDrawn,
         })
       } else {
         s.pushMessage({

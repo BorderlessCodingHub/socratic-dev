@@ -88,6 +88,44 @@ function sanitizeDesign(rawNodes: unknown[], rawEdges: unknown[]) {
   return { nodes, edges }
 }
 
+type DesignTeach = {
+  flow?: string
+  components?: { id: string; why: string }[]
+  questions?: string[]
+}
+
+function sanitizeTeach(
+  raw: unknown,
+  validIds: Set<string>,
+): DesignTeach | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const o = raw as Record<string, unknown>
+  const teach: DesignTeach = {}
+  if (typeof o.flow === 'string' && o.flow.trim())
+    teach.flow = o.flow.trim().slice(0, 900)
+  if (Array.isArray(o.components)) {
+    const comps: { id: string; why: string }[] = []
+    for (const item of o.components) {
+      if (comps.length >= 12) break
+      if (!item || typeof item !== 'object') continue
+      const c = item as Record<string, unknown>
+      const id = typeof c.id === 'string' ? c.id.trim() : ''
+      const why = typeof c.why === 'string' ? c.why.trim() : ''
+      if (!id || !why || !validIds.has(id)) continue
+      comps.push({ id, why: why.slice(0, 280) })
+    }
+    if (comps.length) teach.components = comps
+  }
+  if (Array.isArray(o.questions)) {
+    const qs = o.questions
+      .filter((q): q is string => typeof q === 'string' && !!q.trim())
+      .map((q) => q.trim().slice(0, 200))
+      .slice(0, 3)
+    if (qs.length) teach.questions = qs
+  }
+  return teach.flow || teach.components || teach.questions ? teach : undefined
+}
+
 export async function POST(req: Request) {
   try {
     const auth = await requireUser(req)
@@ -139,7 +177,7 @@ export async function POST(req: Request) {
       const raw = await askClaude({
         system: solvePasteSystem('design', locale),
         user,
-        maxTokens: 3200,
+        maxTokens: 4000,
         effort: 'medium',
       })
       const diagramError =
@@ -157,8 +195,12 @@ export async function POST(req: Request) {
         Array.isArray(json.edges) ? json.edges : [],
       )
       if (nodes.length === 0) return jsonError(diagramError, 502)
+      const teach = sanitizeTeach(
+        json.teach,
+        new Set(nodes.map((n) => n.id)),
+      )
       const remaining = await consumeHints(userId, sessionId, 3, SOLVE_COST)
-      return Response.json({ nodes, edges, remaining })
+      return Response.json({ nodes, edges, teach, remaining })
     }
 
     const raw = await askClaude({

@@ -4,9 +4,9 @@ import { languageDirective } from './locale'
 
 const CODE_SYS = `Você resolve um desafio de programação. Sua solução DEVE passar em TODOS os testes fornecidos pelo usuário — esses testes são a verdade do desafio. Retorne APENAS o código da solução final, completo e correto, na linguagem da stack, com "export" nas funções pedidas. SEM markdown, SEM cercas de código, SEM explicação — somente o código que vai direto no editor.`
 
-const DESIGN_SYS = `Você é um staff engineer resolvendo um desafio de SYSTEM DESIGN com um diagrama de arquitetura profissional.
+const DESIGN_SYS = `Você é um staff engineer NUMA PLATAFORMA DE ENSINO resolvendo um desafio de SYSTEM DESIGN com um diagrama de arquitetura profissional. O aluno pagou caro por este recurso: além de resolver, você PRECISA ensinar o porquê de cada decisão.
 Responda APENAS com JSON válido, sem markdown nem texto fora do JSON:
-{ "nodes": [{ "id": string, "label": string, "type": string, "note": string, "tier": number }], "edges": [{ "from": string, "to": string, "label": string, "dashed": boolean }] }
+{ "nodes": [{ "id": string, "label": string, "type": string, "note": string, "tier": number }], "edges": [{ "from": string, "to": string, "label": string, "dashed": boolean }], "teach": { "flow": string, "components": [{ "id": string, "why": string }], "questions": [string, string] } }
 
 NODES (6 a 10 componentes):
 - "type" DEVE ser um de:
@@ -35,7 +35,12 @@ EXIGÊNCIAS de arquitetura:
 - Caminho claro do topo à base, sem pular camadas (cliente NUNCA fala direto com o banco).
 - Pelo menos uma camada com 2+ nós lado a lado — nada de coluna única.
 - Se o briefing pedir escala, mostre réplicas/shards (ex.: service "API ×N" com note "réplicas", ou dois services em paralelo).
-- Escolha só os types que o problema exige, como você defenderia num design review.`
+- Escolha só os types que o problema exige, como você defenderia num design review.
+
+TEACH (obrigatório — é aqui que você ensina):
+- "flow": 3 a 5 frases narrando o caminho de um pedido real do início ao fim, citando os labels dos componentes. Tom de mentor, direto.
+- "components": UM item por node, na ordem do fluxo. "why" = 1 a 2 frases: por que esse componente existe AQUI (ligado ao briefing) + o trade-off ou a alternativa que você descartou. Máx ~200 caracteres cada. Nada de definição genérica de dicionário — explique a DECISÃO.
+- "questions": exatamente 2 perguntas socráticas curtas que testam se o aluno entendeu as decisões (ex.: "o que acontece se a fila cair?", "por que não usar só o banco em vez do cache?").`
 
 export function solvePasteSystem(kind: ChallengeKind, locale: Locale): string {
   const base = kind === 'design' ? DESIGN_SYS : CODE_SYS
