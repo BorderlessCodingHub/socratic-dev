@@ -147,7 +147,7 @@ export function Footer() {
             © 2026 Socratic.dev
           </span>
           <span className='text-muted-foreground font-mono text-[11px] tracking-[0.1em] uppercase'>
-            Hackathon Borderless — HB01
+            A product from Borderless Coding Labs
           </span>
         </div>
       </div>
