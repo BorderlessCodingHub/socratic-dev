@@ -89,15 +89,16 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
 
   const intro = challenge?.intro || t.intro
 
+  const [reviewOpen, setReviewOpen] = React.useState(false)
+
   const s = useSocraticSession<readonly unknown[]>({
     challenge: challenge ? { id: challenge.id } : null,
     initialWork: [],
     initialMessages: [{ role: 'ai', text: intro }],
+    paused: reviewOpen,
   })
 
   const [outcome, setOutcome] = React.useState<'pass' | 'fail'>('pass')
-
-  const [reviewOpen, setReviewOpen] = React.useState(false)
   const [review, setReview] = React.useState<string | null>(null)
   const [reviewing, setReviewing] = React.useState(false)
 

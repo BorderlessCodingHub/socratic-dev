@@ -115,6 +115,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   const [activePanel, setActivePanel] = React.useState<
     'brief' | 'work' | 'chat'
   >('brief')
+  const [reviewOpen, setReviewOpen] = React.useState(false)
 
   const s = useSocraticSession<string>({
     challenge: challenge ? { id: challenge.id } : null,
@@ -122,9 +123,9 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     initialMessages: challenge
       ? [{ role: 'ai', text: challengeIntro(challenge, locale) }]
       : [],
+    paused: reviewOpen,
   })
 
-  const [reviewOpen, setReviewOpen] = React.useState(false)
   const [review, setReview] = React.useState<string | null>(null)
   const [reviewing, setReviewing] = React.useState(false)
   const [running, setRunning] = React.useState(false)
