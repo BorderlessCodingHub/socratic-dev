@@ -5,7 +5,7 @@ import type { RunnerLanguage } from '@/domain/stacks'
 import { runCode } from '@/features/runner/run-code'
 import type { RunResult } from '@/features/runner/types'
 import { apiFetch } from '@/lib/api/client'
-import { useT } from '@/lib/i18n'
+import { useLocale, useT } from '@/lib/i18n'
 import { useIsDark } from '@/lib/theme'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -108,6 +108,7 @@ const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 export function CodeChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
   const t = useT(copy)
+  const { locale } = useLocale()
   const isDark = useIsDark()
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
   const [loadError, setLoadError] = React.useState(false)
@@ -117,9 +118,9 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
 
   const s = useSocraticSession<string>({
     challenge: challenge ? { id: challenge.id } : null,
-    initialWork: challenge ? starterCode(challenge) : '',
+    initialWork: challenge ? starterCode(challenge, locale) : '',
     initialMessages: challenge
-      ? [{ role: 'ai', text: challengeIntro(challenge) }]
+      ? [{ role: 'ai', text: challengeIntro(challenge, locale) }]
       : [],
   })
 
@@ -287,7 +288,8 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
 
     const code = s.work
     const touched =
-      code.trim().length > 0 && code.trim() !== starterCode(challenge).trim()
+      code.trim().length > 0 &&
+      code.trim() !== starterCode(challenge, locale).trim()
     if (!touched) {
       setOutcome('fail')
       setReview(t.noSolutionYet)
