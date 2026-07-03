@@ -40,10 +40,10 @@ const copy = {
     solutionApplied:
       'I applied the solution in the editor. Run the tests and study why it works.',
     teachDecisions: 'Key decisions:',
-    teachThink: 'Now you — before moving on:',
+    teachThink: 'Now you, before moving on:',
     solveFallback: "Couldn't solve it right now.",
     noSolutionYet:
-      "You haven't written a solution yet — implement something in the editor and submit again.",
+      "You haven't written a solution yet. Implement something in the editor and submit again.",
     reviewFallback: "Couldn't generate the review.",
     pythonNote:
       'Python is evaluated by the AI on submit. Click "Submit" to get Socratic feedback.',
@@ -61,10 +61,10 @@ const copy = {
     solutionApplied:
       'Apliquei a solução no editor. Rode os testes e estude por que ela funciona.',
     teachDecisions: 'Decisões-chave:',
-    teachThink: 'Agora você — antes de seguir:',
+    teachThink: 'Agora você, antes de seguir:',
     solveFallback: 'Não consegui resolver agora.',
     noSolutionYet:
-      'Você ainda não escreveu uma solução — implemente algo no editor e submeta de novo.',
+      'Você ainda não escreveu uma solução. Implemente algo no editor e submeta de novo.',
     reviewFallback: 'Não foi possível gerar o review.',
     pythonNote:
       'Python é avaliado pela IA ao submeter. Clique em "Submeter" para receber o feedback socrático.',
@@ -230,7 +230,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
         if (teach?.decisions?.length) {
           parts.push('', `**${t.teachDecisions}**`)
           for (const d of teach.decisions) {
-            parts.push(`- **${d.what}** — ${d.why}`)
+            parts.push(`- **${d.what}**: ${d.why}`)
           }
         }
         if (teach?.questions?.length) {

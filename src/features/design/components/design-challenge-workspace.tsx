@@ -36,12 +36,12 @@ const copy = {
     solutionDrawn:
       'I drew the architecture on the canvas. Study the flow and why each piece is there.',
     teachWhy: 'Why each piece is here:',
-    teachThink: 'Now you — before moving on:',
+    teachThink: 'Now you, before moving on:',
     solveFallback: "Couldn't solve it right now.",
     nothingDrawn:
-      "You haven't drawn anything yet — start the diagram and submit again.",
+      "You haven't drawn anything yet. Start the diagram and submit again.",
     reviewFallback: "Couldn't generate the review.",
-    canvasLabel: 'Canvas — draw your architecture',
+    canvasLabel: 'Canvas: draw your architecture',
     askAnalysis: 'Ask for analysis',
   },
   pt: {
@@ -53,12 +53,12 @@ const copy = {
     solutionDrawn:
       'Desenhei a arquitetura no canvas. Estude o fluxo e por que cada peça está ali.',
     teachWhy: 'Por que cada peça está aqui:',
-    teachThink: 'Agora você — antes de seguir:',
+    teachThink: 'Agora você, antes de seguir:',
     solveFallback: 'Não consegui resolver agora.',
     nothingDrawn:
-      'Você ainda não desenhou nada — comece o diagrama e submeta de novo.',
+      'Você ainda não desenhou nada. Comece o diagrama e submeta de novo.',
     reviewFallback: 'Não foi possível gerar o review.',
-    canvasLabel: 'Canvas — desenhe sua arquitetura',
+    canvasLabel: 'Canvas: desenhe sua arquitetura',
     askAnalysis: 'Pedir análise',
   },
 }
@@ -230,7 +230,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
         if (teach?.components?.length) {
           parts.push('', `**${t.teachWhy}**`)
           for (const c of teach.components) {
-            parts.push(`- **${labelOf.get(c.id) ?? c.id}** — ${c.why}`)
+            parts.push(`- **${labelOf.get(c.id) ?? c.id}**: ${c.why}`)
           }
         }
         if (teach?.questions?.length) {
