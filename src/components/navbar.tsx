@@ -2,10 +2,11 @@
 
 import { useUser } from '@/features/auth/hooks/use-user'
 import { buyHints, getHintBalance } from '@/features/hints/actions'
+import { getMyRank } from '@/features/ranking/actions'
 import { useLocale, useT } from '@/lib/i18n'
 import { getAccessToken } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
-import { Lightbulb, Menu, Plus, X } from 'lucide-react'
+import { Lightbulb, Menu, Plus, Trophy, X } from 'lucide-react'
 import {
   AnimatePresence,
   motion,
@@ -32,6 +33,8 @@ const copy = {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     hints: 'Hints',
+    ranking: 'Ranking',
+    yourRank: 'Your position in the ranking',
   },
   pt: {
     library: 'Biblioteca',
@@ -46,6 +49,8 @@ const copy = {
     openMenu: 'Abrir menu',
     closeMenu: 'Fechar menu',
     hints: 'Hints',
+    ranking: 'Ranking',
+    yourRank: 'Sua posição no ranking',
   },
 } as const
 
@@ -80,6 +85,41 @@ function useHints(enabled: boolean) {
 }
 
 type Hints = ReturnType<typeof useHints>
+
+function useRank(enabled: boolean) {
+  const [position, setPosition] = React.useState<number | null>(null)
+
+  React.useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+    getAccessToken()
+      .then((tk) => getMyRank(tk))
+      .then((r) => {
+        if (!cancelled && r) setPosition(r.position)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [enabled])
+
+  return position
+}
+
+function RankChip({ position }: { position: number | null }) {
+  const t = useT(copy)
+  if (position === null) return null
+  return (
+    <Link
+      href='/ranking'
+      title={t.yourRank}
+      className='border-border bg-background text-muted-foreground hover:text-ink hidden h-9 items-center gap-1.5 rounded-full border px-3 transition-colors duration-200 sm:inline-flex'
+    >
+      <Trophy className='text-primary size-3.5' strokeWidth={1.5} />
+      <span className='font-mono text-[12px] tabular-nums'>#{position}</span>
+    </Link>
+  )
+}
 
 function HintsChip({ hints }: { hints: Hints }) {
   const t = useT(copy)
@@ -191,6 +231,9 @@ function MobileMenu({
       <nav className='container-main flex flex-col gap-1 py-4'>
         <MobileLink href='/challenges' label={t.library} onClick={onClose} />
         <MobileLink href='/#metodo' label={t.how} onClick={onClose} />
+        {loggedIn && (
+          <MobileLink href='/ranking' label={t.ranking} onClick={onClose} />
+        )}
         {loggedIn ? (
           <MobileLink href='/dashboard' label={t.dashboard} onClick={onClose} />
         ) : (
@@ -240,6 +283,7 @@ export function Navbar() {
   const { scrollY } = useScroll()
   const { user, loading } = useUser()
   const hints = useHints(!loading && !!user)
+  const rank = useRank(!loading && !!user)
 
   useMotionValueEvent(scrollY, 'change', (v) => {
     setScrolled(v > 12)
@@ -285,6 +329,7 @@ export function Navbar() {
           {!loading && user ? (
             <>
               <NavLink href='/dashboard' label={t.dashboard} />
+              <RankChip position={rank} />
               <HintsChip hints={hints} />
               <Link
                 href='/profile'
