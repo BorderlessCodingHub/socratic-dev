@@ -21,3 +21,18 @@ export function independenceTier(score: number): 'high' | 'mid' | 'low' {
   if (score > 40) return 'mid'
   return 'low'
 }
+
+// Ranking points: level base × independence%. A challenge only earns points
+// once per user (the first completed session); the SQL backfill in migration
+// 013 uses the same formula.
+export const LEVEL_POINTS: Record<string, number> = {
+  beginner: 10,
+  intermediate: 25,
+  advanced: 50,
+}
+
+export function challengePoints(level: string, independence: number): number {
+  const base = LEVEL_POINTS[level] ?? LEVEL_POINTS.beginner
+  const factor = Math.min(100, Math.max(0, independence)) / 100
+  return Math.round(base * factor)
+}
