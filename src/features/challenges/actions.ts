@@ -20,6 +20,20 @@ export async function startSession(args: {
 }): Promise<{ id: string } | null> {
   const a = await authActionUser(args.token)
   if ('error' in a) return null
+
+  // Reuse the open session for this challenge instead of creating a new row on
+  // every mount (reopening, refreshing, or coming back to the same challenge).
+  const { data: open } = await supabaseAdmin
+    .from('sessions')
+    .select('id')
+    .eq('user_id', a.userId)
+    .eq('challenge_id', args.challengeId)
+    .eq('status', 'in_progress')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (open) return { id: (open as { id: string }).id }
+
   const { data } = await supabaseAdmin
     .from('sessions')
     .insert({ user_id: a.userId, challenge_id: args.challengeId })
