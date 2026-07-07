@@ -11,6 +11,7 @@ import { authActionUser } from '@/lib/api/guard'
 import { rateLimit } from '@/lib/api/guard'
 import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import * as Sentry from '@sentry/nextjs'
 import { revalidatePath, updateTag } from 'next/cache'
 import type { Challenge } from './types'
 
@@ -284,7 +285,7 @@ export async function getNextChallenge(input: {
   }
   const stack = stackMap[input.stack ?? ''] ?? 'typescript'
 
-  const { data: pool } = await supabaseAdmin.rpc(
+  const { data: pool, error: rpcError } = await supabaseAdmin.rpc(
     'next_challenge_for_user' as never,
     {
       p_user: a.userId,
@@ -293,7 +294,29 @@ export async function getNextChallenge(input: {
       p_stack: stack,
     } as never,
   )
-  const picked = Array.isArray(pool) ? pool[0] : null
+  let picked: unknown = Array.isArray(pool) ? pool[0] : null
+
+  if (rpcError) {
+    Sentry.captureException(rpcError)
+    const { data: seen } = await supabaseAdmin
+      .from('sessions')
+      .select('challenge_id')
+      .eq('user_id', a.userId)
+      .limit(500)
+    const seenIds = [...new Set((seen ?? []).map((s) => s.challenge_id))]
+    let query = supabaseAdmin
+      .from('challenges')
+      .select('*')
+      .eq('kind', kind)
+      .eq('level', level)
+    if (kind === 'code') query = query.eq('stack', stack)
+    if (seenIds.length) query = query.not('id', 'in', `(${seenIds.join(',')})`)
+    const { data: fallback } = await query.limit(12)
+    if (fallback?.length) {
+      picked = fallback[Math.floor(Math.random() * fallback.length)]
+    }
+  }
+
   if (picked) return picked as unknown as Challenge
 
   return doGenerate({ kind, stack, level })

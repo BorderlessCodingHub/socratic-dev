@@ -7,7 +7,16 @@ import { getMyRank } from '@/features/ranking/actions'
 import { useLocale, useT } from '@/lib/i18n'
 import { apiFetch, getAccessToken } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
-import { Lightbulb, Menu, Plus, Trophy, X } from 'lucide-react'
+import {
+  ChevronDown,
+  Code2,
+  Lightbulb,
+  Menu,
+  Network,
+  Plus,
+  Trophy,
+  X,
+} from 'lucide-react'
 import {
   AnimatePresence,
   motion,
@@ -36,6 +45,15 @@ const copy = {
     hints: 'Hints',
     ranking: 'Ranking',
     yourRank: 'Your position in the ranking',
+    train: 'Practice',
+    trackCode: 'Code',
+    trackCodeDesc: 'A real editor, hidden tests',
+    trackCodeQ: 'Can you make the tests pass?',
+    trackDesign: 'System Design',
+    trackDesignDesc: 'Architecture on canvas, reviewed by vision',
+    trackDesignQ: 'Will it survive a million users?',
+    resume: 'Pick up where you left off',
+    explore: 'Browse the library',
   },
   pt: {
     library: 'Biblioteca',
@@ -52,6 +70,15 @@ const copy = {
     hints: 'Hints',
     ranking: 'Ranking',
     yourRank: 'Sua posição no ranking',
+    train: 'Treinar',
+    trackCode: 'Código',
+    trackCodeDesc: 'Editor de verdade, testes escondidos',
+    trackCodeQ: 'Consegue fazer os testes passarem?',
+    trackDesign: 'System Design',
+    trackDesignDesc: 'Arquitetura em canvas, avaliada por visão',
+    trackDesignQ: 'Aguenta um milhão de usuários?',
+    resume: 'Continue de onde parou',
+    explore: 'Explore a biblioteca',
   },
 } as const
 
@@ -116,46 +143,189 @@ function useRank(enabled: boolean) {
   return position
 }
 
-function RankChip({ position }: { position: number | null }) {
+function StatusCluster({
+  position,
+  hints,
+}: {
+  position: number | null
+  hints: Hints
+}) {
   const t = useT(copy)
-  if (position === null) return null
+  if (position === null && hints.remaining === null) return null
   return (
-    <Link
-      href='/ranking'
-      title={t.yourRank}
-      className='border-border bg-background text-muted-foreground hover:text-ink hidden h-9 items-center gap-1.5 rounded-full border px-3 transition-colors duration-200 sm:inline-flex'
-    >
-      <Trophy className='text-primary size-3.5' strokeWidth={1.5} />
-      <span className='font-mono text-[12px] tabular-nums'>#{position}</span>
-    </Link>
+    <div className='border-border bg-background hidden h-9 items-stretch overflow-hidden rounded-full border sm:inline-flex'>
+      {position !== null && (
+        <Link
+          href='/ranking'
+          title={t.yourRank}
+          className='text-muted-foreground hover:text-ink hover:bg-secondary flex items-center gap-1.5 pr-2.5 pl-3 transition-colors duration-200'
+        >
+          <Trophy className='text-primary size-3.5' strokeWidth={1.5} />
+          <span className='font-mono text-[12px] tabular-nums'>
+            #{position}
+          </span>
+        </Link>
+      )}
+      {position !== null && hints.remaining !== null && (
+        <span aria-hidden className='bg-border my-2 w-px' />
+      )}
+      {hints.remaining !== null && (
+        <div className='flex items-center gap-1.5 pr-1 pl-2.5'>
+          <Lightbulb className='text-primary size-3.5' strokeWidth={1.5} />
+          <span
+            title={t.hintsAvailable}
+            className={cn(
+              'font-mono text-[12px] tabular-nums',
+              hints.remaining <= 0
+                ? 'text-destructive'
+                : 'text-muted-foreground',
+            )}
+          >
+            {hints.remaining}
+          </span>
+          <button
+            type='button'
+            onClick={hints.buy}
+            disabled={hints.buying}
+            title={t.buyHints}
+            aria-label={t.buyHints}
+            className='text-primary hover:bg-primary/10 relative grid size-6 cursor-pointer place-items-center rounded-full transition-colors duration-200 before:absolute before:-inset-2 before:content-[""] disabled:opacity-50'
+          >
+            <Plus className='size-3.5' strokeWidth={1.5} />
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
-function HintsChip({ hints }: { hints: Hints }) {
+function TrainMenu({ loggedIn }: { loggedIn: boolean }) {
   const t = useT(copy)
-  if (hints.remaining === null) return null
+  const [open, setOpen] = React.useState(false)
+  const ref = React.useRef<HTMLDivElement>(null)
+  const closeTimer = React.useRef<number | null>(null)
+
+  const cancelClose = React.useCallback(() => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }, [])
+  const hoverOpen = React.useCallback(() => {
+    cancelClose()
+    setOpen(true)
+  }, [cancelClose])
+  const hoverClose = React.useCallback(() => {
+    cancelClose()
+    closeTimer.current = window.setTimeout(() => setOpen(false), 140)
+  }, [cancelClose])
+
+  React.useEffect(() => cancelClose, [cancelClose])
+
+  React.useEffect(() => {
+    if (!open) return
+    function onPointerDown(e: PointerEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  const tracks = [
+    {
+      href: loggedIn ? '/challenge' : '/onboarding',
+      icon: Code2,
+      title: t.trackCode,
+      desc: t.trackCodeDesc,
+      question: t.trackCodeQ,
+    },
+    {
+      href: loggedIn ? '/design' : '/onboarding',
+      icon: Network,
+      title: t.trackDesign,
+      desc: t.trackDesignDesc,
+      question: t.trackDesignQ,
+    },
+  ]
+
   return (
-    <div className='border-border bg-background hidden h-9 items-center gap-1.5 rounded-full border py-0 pr-1 pl-3 sm:inline-flex'>
-      <Lightbulb className='text-primary size-3.5' strokeWidth={1.5} />
-      <span
-        title={t.hintsAvailable}
-        className={cn(
-          'font-mono text-[12px]',
-          hints.remaining <= 0 ? 'text-destructive' : 'text-muted-foreground',
-        )}
-      >
-        {hints.remaining}
-      </span>
+    <div
+      ref={ref}
+      className='relative hidden md:block'
+      onMouseEnter={hoverOpen}
+      onMouseLeave={hoverClose}
+    >
       <button
         type='button'
-        onClick={hints.buy}
-        disabled={hints.buying}
-        title={t.buyHints}
-        aria-label={t.buyHints}
-        className='text-primary hover:bg-primary/10 relative ml-0.5 grid size-6 cursor-pointer place-items-center rounded-full transition-colors duration-200 before:absolute before:-inset-2 before:content-[""] disabled:opacity-50'
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={cn(
+          'flex cursor-pointer items-center gap-1 px-3 py-2 text-sm font-medium transition-colors duration-200',
+          open ? 'text-ink' : 'text-muted-foreground hover:text-ink',
+        )}
       >
-        <Plus className='size-3.5' strokeWidth={1.5} />
+        {t.train}
+        <ChevronDown
+          className={cn(
+            'size-3.5 transition-transform duration-200',
+            open && 'rotate-180',
+          )}
+          strokeWidth={1.5}
+        />
       </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className='border-border bg-background absolute top-full left-0 mt-2 w-[340px] overflow-hidden rounded-2xl border shadow-xl'
+          >
+            <div className='p-2'>
+              {tracks.map((track) => (
+                <Link
+                  key={track.title}
+                  href={track.href}
+                  onClick={() => setOpen(false)}
+                  className='group/track hover:bg-secondary flex gap-3 rounded-xl p-3 transition-colors duration-200'
+                >
+                  <span className='border-border bg-background text-ink group-hover/track:border-primary/40 group-hover/track:text-primary mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg border transition-colors duration-200'>
+                    <track.icon className='size-4' strokeWidth={1.5} />
+                  </span>
+                  <span className='flex flex-col gap-0.5'>
+                    <span className='text-ink text-sm font-medium'>
+                      {track.title}
+                    </span>
+                    <span className='text-muted-foreground text-[13px]'>
+                      {track.desc}
+                    </span>
+                    <span className='text-primary font-serif text-[13px] italic'>
+                      {track.question}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <Link
+              href={loggedIn ? '/dashboard' : '/challenges'}
+              onClick={() => setOpen(false)}
+              className='border-border text-muted-foreground hover:text-ink hover:bg-secondary block border-t px-5 py-3 text-[13px] font-medium transition-colors duration-200'
+            >
+              {loggedIn ? t.resume : t.explore} →
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -236,9 +406,42 @@ function MobileMenu({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className='border-border bg-background absolute inset-x-0 top-full border-b md:hidden'
+      className='border-border overflow-hidden border-t md:hidden'
     >
-      <nav className='container-main flex flex-col gap-1 py-4'>
+      <nav className='flex flex-col gap-1 p-4'>
+        <div className='mb-2 grid grid-cols-2 gap-2'>
+          {(
+            [
+              {
+                href: loggedIn ? '/challenge' : '/onboarding',
+                icon: Code2,
+                title: t.trackCode,
+                question: t.trackCodeQ,
+              },
+              {
+                href: loggedIn ? '/design' : '/onboarding',
+                icon: Network,
+                title: t.trackDesign,
+                question: t.trackDesignQ,
+              },
+            ] as const
+          ).map((track) => (
+            <Link
+              key={track.title}
+              href={track.href}
+              onClick={onClose}
+              className='border-border hover:bg-secondary flex flex-col gap-1.5 rounded-xl border p-3 transition-colors duration-200'
+            >
+              <span className='text-ink flex items-center gap-2 text-sm font-medium'>
+                <track.icon className='text-primary size-4' strokeWidth={1.5} />
+                {track.title}
+              </span>
+              <span className='text-primary font-serif text-[12px] italic'>
+                {track.question}
+              </span>
+            </Link>
+          ))}
+        </div>
         <MobileLink href='/challenges' label={t.library} onClick={onClose} />
         <MobileLink href='/#metodo' label={t.how} onClick={onClose} />
         {loggedIn && (
@@ -318,19 +521,42 @@ export function Navbar() {
       initial={{ y: -32, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        'fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300',
-        scrolled || menuOpen
-          ? 'border-border bg-background/90 backdrop-blur'
-          : 'border-transparent bg-transparent',
-      )}
+      className='fixed inset-x-0 top-0 z-50'
     >
-      <div className='container-main flex h-[72px] items-center justify-between'>
-        <div className='flex items-center gap-6'>
+      <div
+        className={cn(
+          'container-main transition-[padding] duration-300',
+          (scrolled || menuOpen) && 'pt-3',
+        )}
+      >
+        <div
+          className={cn(
+            'rounded-2xl border transition-all duration-300',
+            scrolled || menuOpen
+              ? 'border-border bg-background/90 shadow-[0_8px_30px_rgba(27,25,22,0.08)] backdrop-blur'
+              : 'border-transparent bg-transparent',
+          )}
+        >
+          <div
+            className={cn(
+              'flex items-center justify-between transition-[height,padding] duration-300',
+              scrolled || menuOpen ? 'h-[60px] px-4' : 'h-[72px] px-0',
+            )}
+          >
+        <div className='flex items-center gap-5'>
           <Logo size='lg' />
+          <span
+            aria-hidden
+            className='bg-border hidden h-5 w-px md:block'
+          />
           <nav className='hidden items-center gap-1 md:flex'>
+            <TrainMenu loggedIn={!loading && !!user} />
             <NavLink href='/challenges' label={t.library} />
-            <NavLink href='/#metodo' label={t.how} />
+            {!loading && user ? (
+              <NavLink href='/ranking' label={t.ranking} />
+            ) : (
+              <NavLink href='/#metodo' label={t.how} />
+            )}
           </nav>
         </div>
 
@@ -339,8 +565,7 @@ export function Navbar() {
           {!loading && user ? (
             <>
               <NavLink href='/dashboard' label={t.dashboard} />
-              <RankChip position={rank} />
-              <HintsChip hints={hints} />
+              <StatusCluster position={rank} hints={hints} />
               <Link
                 href='/profile'
                 aria-label={t.profile}
@@ -394,17 +619,19 @@ export function Navbar() {
             )}
           </button>
         </div>
-      </div>
+          </div>
 
-      <AnimatePresence>
-        {menuOpen && (
-          <MobileMenu
-            loggedIn={!loading && !!user}
-            hints={hints}
-            onClose={closeMenu}
-          />
-        )}
-      </AnimatePresence>
+          <AnimatePresence>
+            {menuOpen && (
+              <MobileMenu
+                loggedIn={!loading && !!user}
+                hints={hints}
+                onClose={closeMenu}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </motion.header>
   )
 }
