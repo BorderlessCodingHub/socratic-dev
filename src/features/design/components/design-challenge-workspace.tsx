@@ -77,7 +77,7 @@ const copy = {
   },
 }
 
-export function DesignChallengeWorkspace({ user }: { user: User }) {
+export function DesignChallengeWorkspace({ user: _user }: { user: User }) {
   const router = useRouter()
   const t = useT(copy)
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
@@ -312,7 +312,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     s.complete(s.elapsed, 'completed')
 
     const summary = summarizeElements(elements)
-    let imageBase64: string | null = null
+    let imageBase64: string | null
     try {
       imageBase64 = apiRef.current ? await exportScenePng(apiRef.current) : null
     } catch {

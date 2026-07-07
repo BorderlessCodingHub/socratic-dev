@@ -106,7 +106,7 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
 
 const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
-export function CodeChallengeWorkspace({ user }: { user: User }) {
+export function CodeChallengeWorkspace({ user: _user }: { user: User }) {
   const router = useRouter()
   const t = useT(copy)
   const { locale } = useLocale()
