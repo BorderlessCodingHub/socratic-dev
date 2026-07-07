@@ -1,10 +1,11 @@
 'use client'
 
 import { useUser } from '@/features/auth/hooks/use-user'
-import { buyHints, getHintBalance } from '@/features/hints/actions'
+import { getHintBalance } from '@/features/hints/actions'
+import { HINT_PACK } from '@/features/hints/constants'
 import { getMyRank } from '@/features/ranking/actions'
 import { useLocale, useT } from '@/lib/i18n'
-import { getAccessToken } from '@/lib/api/client'
+import { apiFetch, getAccessToken } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
 import { Lightbulb, Menu, Plus, Trophy, X } from 'lucide-react'
 import {
@@ -29,7 +30,7 @@ const copy = {
     profile: 'Your profile',
     avatar: 'Your avatar',
     hintsAvailable: 'Available hints: 35 free per week, resets Sunday 23:59',
-    buyHints: 'Buy +10 hints',
+    buyHints: `Buy +${HINT_PACK.hints} hints`,
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     hints: 'Hints',
@@ -45,7 +46,7 @@ const copy = {
     profile: 'Seu perfil',
     avatar: 'Seu avatar',
     hintsAvailable: 'Hints disponíveis: 35 grátis por semana, reseta domingo 23:59',
-    buyHints: 'Comprar +10 hints',
+    buyHints: `Comprar +${HINT_PACK.hints} hints`,
     openMenu: 'Abrir menu',
     closeMenu: 'Fechar menu',
     hints: 'Hints',
@@ -74,7 +75,16 @@ function useHints(enabled: boolean) {
     if (buying) return
     setBuying(true)
     try {
-      await buyHints(await getAccessToken())
+      const res = await apiFetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: window.location.pathname }),
+      })
+      const data = (await res.json().catch(() => ({}))) as { url?: string }
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
       refresh()
     } finally {
       setBuying(false)
