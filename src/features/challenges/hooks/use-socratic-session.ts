@@ -123,6 +123,41 @@ export function useSocraticSession<TWork>(opts: {
     setMessages((m) => [...m, msg])
   }
 
+  async function streamIntoMessage(
+    res: Response,
+    opts?: { hintLevel?: 1 | 2 | 3; fallback?: string },
+  ): Promise<string> {
+    const base: ChatMsg = { role: 'ai', text: '' }
+    if (opts?.hintLevel) base.hintLevel = opts.hintLevel
+    setMessages((m) => [...m, base])
+
+    const patchLast = (text: string) =>
+      setMessages((m) => {
+        const next = m.slice()
+        next[next.length - 1] = { ...next[next.length - 1], text }
+        return next
+      })
+
+    const reader = res.body?.getReader()
+    if (!reader) {
+      if (opts?.fallback) patchLast(opts.fallback)
+      return ''
+    }
+    const decoder = new TextDecoder()
+    let text = ''
+    try {
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        text += decoder.decode(value, { stream: true })
+        patchLast(text)
+      }
+    } catch {
+    }
+    if (!text.trim() && opts?.fallback) patchLast(opts.fallback)
+    return text
+  }
+
   function spend(cost: number, penalty: number) {
     setHintsUsed((h) => h + cost)
     setIndependence((i) => Math.max(0, i - penalty))
@@ -191,6 +226,7 @@ export function useSocraticSession<TWork>(opts: {
     messages,
     setMessages,
     pushMessage,
+    streamIntoMessage,
     input,
     setInput,
     thinking,

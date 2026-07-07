@@ -36,24 +36,35 @@ function modelParams(model: string, effort: Effort) {
   }
 }
 
-export async function askClaude(opts: {
+type AskOpts = {
   system: string | TextBlock[]
   user?: string
   messages?: ChatTurn[]
   maxTokens?: number
   effort?: Effort
   model?: string
-}): Promise<string> {
+}
+
+function textParams(opts: AskOpts) {
   const model = opts.model ?? MODELS.default
-  const params = {
+  return {
     model,
     max_tokens: opts.maxTokens ?? 1024,
     system: systemBlocks(opts.system),
     messages: opts.messages ?? [{ role: 'user', content: opts.user ?? '' }],
     ...modelParams(model, opts.effort ?? 'medium'),
   }
-  const res = await anthropic.messages.create(params as never)
+}
+
+export async function askClaude(opts: AskOpts): Promise<string> {
+  const res = await anthropic.messages
+    .stream(textParams(opts) as never)
+    .finalMessage()
   return extractText(res)
+}
+
+export function askClaudeStream(opts: AskOpts) {
+  return anthropic.messages.stream(textParams(opts) as never)
 }
 
 export async function askClaudeVision(opts: {
@@ -88,7 +99,7 @@ export async function askClaudeVision(opts: {
     ],
     ...modelParams(model, opts.effort ?? 'medium'),
   }
-  const res = await anthropic.messages.create(params as never)
+  const res = await anthropic.messages.stream(params as never).finalMessage()
   return extractText(res)
 }
 

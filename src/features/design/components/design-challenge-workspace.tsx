@@ -156,11 +156,12 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
         ...POST,
         body: tutorBody({ mode: 'reply', messages: next }),
       })
-      const data = await res.json()
-      s.pushMessage({
-        role: 'ai',
-        text: data.text || data.error || t.replyFallback,
-      })
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        s.pushMessage({ role: 'ai', text: data.error || t.replyFallback })
+      } else {
+        await s.streamIntoMessage(res, { fallback: t.replyFallback })
+      }
     } catch {
       s.pushMessage({ role: 'ai', text: t.errNetwork })
     } finally {
@@ -176,11 +177,12 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
         ...POST,
         body: tutorBody({ mode: 'reply', messages: s.messages }),
       })
-      const data = await res.json()
-      s.pushMessage({
-        role: 'ai',
-        text: data.text || data.error || t.analyzeFallback,
-      })
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        s.pushMessage({ role: 'ai', text: data.error || t.analyzeFallback })
+      } else {
+        await s.streamIntoMessage(res, { fallback: t.analyzeFallback })
+      }
     } catch {
       s.pushMessage({ role: 'ai', text: t.errNetwork })
     } finally {
@@ -201,14 +203,22 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
           session_id: s.sessionId,
         }),
       })
-      const data = await res.json()
-      s.syncRemaining(data.remaining)
-      if (data.text) s.applyHint(level)
-      s.pushMessage({
-        role: 'ai',
-        text: data.text || data.error || t.hintUnavailable,
-        hintLevel: level,
-      })
+      const remaining = res.headers.get('X-Hints-Remaining')
+      if (remaining != null) s.syncRemaining(Number(remaining))
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        s.pushMessage({
+          role: 'ai',
+          text: data.error || t.hintUnavailable,
+          hintLevel: level,
+        })
+      } else {
+        s.applyHint(level)
+        await s.streamIntoMessage(res, {
+          hintLevel: level,
+          fallback: t.hintUnavailable,
+        })
+      }
     } catch {
       s.pushMessage({ role: 'ai', text: t.errNetwork })
     } finally {

@@ -1,10 +1,11 @@
 import type { ChallengeKind } from '@/domain/challenge-kinds'
 import {
   aiErrorResponse,
-  askClaude,
+  askClaudeStream,
   type ChatTurn,
   type TextBlock,
 } from '@/lib/ai/client'
+import * as Sentry from '@sentry/nextjs'
 import { solveSystem, solveTask } from '@/lib/ai/prompts/solve'
 import { hintGuide, tutorSystem, tutorTask } from '@/lib/ai/prompts/tutor'
 import type { ChatMsg } from '@/lib/ai/types'
@@ -119,13 +120,54 @@ export async function POST(req: Request) {
       task,
     ].join('\n')
 
-    const text = await askClaude({
+    const stream = askClaudeStream({
       system,
       messages: [...history, { role: 'user', content: finalUser }],
       maxTokens: mode === 'solve' ? 2600 : 1024,
       effort: 'medium',
     })
-    return Response.json({ text, remaining })
+
+    const iterator = stream[Symbol.asyncIterator]()
+    let first: IteratorResult<{ type: string }>
+    try {
+      first = await iterator.next()
+    } catch (e) {
+      return aiErrorResponse(e)
+    }
+
+    const encoder = new TextEncoder()
+    const responseBody = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          let cur = first
+          while (!cur.done) {
+            const event = cur.value as {
+              type: string
+              delta?: { type: string; text?: string }
+            }
+            if (
+              event.type === 'content_block_delta' &&
+              event.delta?.type === 'text_delta'
+            ) {
+              controller.enqueue(encoder.encode(event.delta.text ?? ''))
+            }
+            cur = await iterator.next()
+          }
+          controller.close()
+        } catch (e) {
+          Sentry.captureException(e)
+          controller.error(e)
+        }
+      },
+    })
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'text/plain; charset=utf-8',
+    }
+    if (typeof remaining === 'number') {
+      headers['X-Hints-Remaining'] = String(remaining)
+    }
+    return new Response(responseBody, { headers })
   } catch (e) {
     return aiErrorResponse(e)
   }
