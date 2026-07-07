@@ -2,7 +2,7 @@
 
 import { authActionUser } from '@/lib/api/guard'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache, updateTag } from 'next/cache'
 
 export type RankingEntry = {
   position: number
@@ -18,8 +18,21 @@ export type RankingData = {
 
 const TOP_LIMIT = 50
 
-// Never expose other users' emails on a public leaderboard — mask the local
-// part when the user hasn't set a display name.
+const getTopProfiles = unstable_cache(
+  async () => {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id, display_name, email, total_points')
+      .order('total_points', { ascending: false })
+      .order('created_at', { ascending: true })
+      .limit(TOP_LIMIT)
+    if (error) throw new Error(error.message)
+    return data
+  },
+  ['ranking-top'],
+  { revalidate: 60, tags: ['ranking'] },
+)
+
 function publicName(
   displayName: string | null,
   email: string | null,
@@ -36,31 +49,27 @@ export async function getRanking(
   const a = await authActionUser(token)
   if ('error' in a) return { error: 'Não autenticado.' }
 
-  const [topR, meR] = await Promise.all([
-    supabaseAdmin
-      .from('profiles')
-      .select('id, display_name, email, total_points')
-      .order('total_points', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(TOP_LIMIT),
-    supabaseAdmin
-      .from('profiles')
-      .select('display_name, total_points')
-      .eq('id', a.userId)
-      .maybeSingle(),
-  ])
-  if (topR.error) return { error: 'Não foi possível carregar o ranking.' }
-
-  const rows = (topR.data ?? []) as unknown as {
+  let rows: {
     id: string
     display_name: string | null
     email: string | null
     total_points: number
   }[]
-  const me = meR.data as unknown as {
-    display_name: string | null
-    total_points: number
-  } | null
+  let me: { display_name: string | null; total_points: number } | null
+  try {
+    const [top, meR] = await Promise.all([
+      getTopProfiles(),
+      supabaseAdmin
+        .from('profiles')
+        .select('display_name, total_points')
+        .eq('id', a.userId)
+        .maybeSingle(),
+    ])
+    rows = (top ?? []) as unknown as typeof rows
+    me = meR.data as unknown as typeof me
+  } catch {
+    return { error: 'Não foi possível carregar o ranking.' }
+  }
   const myPoints = me?.total_points ?? 0
 
   const { count } = await supabaseAdmin
@@ -84,7 +93,6 @@ export async function getRanking(
   }
 }
 
-// Lightweight version for the navbar chip.
 export async function getMyRank(
   token: string,
 ): Promise<{ position: number; points: number } | null> {
@@ -117,6 +125,7 @@ export async function setDisplayName(args: {
     .update({ display_name: name })
     .eq('id', a.userId)
   if (error) return { error: 'Não foi possível salvar o nome.' }
+  updateTag('ranking')
   revalidatePath('/ranking')
   return { ok: true }
 }

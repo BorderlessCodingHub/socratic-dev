@@ -11,7 +11,7 @@ import { authActionUser } from '@/lib/api/guard'
 import { rateLimit } from '@/lib/api/guard'
 import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import type { Challenge } from './types'
 
 export async function startSession(args: {
@@ -101,6 +101,7 @@ export async function completeSession(args: {
     .from('sessions')
     .update({ ...base, independence })
     .eq('id', args.id)
+  updateTag('ranking')
   revalidatePath('/dashboard')
   revalidatePath('/profile')
   revalidatePath('/ranking')
