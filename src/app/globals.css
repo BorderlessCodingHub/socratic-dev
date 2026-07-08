@@ -693,3 +693,8 @@
     animation: marquee 36s linear infinite;
   }
 }
+
+.tutor-line-flash {
+  background: color-mix(in srgb, var(--lime) 22%, transparent);
+  transition: background 0.4s ease;
+}
