@@ -158,12 +158,14 @@ export function DashboardView({ user }: { user: User }) {
   const [genDesign, setGenDesign] = React.useState(false)
   const [genCode, setGenCode] = React.useState(false)
   const [customOpen, setCustomOpen] = React.useState(false)
-  const [daily, setDaily] = React.useState<DailyChallenge | null>(null)
+  const [daily, setDaily] = React.useState<DailyChallenge | null | undefined>(
+    undefined,
+  )
 
   React.useEffect(() => {
     getDailyChallenge()
       .then((d) => setDaily(d))
-      .catch(() => {})
+      .catch(() => setDaily(null))
   }, [])
 
   React.useEffect(() => {
@@ -353,10 +355,12 @@ export function DashboardView({ user }: { user: User }) {
             </div>
           </motion.section>
 
-          {daily &&
+          {daily === undefined || !loaded ? (
+            <Skeleton className='mb-12 h-[54px] w-full rounded-lg' />
+          ) : daily &&
             !sessions.some(
               (x) => x.challenge_id === daily.id && x.status === 'completed',
-            ) && (
+            ) ? (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -384,7 +388,7 @@ export function DashboardView({ user }: { user: User }) {
                 <ArrowRight className='size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5' />
               </Link>
             </motion.div>
-          )}
+          ) : null}
 
           {!loaded ? (
             <DashboardSkeleton />
