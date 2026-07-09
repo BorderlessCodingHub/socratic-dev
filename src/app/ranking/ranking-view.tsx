@@ -2,6 +2,7 @@
 
 import { Footer } from '@/components/footer'
 import { Navbar } from '@/components/navbar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { setDisplayName } from '@/features/ranking/actions'
 import type { LeagueData, RankingData } from '@/features/ranking/queries'
 import { getAccessToken } from '@/lib/api/client'
@@ -68,6 +69,37 @@ const copy = {
     leagueEmpty:
       'Ninguém da sua liga pontuou ainda — assuma a liderança com um desafio.',
   },
+}
+
+export function RankingFallback() {
+  const t = useT(copy)
+  return (
+    <div className='flex min-h-screen flex-col bg-background'>
+      <Navbar />
+      <main className='container-main flex-1 pt-[120px] pb-20'>
+        <div className='mx-auto max-w-[720px]'>
+          <p className='eyebrow'>{t.eyebrow}</p>
+          <h1 className='type-h2 mt-4'>
+            {t.headline}{' '}
+            <span className='font-serif italic'>{t.flourish}</span>
+          </h1>
+          <p className='mt-4 max-w-[52ch] text-base text-muted-foreground'>
+            {t.intro}
+          </p>
+          <div className='mt-8 grid grid-cols-2 gap-3 sm:max-w-[400px]'>
+            <Skeleton className='h-[86px] rounded-xl' />
+            <Skeleton className='h-[86px] rounded-xl' />
+          </div>
+          <div className='mt-8 space-y-2'>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className='h-12 w-full rounded-xl' />
+            ))}
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
 }
 
 export function RankingView({

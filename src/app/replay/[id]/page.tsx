@@ -5,6 +5,7 @@ import { FormattedText } from '@/features/challenges/components/formatted-text'
 import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
+import { Suspense } from 'react'
 import {
   ArrowRight,
   Calendar,
@@ -190,9 +191,25 @@ export async function generateMetadata(props: {
   }
 }
 
-export default async function ReplayPage(props: {
+export default function ReplayPage(props: {
   params: Promise<{ id: string }>
 }) {
+  return (
+    <Suspense
+      fallback={
+        <div className='grid min-h-screen place-items-center bg-background'>
+          <span className='font-mono text-[12px] text-muted-foreground'>
+            socratic.dev
+          </span>
+        </div>
+      }
+    >
+      <ReplayContent params={props.params} />
+    </Suspense>
+  )
+}
+
+async function ReplayContent(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params
   const locale = await getLocale()
   const t = copy[locale]

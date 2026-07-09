@@ -16,7 +16,8 @@ import { rateLimit } from '@/lib/api/guard'
 import { getLocale } from '@/lib/i18n/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import * as Sentry from '@sentry/nextjs'
-import { revalidatePath, unstable_cache, updateTag } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
+import { dailyChallengeFor, type DailyChallenge } from './queries'
 import type { Challenge } from './types'
 
 export async function startSession(args: {
@@ -284,6 +285,7 @@ async function doGenerate(input: {
       locale: await getLocale(),
     })
     if (error) return { error: 'Não foi possível salvar o desafio. Tente de novo.' }
+    updateTag('challenges')
     revalidatePath('/dashboard')
     return data as unknown as Challenge
   } catch (e) {
@@ -372,38 +374,13 @@ export async function getEditorial(
   }
 }
 
-export type DailyChallenge = {
-  id: string
-  title: string
-  stack: string
-  level: string
-  kind: string | null
-}
-
-// Same challenge for everyone, rotating deterministically by UTC day. Cached
-// per day — zero AI cost, one bounded query per revalidation.
-const getDailyCached = unstable_cache(
-  async (day: string): Promise<DailyChallenge | null> => {
-    const { count } = await supabaseAdmin
-      .from('challenges')
-      .select('id', { count: 'exact', head: true })
-    if (!count) return null
-    const dayNumber = Math.floor(Date.parse(day) / (24 * 3600_000))
-    const idx = dayNumber % count
-    const { data } = await supabaseAdmin
-      .from('challenges')
-      .select('id, title, stack, level, kind')
-      .order('created_at', { ascending: true })
-      .range(idx, idx)
-    return (data?.[0] as DailyChallenge | undefined) ?? null
-  },
-  ['daily-challenge'],
-  { revalidate: 86_400 },
-)
+export type { DailyChallenge } from './queries'
 
 export async function getDailyChallenge(): Promise<DailyChallenge | null> {
+  // Rotates at midnight America/Sao_Paulo (fixed UTC-3), same convention as
+  // the hints week.
   const day = new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10)
-  return getDailyCached(day)
+  return dailyChallengeFor(day)
 }
 
 export async function getNextChallenge(input: {

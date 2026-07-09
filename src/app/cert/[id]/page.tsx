@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { getCertData } from './cert-data'
 
 export async function generateMetadata({
@@ -25,11 +26,27 @@ const TIER_LABEL = {
   low: 'Jornada iniciada',
 } as const
 
-export default async function CertPage({
+export default function CertPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
+  return (
+    <Suspense
+      fallback={
+        <div className='grid min-h-screen place-items-center bg-ink'>
+          <span className='font-mono text-[12px] text-white/40'>
+            socratic.dev
+          </span>
+        </div>
+      }
+    >
+      <CertContent params={params} />
+    </Suspense>
+  )
+}
+
+async function CertContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const cert = await getCertData(id).catch(() => null)
   if (!cert) notFound()

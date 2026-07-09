@@ -12,13 +12,23 @@ const LocaleContext = React.createContext<{
 }>({ locale: 'en', setLocale: () => {} })
 
 export function LocaleProvider({
-  initialLocale = 'en',
+  initialLocale = 'pt',
   children,
 }: {
   initialLocale?: Locale
   children: React.ReactNode
 }) {
   const [locale, setLocaleState] = React.useState<Locale>(initialLocale)
+
+  React.useEffect(() => {
+    const fromCookie = document.cookie.match(/(?:^|;\s*)locale=(en|pt)/)?.[1]
+    const stored =
+      fromCookie ?? window.localStorage.getItem(LOCALE_COOKIE) ?? undefined
+    if ((stored === 'en' || stored === 'pt') && stored !== initialLocale) {
+      setLocaleState(stored)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   React.useEffect(() => {
     window.localStorage.setItem(LOCALE_COOKIE, locale)

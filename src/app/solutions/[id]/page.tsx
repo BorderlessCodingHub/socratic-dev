@@ -230,6 +230,22 @@ function SolutionsContent({ challengeId }: { challengeId: string }) {
 }
 
 export default function SolutionsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className='grid min-h-screen place-items-center bg-background'>
+          <span className='font-mono text-[12px] text-muted-foreground'>
+            socratic.dev
+          </span>
+        </div>
+      }
+    >
+      <SolutionsPageInner />
+    </React.Suspense>
+  )
+}
+
+function SolutionsPageInner() {
   const params = useParams<{ id: string }>()
   return (
     <RequireAuth next={`/solutions/${params.id}`}>

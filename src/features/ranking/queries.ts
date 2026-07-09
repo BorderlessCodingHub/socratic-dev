@@ -1,10 +1,6 @@
 import { seasonEndsAt, seasonKey } from '@/domain/season'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { unstable_cache } from 'next/cache'
-
-// Server-only ranking/league queries, keyed by userId. Called directly from
-// Server Components (after cookie auth) and wrapped by token-authenticated
-// server actions for client callers. Never import this from client code.
+import { cacheLife, cacheTag } from 'next/cache'
 
 export type RankingEntry = {
   position: number
@@ -33,25 +29,20 @@ export type LeagueData = {
 
 const TOP_LIMIT = 50
 
-// The top 50 is identical for every viewer — cache it instead of hitting the
-// DB per visit. completeSession/setDisplayName revalidate the 'ranking' tag.
-const getTopProfiles = unstable_cache(
-  async () => {
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select('id, display_name, email, total_points')
-      .order('total_points', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(TOP_LIMIT)
-    if (error) throw new Error(error.message)
-    return data
-  },
-  ['ranking-top'],
-  { revalidate: 60, tags: ['ranking'] },
-)
+async function getTopProfiles() {
+  'use cache'
+  cacheLife('minutes')
+  cacheTag('ranking')
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, display_name, email, total_points')
+    .order('total_points', { ascending: false })
+    .order('created_at', { ascending: true })
+    .limit(TOP_LIMIT)
+  if (error) throw new Error(error.message)
+  return data
+}
 
-// Never expose other users' emails on a public leaderboard — mask the local
-// part when the user hasn't set a display name.
 export function publicName(
   displayName: string | null,
   email: string | null,
@@ -127,8 +118,6 @@ export async function rankForUser(
   return { position: (count ?? 0) + 1, points }
 }
 
-// The user's 25-person cohort for the current 4-week season. Null until they
-// score their first completion of the season (joined lazily on completion).
 export async function leagueForUser(userId: string): Promise<LeagueData> {
   const season = seasonKey()
   const { data: mine } = await supabaseAdmin

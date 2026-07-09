@@ -1,5 +1,4 @@
 import { LocaleProvider } from '@/lib/i18n'
-import { getLocale } from '@/lib/i18n/server'
 import { ThemeProvider, themeInitScript } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
@@ -38,15 +37,16 @@ export const metadata: Metadata = {
     'A coding environment where the AI never hands you the answer. It makes you find it. For devs who want to actually learn in the AI era.',
 }
 
-export default async function RootLayout({
+const langInitScript = `try{var m=document.cookie.match(/(?:^|;\\s*)locale=(en|pt)/);if(m)document.documentElement.lang=m[1]==='pt'?'pt-BR':'en'}catch(e){}`
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const locale = await getLocale()
   return (
     <html
-      lang={locale === 'pt' ? 'pt-BR' : 'en'}
+      lang='pt-BR'
       suppressHydrationWarning
       className={cn(
         'h-full antialiased',
@@ -61,9 +61,13 @@ export default async function RootLayout({
         suppressHydrationWarning
         className='flex min-h-full flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary'
       >
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `${themeInitScript};${langInitScript}`,
+          }}
+        />
         <ThemeProvider>
-          <LocaleProvider initialLocale={locale}>{children}</LocaleProvider>
+          <LocaleProvider>{children}</LocaleProvider>
         </ThemeProvider>
         <Analytics />
       </body>
