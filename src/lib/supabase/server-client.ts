@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import type { User } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { Database } from '../database.types'
 
@@ -30,10 +29,14 @@ export async function createSupabaseServer() {
   )
 }
 
-export async function getServerUser(): Promise<User | null> {
+export type ServerUser = { id: string; email: string | null }
+
+export async function getServerUser(): Promise<ServerUser | null> {
   const supabase = await createSupabaseServer()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  const { data, error } = await supabase.auth.getClaims()
+  const claims = data?.claims as
+    | { sub?: string; email?: string }
+    | undefined
+  if (error || !claims?.sub) return null
+  return { id: claims.sub, email: claims.email ?? null }
 }

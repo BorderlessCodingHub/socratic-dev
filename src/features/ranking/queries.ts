@@ -72,6 +72,7 @@ export async function rankingForUser(
     total_points: number
   }[]
   let me: { display_name: string | null; total_points: number } | null
+  let myPosition: number
   try {
     const [top, meR] = await Promise.all([
       getTopProfiles(),
@@ -83,17 +84,16 @@ export async function rankingForUser(
     ])
     rows = (top ?? []) as unknown as typeof rows
     me = meR.data as unknown as typeof me
+    const { count } = await supabaseAdmin
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .gt('total_points', me?.total_points ?? 0)
+    myPosition = (count ?? 0) + 1
   } catch {
     return { error: 'Não foi possível carregar o ranking.' }
   }
 
   const myPoints = me?.total_points ?? 0
-
-  const { count } = await supabaseAdmin
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .gt('total_points', myPoints)
-  const myPosition = (count ?? 0) + 1
 
   return {
     entries: rows.map((r, i) => ({
