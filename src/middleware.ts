@@ -8,7 +8,6 @@ function tokenExpiry(request: NextRequest): number | null {
     .getAll()
     .filter((c) => /^sb-.+-auth-token(\.\d+)?$/.test(c.name))
   if (chunks.length === 0) return null
-
   const whole = chunks.find((c) => !/\.\d+$/.test(c.name))
   const raw = whole
     ? whole.value
@@ -38,7 +37,7 @@ function tokenExpiry(request: NextRequest): number | null {
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const exp = tokenExpiry(request)
   if (exp === null) return NextResponse.next({ request })
   if (exp * 1000 - Date.now() > REFRESH_MARGIN_MS) {

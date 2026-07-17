@@ -34,3 +34,9 @@ export default withSentryConfig(nextConfig, {
   disableLogger: true,
   tunnelRoute: '/monitoring',
 })
+
+// Enable calling `getCloudflareContext()` in `next dev`.
+// See https://opennext.js.org/cloudflare/bindings#local-access-to-bindings.
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
+
+initOpenNextCloudflareForDev()
