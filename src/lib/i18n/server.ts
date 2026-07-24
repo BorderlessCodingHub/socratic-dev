@@ -1,7 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import type { Locale } from './index'
 
-const LOCALE_COOKIE = 'locale'
+const LOCALE_COOKIE = 'socratic-locale'
 
 /**
  * The single source of truth for the active locale. An explicit cookie (set by

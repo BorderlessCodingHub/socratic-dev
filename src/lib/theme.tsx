@@ -4,7 +4,7 @@ import * as React from 'react'
 
 export type ThemeSetting = 'light' | 'dark' | 'system'
 
-const THEME_KEY = 'theme'
+const THEME_KEY = 'socratic-theme'
 
 function systemDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches

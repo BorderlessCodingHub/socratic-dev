@@ -4,7 +4,7 @@ import * as React from 'react'
 
 export type Locale = 'en' | 'pt'
 
-export const LOCALE_COOKIE = 'locale'
+export const LOCALE_COOKIE = 'socratic-locale'
 
 const LocaleContext = React.createContext<{
   locale: Locale
@@ -21,7 +21,9 @@ export function LocaleProvider({
   const [locale, setLocaleState] = React.useState<Locale>(initialLocale)
 
   React.useEffect(() => {
-    const fromCookie = document.cookie.match(/(?:^|;\s*)locale=(en|pt)/)?.[1]
+    const fromCookie = document.cookie.match(
+      /(?:^|;\s*)socratic-locale=(en|pt)/,
+    )?.[1]
     const stored =
       fromCookie ?? window.localStorage.getItem(LOCALE_COOKIE) ?? undefined
     if ((stored === 'en' || stored === 'pt') && stored !== initialLocale) {

@@ -140,7 +140,7 @@ export function ReviewModal({
 
   async function copyShareLink() {
     if (!sessionId || typeof window === 'undefined') return
-    const url = `${window.location.origin}/replay/${sessionId}`
+    const url = `${window.location.origin}/socratic-dev/replay/${sessionId}`
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
