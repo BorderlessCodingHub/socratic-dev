@@ -2,13 +2,33 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '../database.types'
 
+const BUILD_PLACEHOLDER_URL = 'https://placeholder.supabase.co'
+const BUILD_PLACEHOLDER_ANON = 'placeholder-anon-key'
+
+function isNextProductionBuild(): boolean {
+  return process.env.NEXT_PHASE === 'phase-production-build'
+}
+
+function envOrBuildPlaceholder(name: string, placeholder: string): string {
+  const value = process.env[name]
+  if (value) return value
+  if (isNextProductionBuild()) return placeholder
+  throw new Error(
+    `${name} is required. Set it in the runtime environment (Cloudflare Workers Variables / secrets).`,
+  )
+}
+
 // Cookie-aware client for Server Components, server actions and route
 // handlers. Reads the session the browser client stores in cookies.
+// Env is read only when called (safe to import during `next build`).
 export async function createSupabaseServer() {
   const cookieStore = await cookies()
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    envOrBuildPlaceholder('NEXT_PUBLIC_SUPABASE_URL', BUILD_PLACEHOLDER_URL),
+    envOrBuildPlaceholder(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+      BUILD_PLACEHOLDER_ANON,
+    ),
     {
       cookies: {
         getAll() {
