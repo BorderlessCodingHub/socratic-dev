@@ -1,10 +1,9 @@
 'use client'
 
 import * as React from 'react'
+import { THEME_KEY } from '@/lib/theme-init-script'
 
 export type ThemeSetting = 'light' | 'dark' | 'system'
-
-const THEME_KEY = 'socratic-theme'
 
 function systemDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -71,5 +70,3 @@ export function useIsDark(): boolean {
   }, [])
   return dark
 }
-
-export const themeInitScript = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');var d=t?(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)):true;if(d)document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}})()`

@@ -1,5 +1,6 @@
 import { LocaleProvider } from '@/lib/i18n'
-import { ThemeProvider, themeInitScript } from '@/lib/theme'
+import { themeInitScript } from '@/lib/theme-init-script'
+import { ThemeProvider } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
