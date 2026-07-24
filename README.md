@@ -171,3 +171,4 @@ npm run build   # validate the production build before shipping
 <div align="center">
 © 2026 Socratic.dev
 </div>
+
