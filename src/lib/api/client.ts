@@ -1,5 +1,13 @@
 import { supabase } from '@/lib/supabase/client'
 
+const BASE_PATH = '/socratic-dev'
+
+function withBasePath(input: string): string {
+  if (!input.startsWith('/') || input.startsWith('//')) return input
+  if (input === BASE_PATH || input.startsWith(`${BASE_PATH}/`)) return input
+  return `${BASE_PATH}${input}`
+}
+
 export async function getAccessToken(): Promise<string> {
   const {
     data: { session },
@@ -19,5 +27,5 @@ export async function apiFetch(
   if (session?.access_token) {
     headers.set('Authorization', `Bearer ${session.access_token}`)
   }
-  return fetch(input, { ...init, headers })
+  return fetch(withBasePath(input), { ...init, headers })
 }

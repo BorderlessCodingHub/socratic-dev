@@ -3,9 +3,22 @@ import { jsonError, rateLimit, requireUser, tooMany } from '@/lib/api/guard'
 import { addBonus } from '@/lib/api/hints-server'
 import Stripe from 'stripe'
 
+const BASE_PATH = '/socratic-dev'
+
 function safePath(input: unknown): string {
   const path = typeof input === 'string' ? input : ''
   return path.startsWith('/') && !path.startsWith('//') ? path : '/challenge'
+}
+
+/** Avoid doubling /socratic-dev when SITE_URL already includes the basePath. */
+function pathRelativeToOrigin(origin: string, path: string): string {
+  if (
+    origin.endsWith(BASE_PATH) &&
+    (path === BASE_PATH || path.startsWith(`${BASE_PATH}/`))
+  ) {
+    return path.slice(BASE_PATH.length) || '/'
+  }
+  return path
 }
 
 export async function POST(req: Request) {
@@ -19,11 +32,14 @@ export async function POST(req: Request) {
   const path = safePath((body as { path?: string }).path)
   // Payment redirect URLs must never be derived from request headers (Origin
   // is attacker-controlled → phishing after a real payment). The site host is
-  // pinned by env; dev falls back to localhost.
+  // pinned by env; include basePath. Dev falls back to local basePath URL.
   const origin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, '') ??
-    (process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : null)
+    (process.env.NODE_ENV !== 'production'
+      ? `http://localhost:3000${BASE_PATH}`
+      : null)
   if (!origin) return jsonError('Pagamentos indisponíveis no momento.', 503)
+  const relativePath = pathRelativeToOrigin(origin, path)
 
   const key = process.env.STRIPE_SECRET_KEY
   if (!key) {
@@ -56,8 +72,8 @@ export async function POST(req: Request) {
       user_id: userId,
       hints: String(HINT_PACK.hints),
     },
-    success_url: `${origin}${path}?purchase=success`,
-    cancel_url: `${origin}${path}?purchase=cancelled`,
+    success_url: `${origin}${relativePath}?purchase=success`,
+    cancel_url: `${origin}${relativePath}?purchase=cancelled`,
   })
 
   return Response.json({ url: session.url })

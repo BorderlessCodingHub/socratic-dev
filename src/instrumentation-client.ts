@@ -3,7 +3,7 @@ import posthog from 'posthog-js'
 
 if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-    api_host: '/ingest',
+    api_host: '/socratic-dev/ingest',
     ui_host: 'https://us.posthog.com',
     defaults: '2025-05-24',
     person_profiles: 'identified_only',

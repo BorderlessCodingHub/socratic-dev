@@ -146,7 +146,7 @@ function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: `${window.location.origin}/socratic-dev/auth/callback?next=${encodeURIComponent(next)}`,
         },
       })
       if (error) throw error

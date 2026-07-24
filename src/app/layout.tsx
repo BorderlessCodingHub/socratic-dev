@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     'A coding environment where the AI never hands you the answer. It makes you find it. For devs who want to actually learn in the AI era.',
 }
 
-const langInitScript = `try{var m=document.cookie.match(/(?:^|;\\s*)locale=(en|pt)/);if(m)document.documentElement.lang=m[1]==='pt'?'pt-BR':'en'}catch(e){}`
+const langInitScript = `try{var m=document.cookie.match(/(?:^|;\\s*)socratic-locale=(en|pt)/);if(m)document.documentElement.lang=m[1]==='pt'?'pt-BR':'en'}catch(e){}`
 
 export default function RootLayout({
   children,

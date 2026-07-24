@@ -38,7 +38,7 @@ const Excalidraw = dynamic(
 
 async function loadUserLibrary(api: ExcalidrawApi) {
   try {
-    const res = await fetch('/design-library.excalidrawlib')
+    const res = await fetch('/socratic-dev/design-library.excalidrawlib')
     if (!res.ok) return
     const data = (await res.json()) as {
       library?: unknown[]
