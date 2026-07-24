@@ -106,7 +106,7 @@ SUPABASE_SERVICE_ROLE_KEY=       # service-role key (server only — never expos
 ANTHROPIC_API_KEY=               # Anthropic API key
 ```
 
-> `.env.local` is in `.gitignore`. **Never** commit keys. In production, set them in the Vercel dashboard.
+> `.env.local` is in `.gitignore`. **Never** commit keys. In production, set them in Cloudflare Workers Variables/Secrets (or your host’s dashboard). See [Deploy](#deploy).
 
 ## Architecture
 
@@ -147,24 +147,66 @@ src/
 
 ## Deploy
 
-The target is **Vercel + Supabase** (Supabase is managed — no deploy of your own).
+### Cloudflare Workers (OpenNext) — recommended for labs
 
-1. Import the repository on **Vercel** (it detects Next.js automatically).
-2. Set the **4 environment variables** above.
-3. After deploying, in **Supabase → Authentication → URL Configuration**, set **Site URL** and **Redirect URLs** (`https://your-domain/**`) so login works in production.
+This app deploys to **Cloudflare Workers** via [@opennextjs/cloudflare](https://opennext.js.org/cloudflare).
+
+**Build command** (Workers Builds / CI) must use OpenNext, not plain `next build`:
 
 ```bash
-npm run build   # validate the production build before shipping
+bun run build:cloudflare
+# equivalent: npx opennextjs-cloudflare build
+```
+
+Deploy scripts already wrap that:
+
+```bash
+bun run deploy    # build + deploy
+bun run preview   # build + local preview
+```
+
+`bun run build` (`next build`) is fine for local validation, but Cloudflare production should run **`build:cloudflare`**.
+
+#### Required Variables / secrets in Workers Builds
+
+Set these in **Cloudflare → Workers → your app → Settings → Variables and Secrets** (and ensure they are available to the **build** step for any `NEXT_PUBLIC_*` values):
+
+| Name | Where | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Build + runtime Variable | Required at build for client bundles |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Build + runtime Variable | Required at build for client bundles |
+| `NEXT_PUBLIC_SITE_URL` | Build + runtime Variable | Public origin incl. labs basePath, e.g. `https://labs.borderlesscoding.com/socratic-dev` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Runtime **Secret** | Server only — never `NEXT_PUBLIC_` |
+| `ANTHROPIC_API_KEY` | Runtime **Secret** | Server only |
+| `STRIPE_SECRET_KEY` | Runtime **Secret** | If checkout is enabled |
+| `STRIPE_WEBHOOK_SECRET` | Runtime **Secret** | If webhooks are enabled |
+| `NEXT_PUBLIC_SENTRY_DSN` | Build + runtime Variable | Optional |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Build + runtime Variable | Optional |
+
+> A code change makes Supabase clients initialize lazily so missing env no longer crashes **module import** during page-data collection — but you still **must** set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as Workers build Variables. Without them, client routes and auth will fail at runtime (and some client bundles may still need them inlined at build).
+
+After deploying, in **Supabase → Authentication → URL Configuration**, set **Site URL** and **Redirect URLs** for the labs origin (including `/socratic-dev`).
+
+### Vercel (alternative)
+
+1. Import the repository on **Vercel** (it detects Next.js automatically).
+2. Set the environment variables from [Environment variables](#environment-variables) above.
+3. Configure Supabase Auth redirect URLs for your production domain.
+
+```bash
+bun run build   # validate a plain Next production build locally
 ```
 
 ## Scripts
 
 | Command | What |
 |---|---|
-| `npm run dev` | Dev server (Turbopack) |
-| `npm run build` | Production build |
-| `npm run start` | Serve the build |
-| `npm run format` | Prettier |
+| `bun run dev` / `npm run dev` | Dev server (Turbopack) |
+| `bun run build` | Plain Next production build |
+| `bun run build:cloudflare` | OpenNext Cloudflare build (use this on CF) |
+| `bun run deploy` | OpenNext build + Cloudflare deploy |
+| `bun run start` | Serve the Next build |
+| `bun run format` | Prettier |
 
 ---
 
