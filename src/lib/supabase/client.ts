@@ -6,8 +6,15 @@ type BrowserClient = SupabaseClient<Database>
 
 let browserClient: BrowserClient | undefined
 
-function requirePublicEnv(name: string): string {
-  const value = process.env[name]
+/**
+ * Next.js only inlines `NEXT_PUBLIC_*` when accessed as a static property
+ * (`process.env.NEXT_PUBLIC_FOO`). Dynamic `process.env[name]` stays empty in
+ * the browser bundle even when Cloudflare Build Variables are set.
+ */
+function requirePublicEnv(
+  name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  value: string | undefined,
+): string {
   if (!value) {
     throw new Error(
       `${name} is required. Set it as a Cloudflare Workers build Variable (NEXT_PUBLIC_* must be present at build) or in .env.local for local dev.`,
@@ -24,8 +31,14 @@ function requirePublicEnv(name: string): string {
 export function getSupabaseBrowser(): BrowserClient {
   if (!browserClient) {
     browserClient = createBrowserClient<Database>(
-      requirePublicEnv('NEXT_PUBLIC_SUPABASE_URL'),
-      requirePublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+      requirePublicEnv(
+        'NEXT_PUBLIC_SUPABASE_URL',
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+      ),
+      requirePublicEnv(
+        'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      ),
     )
   }
   return browserClient

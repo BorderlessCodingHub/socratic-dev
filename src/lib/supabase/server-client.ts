@@ -9,8 +9,11 @@ function isNextProductionBuild(): boolean {
   return process.env.NEXT_PHASE === 'phase-production-build'
 }
 
-function envOrBuildPlaceholder(name: string, placeholder: string): string {
-  const value = process.env[name]
+function envOrBuildPlaceholder(
+  name: string,
+  value: string | undefined,
+  placeholder: string,
+): string {
   if (value) return value
   if (isNextProductionBuild()) return placeholder
   throw new Error(
@@ -21,12 +24,18 @@ function envOrBuildPlaceholder(name: string, placeholder: string): string {
 // Cookie-aware client for Server Components, server actions and route
 // handlers. Reads the session the browser client stores in cookies.
 // Env is read only when called (safe to import during `next build`).
+// Use static `process.env.NEXT_PUBLIC_*` access so Next can inline at build.
 export async function createSupabaseServer() {
   const cookieStore = await cookies()
   return createServerClient<Database>(
-    envOrBuildPlaceholder('NEXT_PUBLIC_SUPABASE_URL', BUILD_PLACEHOLDER_URL),
+    envOrBuildPlaceholder(
+      'NEXT_PUBLIC_SUPABASE_URL',
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      BUILD_PLACEHOLDER_URL,
+    ),
     envOrBuildPlaceholder(
       'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       BUILD_PLACEHOLDER_ANON,
     ),
     {
