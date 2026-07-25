@@ -3,8 +3,8 @@
 import { useT } from '@/lib/i18n'
 import { ArrowRight } from 'lucide-react'
 import { motion } from 'motion/react'
-import Link from 'next/link'
 import { Halftone } from './halftone'
+import { LandingCtaLink } from './landing-cta-link'
 
 const copy = {
   en: {
@@ -68,19 +68,19 @@ export function Hero() {
             {t.sub}
           </p>
           <div className='flex flex-col justify-center gap-3 sm:flex-row'>
-            <Link
+            <LandingCtaLink
               href='/onboarding'
               className='group inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-base font-medium tracking-tight text-background transition-colors duration-300 hover:bg-primary'
             >
               {t.primary}
               <ArrowRight className='size-4 transition-transform group-hover:translate-x-0.5' />
-            </Link>
-            <Link
+            </LandingCtaLink>
+            <LandingCtaLink
               href='/challenges'
               className='inline-flex items-center justify-center rounded-full bg-lime px-5 py-2.5 text-base font-medium tracking-tight text-ink transition-colors duration-300 hover:bg-lime-dark hover:text-white dark:text-background'
             >
               {t.secondary}
-            </Link>
+            </LandingCtaLink>
           </div>
         </div>
       </motion.div>

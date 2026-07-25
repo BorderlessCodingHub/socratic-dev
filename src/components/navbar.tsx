@@ -24,7 +24,7 @@ import {
   useRank,
   useStreak,
 } from './nav/status-cluster'
-import { Button } from './ui/button'
+import { LandingCtaLink } from '@/features/landing/components/landing-cta-link'
 
 function NavLink({ href, label }: { href: string; label: string }) {
   return (
@@ -147,9 +147,12 @@ export function Navbar() {
                   >
                     <span className='link-underline'>{t.signIn}</span>
                   </Link>
-                  <Button variant='ink' render={<Link href='/onboarding' />}>
+                  <LandingCtaLink
+                    href='/onboarding'
+                    className='inline-flex h-9 items-center justify-center rounded-full border border-ink bg-ink px-[calc(--spacing(3)-1px)] text-base font-medium text-background transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground sm:h-8 sm:text-sm'
+                  >
                     {t.cta}
-                  </Button>
+                  </LandingCtaLink>
                 </>
               )}
               <button

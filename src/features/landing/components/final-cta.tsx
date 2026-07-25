@@ -1,10 +1,9 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { useT } from '@/lib/i18n'
 import { ArrowRight } from 'lucide-react'
-import Link from 'next/link'
 import { Halftone, type Painter } from './halftone'
+import { LandingCtaLink } from './landing-cta-link'
 import { Reveal } from './reveal'
 
 const copy = {
@@ -64,15 +63,13 @@ export function FinalCta() {
               {t.body}
             </p>
             <div className='mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row'>
-              <Button
-                variant='ink'
-                size='lg'
-                className='group'
-                render={<Link href='/onboarding' />}
+              <LandingCtaLink
+                href='/onboarding'
+                className='group inline-flex h-auto items-center justify-center gap-2 rounded-full border border-ink bg-ink px-5 py-2.5 text-base font-medium text-background transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground'
               >
                 {t.cta}
-                <ArrowRight className='transition-transform duration-200 group-hover:translate-x-0.5' />
-              </Button>
+                <ArrowRight className='size-4.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+              </LandingCtaLink>
             </div>
           </div>
         </div>
