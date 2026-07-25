@@ -12,8 +12,11 @@ function isNextProductionBuild(): boolean {
   return process.env.NEXT_PHASE === 'phase-production-build'
 }
 
-function envOrBuildPlaceholder(name: string, placeholder: string): string {
-  const value = process.env[name]
+function envOrBuildPlaceholder(
+  name: string,
+  value: string | undefined,
+  placeholder: string,
+): string {
   if (value) return value
   // Allow `next build` / OpenNext page collection & SSG without real secrets.
   // Runtime requests still throw when env is missing.
@@ -35,9 +38,14 @@ function envOrBuildPlaceholder(name: string, placeholder: string): string {
 export function getSupabaseAdmin(): AdminClient {
   if (!adminClient) {
     adminClient = createClient<Database>(
-      envOrBuildPlaceholder('NEXT_PUBLIC_SUPABASE_URL', BUILD_PLACEHOLDER_URL),
+      envOrBuildPlaceholder(
+        'NEXT_PUBLIC_SUPABASE_URL',
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        BUILD_PLACEHOLDER_URL,
+      ),
       envOrBuildPlaceholder(
         'SUPABASE_SERVICE_ROLE_KEY',
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
         BUILD_PLACEHOLDER_KEY,
       ),
     )
