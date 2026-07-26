@@ -37,7 +37,7 @@ export async function getCommunitySolutions(
   const [challengeR, ownR] = await Promise.all([
     supabaseAdmin
       .from('challenges')
-      .select('title')
+      .select('title, kind')
       .eq('id', challengeId)
       .maybeSingle(),
     supabaseAdmin
@@ -50,6 +50,9 @@ export async function getCommunitySolutions(
       .maybeSingle(),
   ])
   if (!challengeR.data) return { error: 'not-found' }
+  // Design submissions store the Excalidraw scene JSON in code_submissions.code
+  // — there is no code to show. Solutions are a code-track feature.
+  if (challengeR.data.kind === 'design') return { error: 'not-found' }
   if (!ownR.data) return { error: 'not-completed' }
 
   const { data: subs } = await supabaseAdmin
