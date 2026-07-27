@@ -115,14 +115,17 @@ export async function completeSession(args: {
     }
   }
 
+  // completed_at means exactly that — abandoned sessions keep it null
+  // (migration 023 cleaned the historical rows written before this guard).
+  const completedAt = status === 'completed' ? new Date().toISOString() : null
   const base =
     typeof args.durationSeconds === 'number'
       ? {
           status,
-          completed_at: new Date().toISOString(),
+          completed_at: completedAt,
           duration_seconds: Math.max(0, Math.floor(args.durationSeconds)),
         }
-      : { status, completed_at: new Date().toISOString() }
+      : { status, completed_at: completedAt }
   await supabaseAdmin
     .from('sessions')
     .update({ ...base, independence })
