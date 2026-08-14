@@ -30,13 +30,13 @@ export default async function NotFound() {
 
   return (
     <div className='flex min-h-screen flex-col bg-background'>
-      <header className='flex h-16 shrink-0 items-center px-6 sm:px-10'>
+      <header className='container-main flex h-16 w-full shrink-0 items-center'>
         <Logo />
       </header>
       <main className='flex flex-1 items-center justify-center px-4 pb-16'>
         <Empty>
           <EmptyHeader>
-            <span className='font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase'>
+            <span className='eyebrow'>
               404
             </span>
             <EmptyTitle className='mt-3'>{t.title}</EmptyTitle>

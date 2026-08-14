@@ -75,7 +75,7 @@ export function Footer() {
     <footer className='bg-ink dark:bg-card dark:border-border mt-16 overflow-hidden dark:border-t'>
       <div className='container-main grid gap-12 pt-16 pb-10 lg:grid-cols-[1fr_auto] lg:gap-24'>
         <div className='max-w-md'>
-          <p className='font-heading text-xl tracking-tight'>
+          <p className='font-heading text-xl font-medium tracking-tight'>
             <span className='text-background dark:text-foreground'>
               socratic
             </span>

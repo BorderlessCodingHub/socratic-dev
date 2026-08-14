@@ -98,5 +98,5 @@ export function FormattedText({ text }: { text: string }) {
   }
   flush()
 
-  return <div>{blocks}</div>
+  return <div className='wrap-anywhere'>{blocks}</div>
 }

@@ -1,9 +1,10 @@
 'use client'
 
+import { Spinner } from '@/components/ui/spinner'
 import type { RunResult } from '@/features/runner/types'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { CheckCircle2, Loader2, Terminal, X, XCircle } from 'lucide-react'
+import { CheckCircle2, Terminal, X, XCircle } from 'lucide-react'
 
 const copy = {
   en: {
@@ -58,7 +59,7 @@ export function RunTerminal({
         <div className='flex items-center gap-3'>
           {running ? (
             <span className='flex items-center gap-1.5 text-white/50 normal-case'>
-              <Loader2 className='size-3 animate-spin' /> {t.running}
+              <Spinner aria-hidden='true' className='size-3' /> {t.running}
             </span>
           ) : result ? (
             <span

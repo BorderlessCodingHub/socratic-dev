@@ -1,11 +1,12 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { SOLVE_COST } from '@/features/hints/constants'
 import type { ChatMsg } from '@/lib/ai/types'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { Lightbulb, Loader2, Send, Sparkles, Wand2 } from 'lucide-react'
+import { Lightbulb, Send, Sparkles, Wand2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { FormattedText } from './formatted-text'
 
@@ -122,7 +123,7 @@ export function ChatPanel({
           >
             {m.role === 'user' ? (
               <div className='flex justify-end'>
-                <div className='max-w-[85%] rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-background'>
+                <div className='max-w-[85%] rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-background wrap-anywhere'>
                   {m.text}
                 </div>
               </div>
@@ -193,10 +194,10 @@ export function ChatPanel({
             <button
               onClick={onBuy}
               disabled={buying}
-              className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-3 font-mono text-[10px] text-primary transition-colors duration-200 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 lg:py-1.5'
+              className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-3 font-mono text-[10px] text-primary transition-colors duration-200 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40 lg:py-1.5'
             >
               {buying ? (
-                <Loader2 className='size-3 animate-spin' strokeWidth={1.5} />
+                <Spinner className='size-3' strokeWidth={1.5} />
               ) : (
                 <Sparkles className='size-3' strokeWidth={1.5} />
               )}{' '}
@@ -207,7 +208,7 @@ export function ChatPanel({
               onClick={onSolve}
               disabled={cantSolve}
               title={t.solveTitle}
-              className='flex w-full cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-3 font-mono text-[10px] text-ink transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 disabled:opacity-40 lg:py-1.5'
+              className='flex w-full cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-3 font-mono text-[10px] text-ink transition-colors duration-200 hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40 lg:py-1.5'
             >
               <Wand2 className='size-3 text-primary' strokeWidth={1.5} />{' '}
               {t.solveForMe}

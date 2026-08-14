@@ -45,7 +45,7 @@ export function MobileMenu({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className='border-border overflow-hidden border-t md:hidden'
+      className='border-border overflow-hidden border-t lg:hidden'
     >
       <nav className='flex flex-col gap-1 p-4'>
         <div className='mb-2 grid grid-cols-2 gap-2'>

@@ -1,7 +1,7 @@
 'use client'
 
-import { Footer } from '@/components/footer'
 import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { setDisplayName } from '@/features/ranking/actions'
 import type { LeagueData, RankingData } from '@/features/ranking/queries'
@@ -76,7 +76,7 @@ export function RankingFallback() {
   return (
     <div className='flex min-h-screen flex-col bg-background'>
       <Navbar />
-      <main className='container-main flex-1 pt-[120px] pb-20'>
+      <main className='container-main flex-1 pt-[88px] pb-20 md:pt-24'>
         <div className='mx-auto max-w-[720px]'>
           <p className='eyebrow'>{t.eyebrow}</p>
           <h1 className='type-h2 mt-4'>
@@ -97,7 +97,6 @@ export function RankingFallback() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   )
 }
@@ -116,7 +115,7 @@ export function RankingView({
   return (
     <div className='flex min-h-screen flex-col bg-background'>
       <Navbar />
-      <main className='container-main flex-1 pt-[120px] pb-20'>
+      <main className='container-main flex-1 pt-[88px] pb-20 md:pt-24'>
         <div className='mx-auto max-w-[720px]'>
           <p className='eyebrow'>{t.eyebrow}</p>
           <h1 className='type-h2 mt-4'>
@@ -186,10 +185,12 @@ export function RankingView({
                             strokeWidth={1.5}
                           />
                         )}
-                        <span className='min-w-0 flex-1 truncate text-sm font-medium text-ink'>
-                          {e.name}
+                        <span className='flex min-w-0 flex-1 items-center gap-2'>
+                          <span className='truncate text-sm font-medium text-ink'>
+                            {e.name}
+                          </span>
                           {e.isMe && (
-                            <span className='ml-2 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] tracking-wider text-primary uppercase'>
+                            <span className='shrink-0 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] tracking-wider text-primary uppercase'>
                               {t.you}
                             </span>
                           )}
@@ -214,7 +215,6 @@ export function RankingView({
           )}
         </div>
       </main>
-      <Footer />
     </div>
   )
 }
@@ -255,13 +255,13 @@ function LeagueSection({ league }: { league: LeagueData }) {
             <li
               key={e.position}
               className={cn(
-                'flex items-center gap-4 border-b border-border px-5 py-3 last:border-b-0',
+                'flex items-center gap-4 border-b border-border px-5 py-3.5 last:border-b-0',
                 e.isMe ? 'bg-primary/[0.06]' : 'bg-card',
               )}
             >
               <span
                 className={cn(
-                  'w-8 shrink-0 font-mono text-[13px] tabular-nums',
+                  'w-10 shrink-0 font-mono text-[13px] tabular-nums',
                   e.position === 1 ? 'text-primary' : 'text-muted-foreground',
                 )}
               >
@@ -343,14 +343,13 @@ function NamePrompt({ onSaved }: { onSaved: () => void }) {
           placeholder={t.namePlaceholder}
           className='h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
         />
-        <button
-          type='button'
+        <Button
+          variant='ink'
           onClick={save}
           disabled={saving || name.trim().length < 2}
-          className='bg-ink hover:bg-primary h-9 cursor-pointer rounded-lg px-4 text-sm font-medium text-background transition-colors disabled:cursor-not-allowed disabled:opacity-50'
         >
           {t.nameSave}
-        </button>
+        </Button>
       </div>
       {error && <p className='text-destructive mt-2 text-xs'>{error}</p>}
     </div>

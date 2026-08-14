@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import type { RunnerLanguage } from '@/domain/stacks'
 import { runCode } from '@/features/runner/run-code'
 import type { RunResult } from '@/features/runner/types'
@@ -11,13 +12,7 @@ import { useIsDark } from '@/lib/theme'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
-import {
-  CheckCircle2,
-  Loader2,
-  PlayCircle,
-  Terminal,
-  XCircle,
-} from 'lucide-react'
+import { CheckCircle2, PlayCircle, Terminal, XCircle } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
@@ -298,7 +293,7 @@ export function CodeChallengeWorkspace({ user: _user }: { user: User }) {
       }
       setSelAction({
         top: Math.max(pos.top - 40, 6),
-        left: Math.max(pos.left, 12),
+        left: Math.min(Math.max(pos.left, 12), editor.getLayoutInfo().width - 200),
       })
     }
     editor.onDidChangeCursorSelection(update)
@@ -517,7 +512,7 @@ export function CodeChallengeWorkspace({ user: _user }: { user: User }) {
             type='button'
             onClick={() => setActivePanel(p)}
             className={cn(
-              'rounded-full px-3 py-1 font-mono text-[12px] transition-colors',
+              'cursor-pointer rounded-full px-3 py-1 font-mono text-[12px] transition-colors',
               activePanel === p
                 ? 'bg-ink text-background'
                 : 'text-muted-foreground hover:text-foreground',
@@ -582,15 +577,11 @@ export function CodeChallengeWorkspace({ user: _user }: { user: User }) {
                 size='xs'
                 variant='ghost'
                 onClick={run}
-                disabled={running}
+                loading={running}
                 aria-label={t.run}
                 className='gap-1.5 rounded-md text-muted-foreground hover:text-foreground'
               >
-                {running ? (
-                  <Loader2 className='size-3.5 animate-spin' />
-                ) : (
-                  <PlayCircle className='size-3.5' />
-                )}
+                <PlayCircle className='size-3.5' />
                 <span className='hidden sm:inline'>{t.run}</span>
               </Button>
             </div>
@@ -726,9 +717,9 @@ function RunStatusChip({
         type='button'
         onClick={onClick}
         aria-label={t.toggleTerminal}
-        className='flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground'
+        className='flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground'
       >
-        <Loader2 className='size-3 animate-spin' /> {t.statusRunning}
+        <Spinner aria-hidden='true' className='size-3' /> {t.statusRunning}
       </button>
     )
   if (!result) return null
@@ -743,7 +734,7 @@ function RunStatusChip({
       onClick={onClick}
       aria-label={t.toggleTerminal}
       className={cn(
-        'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] transition-colors',
+        'flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] transition-colors',
         solved
           ? 'border-mint/30 bg-mint/10 text-mint hover:bg-mint/20'
           : 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20',

@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { BriefingPanel } from '@/features/challenges/components/briefing-panel'
 import { ChallengeSkeleton } from '@/features/challenges/components/challenge-skeleton'
 import { ChatPanel } from '@/features/challenges/components/chat-panel'
@@ -20,7 +21,7 @@ import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
-import { Loader2, Wand2 } from 'lucide-react'
+import { Wand2 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
@@ -376,7 +377,7 @@ export function DesignChallengeWorkspace({ user: _user }: { user: User }) {
             type='button'
             onClick={() => setActivePanel(p)}
             className={cn(
-              'rounded-full px-3 py-1 font-mono text-[12px] transition-colors',
+              'cursor-pointer rounded-full px-3 py-1 font-mono text-[12px] transition-colors',
               activePanel === p
                 ? 'bg-ink text-background'
                 : 'text-muted-foreground hover:text-foreground',
@@ -415,14 +416,10 @@ export function DesignChallengeWorkspace({ user: _user }: { user: User }) {
               size='xs'
               variant='ghost'
               onClick={askAnalysis}
-              disabled={s.thinking}
+              loading={s.thinking}
               className='gap-1.5 rounded-md text-muted-foreground hover:text-ink'
             >
-              {s.thinking ? (
-                <Loader2 className='size-3.5 animate-spin' />
-              ) : (
-                <Wand2 className='size-3.5' />
-              )}
+              <Wand2 className='size-3.5' />
               {t.askAnalysis}
             </Button>
           </div>
@@ -437,7 +434,7 @@ export function DesignChallengeWorkspace({ user: _user }: { user: User }) {
               />
             ) : (
               <div className='grid h-full place-items-center text-muted-foreground'>
-                <Loader2 className='size-4 animate-spin' />
+                <Spinner className='size-4' />
               </div>
             )}
           </div>

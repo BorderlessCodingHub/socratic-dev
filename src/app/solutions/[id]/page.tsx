@@ -73,9 +73,11 @@ function SolutionCard({
         type='button'
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className='flex w-full cursor-pointer flex-wrap items-center gap-2.5 px-5 py-3.5 text-left transition-colors duration-200 hover:bg-secondary'
+        className='flex w-full cursor-pointer items-center gap-2.5 px-5 py-3.5 text-left transition-colors duration-200 hover:bg-secondary'
       >
-        <span className='text-sm font-medium text-ink'>{sol.name}</span>
+        <span className='min-w-0 flex-1 truncate text-sm font-medium text-ink'>
+          {sol.name}
+        </span>
         {sol.isMe && (
           <span className='rounded-full bg-lime px-2 py-0.5 font-mono text-[10px] uppercase text-ink dark:text-background'>
             {youLabel}
@@ -158,72 +160,74 @@ function SolutionsContent({ challengeId }: { challengeId: string }) {
   return (
     <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <Navbar />
-      <main className='container-main flex-1 pt-[110px] pb-24'>
-        <p className='eyebrow'>{t.eyebrow}</p>
-        <h1 className='type-h2 mt-2'>{t.title}</h1>
+      <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
+        <div className='container-main w-full max-w-3xl'>
+          <p className='eyebrow'>{t.eyebrow}</p>
+          <h1 className='type-h2 mt-4'>{t.title}</h1>
 
-        {state.kind === 'loading' && (
-          <div className='mt-10 flex flex-col gap-4'>
-            <Skeleton className='h-6 w-72' />
-            <Skeleton className='h-48 w-full rounded-lg' />
-            <Skeleton className='h-48 w-full rounded-lg' />
-          </div>
-        )}
+          {state.kind === 'loading' && (
+            <div className='mt-10 flex flex-col gap-4'>
+              <Skeleton className='h-6 w-72' />
+              <Skeleton className='h-48 w-full rounded-lg' />
+              <Skeleton className='h-48 w-full rounded-lg' />
+            </div>
+          )}
 
-        {state.kind === 'locked' && (
-          <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
-            <Lock className='size-5 text-primary' strokeWidth={1.5} />
-            <p className='type-body max-w-md'>{t.locked}</p>
-            <Button
-              variant='ink'
-              render={<Link href={`/challenge?id=${challengeId}`} />}
-            >
-              {t.lockedCta}
-            </Button>
-          </div>
-        )}
+          {state.kind === 'locked' && (
+            <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
+              <Lock className='size-5 text-primary' strokeWidth={1.5} />
+              <p className='type-body max-w-md'>{t.locked}</p>
+              <Button
+                variant='ink'
+                render={<Link href={`/challenge?id=${challengeId}`} />}
+              >
+                {t.lockedCta}
+              </Button>
+            </div>
+          )}
 
-        {state.kind === 'not-found' && (
-          <div className='mt-10 rounded-lg border border-border bg-card px-6 py-10'>
-            <p className='type-body'>{t.notFound}</p>
-          </div>
-        )}
+          {state.kind === 'not-found' && (
+            <div className='mt-10 rounded-lg border border-border bg-card px-6 py-10'>
+              <p className='type-body'>{t.notFound}</p>
+            </div>
+          )}
 
-        {state.kind === 'ready' && (
-          <>
-            <p className='type-body mt-2 text-muted-foreground'>
-              {state.title}
-            </p>
+          {state.kind === 'ready' && (
+            <>
+              <p className='type-body mt-2 text-muted-foreground'>
+                {state.title}
+              </p>
 
-            {editorial === undefined ? (
-              <Skeleton className='mt-8 h-40 w-full rounded-lg' />
-            ) : editorial ? (
-              <section className='mt-8 rounded-lg border border-primary/25 bg-primary/[0.04] px-6 py-5'>
-                <p className='font-mono text-[10px] tracking-wider text-primary uppercase'>
-                  {t.editorialTitle}
-                </p>
-                <div className='type-body mt-3'>
-                  <FormattedText text={editorial} />
+              {editorial === undefined ? (
+                <Skeleton className='mt-8 h-40 w-full rounded-lg' />
+              ) : editorial ? (
+                <section className='mt-8 rounded-lg border border-primary/25 bg-primary/[0.04] px-6 py-5'>
+                  <p className='font-mono text-[10px] tracking-wider text-primary uppercase'>
+                    {t.editorialTitle}
+                  </p>
+                  <div className='type-body mt-3'>
+                    <FormattedText text={editorial} />
+                  </div>
+                </section>
+              ) : null}
+              {state.solutions.length === 0 ? (
+                <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
+                  <Users className='size-5 text-primary' strokeWidth={1.5} />
+                  <p className='type-body max-w-lg'>{t.empty}</p>
+                  <Button variant='outline' render={<Link href='/profile' />}>
+                    {t.profileCta}
+                  </Button>
                 </div>
-              </section>
-            ) : null}
-            {state.solutions.length === 0 ? (
-              <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
-                <Users className='size-5 text-primary' strokeWidth={1.5} />
-                <p className='type-body max-w-lg'>{t.empty}</p>
-                <Button variant='outline' render={<Link href='/profile' />}>
-                  {t.profileCta}
-                </Button>
-              </div>
-            ) : (
-              <div className='mt-10 flex flex-col gap-3'>
-                {state.solutions.map((sol, i) => (
-                  <SolutionCard key={i} sol={sol} youLabel={t.you} indLabel={t.independent} />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+              ) : (
+                <div className='mt-10 flex flex-col gap-3'>
+                  {state.solutions.map((sol, i) => (
+                    <SolutionCard key={i} sol={sol} youLabel={t.you} indLabel={t.independent} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
     </div>
   )

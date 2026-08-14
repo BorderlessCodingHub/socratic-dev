@@ -74,51 +74,53 @@ function SolutionsIndexContent() {
   return (
     <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <Navbar />
-      <main className='container-main flex-1 pt-[110px] pb-24'>
-        <p className='eyebrow'>{t.eyebrow}</p>
-        <h1 className='type-h2 mt-2'>{t.title}</h1>
-        <p className='type-body mt-3 max-w-lg text-muted-foreground'>
-          {t.subtitle}
-        </p>
+      <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
+        <div className='container-main w-full max-w-3xl'>
+          <p className='eyebrow'>{t.eyebrow}</p>
+          <h1 className='type-h2 mt-4'>{t.title}</h1>
+          <p className='type-body mt-3 max-w-lg text-muted-foreground'>
+            {t.subtitle}
+          </p>
 
-        {entries === null ? (
-          <div className='mt-10 flex flex-col gap-3'>
-            <Skeleton className='h-16 w-full rounded-lg' />
-            <Skeleton className='h-16 w-full rounded-lg' />
-            <Skeleton className='h-16 w-full rounded-lg' />
-          </div>
-        ) : entries.length === 0 ? (
-          <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
-            <Users className='size-5 text-primary' strokeWidth={1.5} />
-            <p className='type-body max-w-lg'>{t.empty}</p>
-            <Button variant='ink' render={<Link href='/challenge' />}>
-              {t.emptyCta}
-            </Button>
-          </div>
-        ) : (
-          <div className='mt-10 flex flex-col gap-3'>
-            {entries.map((e) => (
-              <Link
-                key={e.challengeId}
-                href={`/solutions/${e.challengeId}`}
-                className='group flex items-center gap-4 rounded-lg border border-border bg-card px-5 py-4 transition-colors duration-200 hover:bg-secondary'
-              >
-                <span className='min-w-0 flex-1 truncate text-sm font-medium text-ink'>
-                  {e.title}
-                </span>
-                {e.stack && (
-                  <span className='hidden font-mono text-[11px] uppercase text-muted-foreground sm:block'>
-                    {e.stack}
+          {entries === null ? (
+            <div className='mt-10 flex flex-col gap-3'>
+              <Skeleton className='h-16 w-full rounded-lg' />
+              <Skeleton className='h-16 w-full rounded-lg' />
+              <Skeleton className='h-16 w-full rounded-lg' />
+            </div>
+          ) : entries.length === 0 ? (
+            <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
+              <Users className='size-5 text-primary' strokeWidth={1.5} />
+              <p className='type-body max-w-lg'>{t.empty}</p>
+              <Button variant='ink' render={<Link href='/challenge' />}>
+                {t.emptyCta}
+              </Button>
+            </div>
+          ) : (
+            <div className='mt-10 flex flex-col gap-3'>
+              {entries.map((e) => (
+                <Link
+                  key={e.challengeId}
+                  href={`/solutions/${e.challengeId}`}
+                  className='group flex items-center gap-4 rounded-lg border border-border bg-card px-5 py-4 transition-colors duration-200 hover:bg-secondary'
+                >
+                  <span className='min-w-0 flex-1 truncate text-sm font-medium text-ink'>
+                    {e.title}
                   </span>
-                )}
-                <span className='flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-primary'>
-                  {t.open}
-                  <ArrowRight className='size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
+                  {e.stack && (
+                    <span className='hidden font-mono text-[11px] uppercase text-muted-foreground sm:block'>
+                      {e.stack}
+                    </span>
+                  )}
+                  <span className='flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-primary'>
+                    {t.open}
+                    <ArrowRight className='size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
+import { Spinner } from '@/components/ui/spinner'
 import { supabase } from '@/lib/supabase/client'
-import { Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect } from 'react'
 
@@ -30,7 +30,7 @@ function CallbackHandler() {
 
   return (
     <div className='grid min-h-screen place-items-center bg-background'>
-      <Loader2 className='size-5 animate-spin text-muted-foreground' />
+      <Spinner className='size-5 text-muted-foreground' />
     </div>
   )
 }
@@ -40,7 +40,7 @@ export default function AuthCallbackPage() {
     <Suspense
       fallback={
         <div className='grid min-h-screen place-items-center bg-background'>
-          <Loader2 className='size-5 animate-spin text-muted-foreground' />
+          <Spinner className='size-5 text-muted-foreground' />
         </div>
       }
     >

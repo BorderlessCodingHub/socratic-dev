@@ -34,7 +34,7 @@ export default function CertPage({
   return (
     <Suspense
       fallback={
-        <div className='grid min-h-screen place-items-center bg-ink'>
+        <div className='grid min-h-screen place-items-center bg-terminal'>
           <span className='font-mono text-[12px] text-white/40'>
             socratic.dev
           </span>
@@ -59,7 +59,7 @@ async function CertContent({ params }: { params: Promise<{ id: string }> }) {
   })
 
   return (
-    <div className='grid min-h-screen place-items-center bg-ink px-4 py-16'>
+    <div className='grid min-h-screen place-items-center bg-terminal px-4 py-16'>
       <div className='w-full max-w-2xl'>
         <div className='overflow-hidden rounded-2xl border border-white/10 bg-[#211e1a] shadow-2xl'>
           <div className='border-b border-white/10 px-8 py-6 sm:px-12'>

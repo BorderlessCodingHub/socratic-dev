@@ -1,8 +1,8 @@
 'use client'
 
+import { Spinner } from '@/components/ui/spinner'
 import type { RunnerLanguage } from '@/domain/stacks'
 import { useT } from '@/lib/i18n'
-import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const copy = {
@@ -14,7 +14,7 @@ export function EditorLoading() {
   const t = useT(copy)
   return (
     <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
-      <Loader2 className='mr-2 size-4 animate-spin' /> {t.loadingEditor}
+      <Spinner aria-hidden='true' className='mr-2 size-4' /> {t.loadingEditor}
     </div>
   )
 }

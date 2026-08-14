@@ -83,7 +83,8 @@ export function Segmented({
           key={o.value}
           type='button'
           onClick={() => onChange(o.value)}
-          className={`min-h-10 rounded-full px-3.5 py-2 font-mono text-[11px] tracking-wider uppercase transition-colors ${
+          aria-pressed={value === o.value}
+          className={`min-h-10 cursor-pointer rounded-full px-3.5 py-2 font-mono text-[11px] tracking-wider uppercase transition-colors duration-200 ${
             value === o.value
               ? 'bg-ink text-background'
               : 'text-muted-foreground hover:text-ink'
@@ -114,7 +115,7 @@ export function SaveBadge({ state }: { state: SaveState }) {
   if (state === 'idle') return null
   const map = {
     saving: [t.saving, 'text-muted-foreground'],
-    saved: [t.saved, 'text-mint'],
+    saved: [t.saved, 'text-primary'],
     error: [t.error, 'text-destructive'],
   } as const
   const [text, cls] = map[state]

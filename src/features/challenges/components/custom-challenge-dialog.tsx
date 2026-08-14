@@ -1,18 +1,12 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { STACKS as DOMAIN_STACKS } from '@/domain/stacks'
 import { getAccessToken } from '@/lib/api/client'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import {
-  Code2,
-  Lightbulb,
-  Loader2,
-  Network,
-  PenLine,
-  Sparkles,
-  X,
-} from 'lucide-react'
+import { Code2, Lightbulb, Network, PenLine, Sparkles, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
@@ -148,6 +142,15 @@ export function CustomChallengeDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch only on open, not on every chip change
   }, [open])
 
+  React.useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, onClose])
+
   async function submit() {
     if (submitting || prompt.trim().length < 10) return
     setSubmitting(true)
@@ -184,7 +187,7 @@ export function CustomChallengeDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className='fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm'
+          className='fixed inset-0 z-50 grid place-items-center bg-black/32 p-4 backdrop-blur-sm'
           onClick={onClose}
         >
           <motion.div
@@ -192,13 +195,15 @@ export function CustomChallengeDialog({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className='shadow-soft-lg relative w-full max-w-xl overflow-hidden rounded-3xl border border-border bg-card'
+            role='dialog'
+            aria-modal='true'
+            className='shadow-soft-lg relative flex max-h-[88dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-border bg-card'
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type='button'
               onClick={onClose}
-              className='absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border border-border bg-card text-muted-foreground hover:bg-muted'
+              className='absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-ink'
               aria-label={t.close}
             >
               <X className='size-4' />
@@ -209,16 +214,14 @@ export function CustomChallengeDialog({
                 <div className='grid size-12 place-items-center rounded-xl bg-pastel-lavender/55 text-ink'>
                   <Sparkles className='size-6' strokeWidth={1.5} />
                 </div>
-                <h3 className='font-heading text-2xl font-light tracking-tight text-ink'>
-                  {t.buildingTitle}
-                </h3>
+                <h3 className='type-h3'>{t.buildingTitle}</h3>
                 <p className='max-w-[36ch] text-center text-sm text-muted-foreground'>
                   {t.buildingBody}
                 </p>
-                <Loader2 className='size-5 animate-spin text-primary' />
+                <Spinner className='size-5 text-primary' />
               </div>
             ) : (
-              <div className='px-8 pt-9 pb-7'>
+              <div className='min-h-0 overflow-y-auto px-8 pt-9 pb-7'>
                 <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-mono text-[11px] text-primary'>
                   <PenLine className='size-3' />
                   {t.badge}
@@ -304,7 +307,7 @@ export function CustomChallengeDialog({
                           ? t.placeholderDesign
                           : t.placeholderCode
                       }
-                      className='w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-[14px] text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
+                      className='w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20'
                     />
                     <p className='mt-1.5 text-[12px] text-muted-foreground'>
                       {t.promptHelp}
@@ -354,22 +357,24 @@ export function CustomChallengeDialog({
                 </div>
 
                 <div className='mt-7 flex gap-2'>
-                  <button
-                    type='button'
+                  <Button
+                    variant='outline'
+                    size='lg'
+                    className='flex-1'
                     onClick={onClose}
-                    className='flex-1 cursor-pointer rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-ink'
                   >
                     {t.cancel}
-                  </button>
-                  <button
-                    type='button'
+                  </Button>
+                  <Button
+                    variant='ink'
+                    size='lg'
+                    className='flex-1'
                     onClick={submit}
                     disabled={prompt.trim().length < 10}
-                    className='group inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium tracking-tight text-background transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <PenLine className='size-4' />
                     {t.generate}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

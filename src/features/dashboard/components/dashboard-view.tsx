@@ -289,7 +289,7 @@ export function DashboardView({ user }: { user: User }) {
             </div>
             <div className='relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between'>
               <div className='min-w-0'>
-                <p className='eyebrow mb-3'>{t.welcome}</p>
+                <p className='eyebrow mb-4'>{t.welcome}</p>
                 {!loaded ? (
                   <>
                     <Skeleton className='h-11 w-[22rem] max-w-full lg:h-14' />
@@ -384,7 +384,7 @@ export function DashboardView({ user }: { user: User }) {
                 className='group flex items-center gap-3 rounded-lg border border-border bg-card px-5 py-4 transition-colors duration-200 hover:bg-secondary'
               >
                 <Flame
-                  className='size-4 shrink-0 text-orange-500'
+                  className='size-4 shrink-0 text-ember'
                   strokeWidth={1.5}
                 />
                 <span className='font-mono text-[11px] tracking-wider text-primary uppercase'>
@@ -405,7 +405,7 @@ export function DashboardView({ user }: { user: User }) {
           {!loaded ? (
             <DashboardSkeleton />
           ) : loadError ? (
-            <div className='flex flex-col items-center rounded-lg border border-border bg-card px-6 py-14 text-center'>
+            <div className='flex flex-col items-center rounded-lg border border-border bg-card px-6 py-10 text-center'>
               <p className='text-sm text-muted-foreground'>{t.loadError}</p>
               <Button variant='outline' className='mt-5' onClick={retryLoad}>
                 {t.retry}
@@ -548,8 +548,12 @@ function DashboardSkeleton() {
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className={`border-border px-5 lg:px-8 ${
-              i === 0 ? '' : i === 2 ? 'lg:border-l' : 'border-l'
+            className={`border-border ${
+              i === 0
+                ? 'pr-5 lg:pr-8'
+                : i === 2
+                  ? 'pr-5 lg:border-l lg:px-8'
+                  : 'border-l px-5 lg:px-8'
             }`}
           >
             <Skeleton className='h-12 w-16' />
@@ -606,8 +610,12 @@ function StatCol({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.06, duration: 0.5, ease: EASE }}
-      className={`border-border px-5 lg:px-8 ${
-        i === 0 ? '' : i === 2 ? 'lg:border-l' : 'border-l'
+      className={`border-border ${
+        i === 0
+          ? 'pr-5 lg:pr-8'
+          : i === 2
+            ? 'pr-5 lg:border-l lg:px-8'
+            : 'border-l px-5 lg:px-8'
       }`}
     >
       <div className='font-heading text-5xl leading-none font-light tracking-tight text-ink tabular-nums lg:text-[56px]'>

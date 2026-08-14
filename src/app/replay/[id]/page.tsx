@@ -296,7 +296,7 @@ async function ReplayContent(props: { params: Promise<{ id: string }> }) {
             </span>
           </div>
 
-          <div className='mt-10 grid grid-cols-3 border-y border-border py-8'>
+          <div className='mt-10 grid grid-cols-1 gap-y-6 border-y border-border py-8 sm:grid-cols-3'>
             <Metric
               label={t.independence}
               value={String(independence)}
@@ -318,7 +318,7 @@ async function ReplayContent(props: { params: Promise<{ id: string }> }) {
           >
             {persona && (
               <div className='mb-5 flex items-center gap-3'>
-                <div className='grid size-11 shrink-0 place-items-center rounded-full bg-pastel-lavender font-heading text-sm font-medium text-ink'>
+                <div className='grid size-11 shrink-0 place-items-center rounded-full bg-pastel-lavender font-heading text-sm font-light text-ink'>
                   {persona.name
                     .split(/\s+/)
                     .map((p) => p[0])
@@ -330,7 +330,7 @@ async function ReplayContent(props: { params: Promise<{ id: string }> }) {
                   <div className='truncate font-heading text-[15px] font-medium text-ink'>
                     {persona.name}
                   </div>
-                  <div className='truncate text-[12px] text-muted-foreground'>
+                  <div className='truncate font-mono text-[11px] text-muted-foreground'>
                     {persona.role} · {persona.company}
                   </div>
                 </div>
@@ -346,15 +346,15 @@ async function ReplayContent(props: { params: Promise<{ id: string }> }) {
               title={t.howHints}
               icon={<Lightbulb className='size-3.5' strokeWidth={1.5} />}
             >
-              <div className='grid grid-cols-3'>
+              <div className='grid grid-cols-1 gap-y-6 sm:grid-cols-3'>
                 {([1, 2, 3] as const).map((lvl) => {
                   const n = realHints.filter((h) => h.hint_level === lvl).length
                   return (
                     <div
                       key={lvl}
-                      className='border-l border-border px-5 first:border-l-0 first:pl-0 sm:px-8'
+                      className='sm:border-l sm:border-border sm:px-8 sm:first:border-l-0 sm:first:pl-0'
                     >
-                      <div className='font-heading text-[32px] leading-none font-light text-ink tabular-nums sm:text-[40px]'>
+                      <div className='font-heading text-[32px] leading-none font-light tracking-[-0.03em] text-ink tabular-nums sm:text-[40px]'>
                         {n}
                       </div>
                       <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>
@@ -461,7 +461,7 @@ function Metric({
   return (
     <div
       title={hint}
-      className='border-l border-border px-5 first:border-l-0 first:pl-0 sm:px-8'
+      className='sm:border-l sm:border-border sm:px-8 sm:first:border-l-0 sm:first:pl-0'
     >
       <div className='flex items-baseline'>
         <span

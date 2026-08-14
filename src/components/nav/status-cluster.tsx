@@ -110,7 +110,7 @@ export function StatusCluster({
           title={`${streak} ${t.streakTitle}`}
           className='text-muted-foreground flex items-center gap-1 pr-2.5 pl-3'
         >
-          <Flame className='size-3.5 text-orange-500' strokeWidth={1.5} />
+          <Flame className='text-ember size-3.5' strokeWidth={1.5} />
           <span className='font-mono text-[12px] tabular-nums'>{streak}</span>
         </span>
       )}

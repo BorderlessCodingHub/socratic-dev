@@ -1,5 +1,6 @@
 'use client'
 
+import { Spinner } from '@/components/ui/spinner'
 import {
   Halftone,
   glyph,
@@ -7,7 +8,7 @@ import {
 } from '@/features/landing/components/halftone'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { Check, Loader2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
 import * as React from 'react'
@@ -74,7 +75,7 @@ export function GeneratingChallenge({ design }: { design: boolean }) {
         <div className='max-w-md'>
           <div className='flex items-center gap-3'>
             <p className='eyebrow'>{t.eyebrow}</p>
-            <Loader2 className='size-3.5 animate-spin text-muted-foreground' />
+            <Spinner className='size-3.5 text-muted-foreground' />
           </div>
           <h1 className='type-h2 mt-5'>{t.title}</h1>
 
@@ -92,9 +93,9 @@ export function GeneratingChallenge({ design }: { design: boolean }) {
               >
                 <span className='grid w-4 shrink-0 place-items-center'>
                   {idx < i ? (
-                    <Check className='size-3.5 text-mint' />
+                    <Check className='size-3.5 text-primary' />
                   ) : (
-                    <Loader2 className='size-3.5 animate-spin text-primary' />
+                    <Spinner className='size-3.5 text-primary' />
                   )}
                 </span>
                 <span>{m}</span>

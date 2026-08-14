@@ -141,13 +141,13 @@ export default function PrivacyPage() {
       <Navbar />
       <main className='container-main flex-1 pt-[120px] pb-24 md:pb-32'>
         <div className='max-w-2xl'>
-          <p className='text-muted-foreground font-mono text-[11px] tracking-[0.14em] uppercase'>
+          <p className='eyebrow'>
             {t.eyebrow}
           </p>
-          <h1 className='font-heading text-ink mt-3 text-[32px] leading-none font-light tracking-[-0.03em] sm:text-[40px]'>
+          <h1 className='type-h3 mt-4'>
             {t.title}
           </h1>
-          <p className='text-muted-foreground mt-4 font-mono text-[11px] tracking-[0.14em] uppercase'>
+          <p className='eyebrow mt-4'>
             {t.effective}
           </p>
           <p className='text-muted-foreground mt-8 text-[15px] leading-relaxed'>
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
           <div className='mt-12 flex flex-col gap-10'>
             {t.sections.map((s) => (
               <section key={s.h} className='border-border border-t pt-8'>
-                <h2 className='font-heading text-ink text-[22px] leading-tight font-light tracking-[-0.02em]'>
+                <h2 className='type-h4'>
                   {s.h}
                 </h2>
                 {s.body.map((p) => (

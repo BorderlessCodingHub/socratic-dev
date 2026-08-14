@@ -341,7 +341,7 @@ export function ProfileView({ user }: { user: User }) {
 function StatCol({ value, label }: { value: string; label: string }) {
   return (
     <div className='border-border sm:border-l sm:pl-8 sm:first:border-l-0 sm:first:pl-0'>
-      <div className='font-heading text-[44px] leading-none font-light tracking-tight text-ink tabular-nums sm:text-[56px]'>
+      <div className='font-heading text-5xl leading-none font-light tracking-tight text-ink tabular-nums lg:text-[56px]'>
         {value}
       </div>
       <div className='mt-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase'>

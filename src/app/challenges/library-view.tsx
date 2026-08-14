@@ -156,7 +156,7 @@ export function LibraryView({
             className='grid gap-6 lg:grid-cols-[1fr_420px] lg:items-end lg:gap-16'
           >
             <div>
-              <p className='eyebrow mb-2'>{t.eyebrow}</p>
+              <p className='eyebrow mb-4'>{t.eyebrow}</p>
               <h1 className='type-h2'>
                 {t.headline}{' '}
                 <span className='text-gradient-iris font-serif font-normal italic'>

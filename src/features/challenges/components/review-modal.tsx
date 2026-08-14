@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Halftone, glyph } from '@/features/landing/components/halftone'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 import {
   CheckCircle2,
   GitPullRequestArrow,
   Link2,
-  Loader2,
   Users,
   X,
   XCircle,
@@ -150,6 +150,14 @@ export function ReviewModal({
     }
   }
 
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
   const passed = outcome === 'pass'
   const canShare = passed && !!sessionId
 
@@ -158,7 +166,7 @@ export function ReviewModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className='fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm'
+      className='fixed inset-0 z-50 grid place-items-center bg-black/32 p-4 backdrop-blur-sm'
       onClick={onClose}
     >
       <motion.div
@@ -166,10 +174,13 @@ export function ReviewModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 24, scale: 0.97 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        role='dialog'
+        aria-modal='true'
         className='shadow-soft-lg border-border bg-card relative flex max-h-[88dvh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border'
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type='button'
           onClick={onClose}
           className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-ink absolute top-4 right-4 z-10 grid size-8 cursor-pointer place-items-center rounded-full border transition-colors duration-200'
           aria-label={t.close}
@@ -263,7 +274,7 @@ export function ReviewModal({
                   />
                 </div>
                 <div className='text-muted-foreground relative flex items-center gap-2 text-sm'>
-                  <Loader2 className='size-4 animate-spin' /> {t.generating}
+                  <Spinner className='size-4' /> {t.generating}
                 </div>
               </div>
             ) : (

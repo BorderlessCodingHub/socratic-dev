@@ -30,7 +30,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className='text-muted-foreground hover:text-ink hidden px-3 py-2 text-sm font-medium transition-colors duration-200 md:inline-flex'
+      className='text-muted-foreground hover:text-ink hidden px-3 py-2 text-sm font-medium transition-colors duration-200 lg:inline-flex'
     >
       <span className='link-underline'>{label}</span>
     </Link>
@@ -83,7 +83,7 @@ export function Navbar() {
           className={cn(
             'rounded-2xl border transition-all duration-300',
             scrolled || menuOpen
-              ? 'border-border bg-background/90 shadow-[0_8px_30px_rgba(27,25,22,0.08)] backdrop-blur'
+              ? 'border-border bg-background/90 shadow-soft backdrop-blur'
               : 'border-transparent bg-transparent',
           )}
         >
@@ -95,8 +95,8 @@ export function Navbar() {
           >
             <div className='flex items-center gap-5'>
               <Logo size='lg' />
-              <span aria-hidden className='bg-border hidden h-5 w-px md:block' />
-              <nav className='hidden items-center gap-1 md:flex'>
+              <span aria-hidden className='bg-border hidden h-5 w-px lg:block' />
+              <nav className='hidden items-center gap-1 lg:flex'>
                 <NavMenuGroup>
                   <TrainMenu loggedIn={!loading && !!user} />
                   <CommunityMenu />
@@ -133,7 +133,7 @@ export function Navbar() {
                         className='size-full object-cover'
                       />
                     ) : (
-                      <span className='bg-primary text-primary-foreground grid size-full place-items-center font-mono text-[13px] font-semibold uppercase'>
+                      <span className='bg-primary text-primary-foreground grid size-full place-items-center font-heading text-[13px] font-light uppercase'>
                         {(user.email?.[0] ?? 'u').toUpperCase()}
                       </span>
                     )}
@@ -157,7 +157,7 @@ export function Navbar() {
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-expanded={menuOpen}
                 aria-label={menuOpen ? t.closeMenu : t.openMenu}
-                className='text-ink hover:bg-secondary grid size-10 shrink-0 cursor-pointer place-items-center rounded-full transition-colors duration-200 md:hidden'
+                className='text-ink hover:bg-secondary grid size-10 shrink-0 cursor-pointer place-items-center rounded-full transition-colors duration-200 lg:hidden'
               >
                 {menuOpen ? (
                   <X className='size-5' strokeWidth={1.5} />

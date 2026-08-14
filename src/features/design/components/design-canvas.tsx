@@ -1,8 +1,8 @@
 'use client'
 
 import '@excalidraw/excalidraw/index.css'
+import { Spinner } from '@/components/ui/spinner'
 import { useT } from '@/lib/i18n'
-import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { registerExcalidrawModule } from '../utils/excalidraw-registry'
@@ -18,7 +18,7 @@ function CanvasLoading() {
   return (
     <div className='grid h-full place-items-center text-sm text-muted-foreground'>
       <span className='flex items-center gap-2'>
-        <Loader2 className='size-4 animate-spin' /> {t.loadingCanvas}
+        <Spinner aria-hidden='true' className='size-4' /> {t.loadingCanvas}
       </span>
     </div>
   )

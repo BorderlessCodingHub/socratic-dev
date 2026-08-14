@@ -86,7 +86,6 @@ export function WorkspaceHeader({
             variant='ink'
             disabled={submitting}
             onClick={onSubmit}
-            className='h-8 gap-1.5 px-3.5'
           >
             <GitPullRequestArrow className='size-3.5' />
             {t.submit}

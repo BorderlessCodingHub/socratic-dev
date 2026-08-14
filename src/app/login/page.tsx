@@ -9,7 +9,8 @@ import {
 import { track } from '@/lib/analytics'
 import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
+import { ArrowRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -49,7 +50,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className='grid min-h-screen place-items-center bg-background'>
-          <Loader2 className='size-5 animate-spin text-muted-foreground' />
+          <Spinner className='size-5 text-muted-foreground' />
         </div>
       }
     >
@@ -106,7 +107,7 @@ function LoginForm() {
 
   return (
     <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
-      <header className='flex h-16 shrink-0 items-center px-6 sm:px-10'>
+      <header className='container-main flex h-16 w-full shrink-0 items-center'>
         <Logo />
       </header>
 
