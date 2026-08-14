@@ -50,6 +50,7 @@ export type Database = {
           intro: string
           kind: string
           level: string
+          locale: string
           stack: string
           tests_source: string
           title: string
@@ -65,6 +66,7 @@ export type Database = {
           intro?: string
           kind?: string
           level: string
+          locale?: string
           stack: string
           tests_source?: string
           title: string
@@ -80,6 +82,7 @@ export type Database = {
           intro?: string
           kind?: string
           level?: string
+          locale?: string
           stack?: string
           tests_source?: string
           title?: string

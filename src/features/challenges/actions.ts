@@ -382,7 +382,7 @@ export async function getDailyChallenge(): Promise<DailyChallenge | null> {
   // Rotates at midnight America/Sao_Paulo (fixed UTC-3), same convention as
   // the hints week.
   const day = new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10)
-  return dailyChallengeFor(day)
+  return dailyChallengeFor(day, await getLocale())
 }
 
 export async function getNextChallenge(input: {
@@ -409,6 +409,7 @@ export async function getNextChallenge(input: {
     python: 'python',
   }
   const stack = stackMap[input.stack ?? ''] ?? 'typescript'
+  const locale = await getLocale()
 
   const { data: pool, error: rpcError } = await supabaseAdmin.rpc(
     'next_challenge_for_user' as never,
@@ -417,6 +418,7 @@ export async function getNextChallenge(input: {
       p_kind: kind,
       p_level: level,
       p_stack: stack,
+      p_locale: locale,
     } as never,
   )
   let picked: unknown = Array.isArray(pool) ? pool[0] : null
@@ -434,6 +436,7 @@ export async function getNextChallenge(input: {
       .select('*')
       .eq('kind', kind)
       .eq('level', level)
+      .eq('locale', locale)
     if (kind === 'code') query = query.eq('stack', stack)
     if (seenIds.length) query = query.not('id', 'in', `(${seenIds.join(',')})`)
     const { data: fallback } = await query.limit(12)

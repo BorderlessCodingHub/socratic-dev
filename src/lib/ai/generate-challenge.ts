@@ -22,17 +22,44 @@ async function existingTitles(
   kind: 'code' | 'design',
   level: GenLevel,
   stack: string,
+  locale: Locale,
 ): Promise<string[]> {
   let q = supabaseAdmin
     .from('challenges')
     .select('title')
     .eq('kind', kind)
     .eq('level', level)
+    .eq('locale', locale)
   if (kind === 'code') q = q.eq('stack', stack)
   // Only the most recent titles: with a large library, dumping every title
   // into the prompt inflates cost and drowns the "avoid these" instruction.
   const { data } = await q.order('created_at', { ascending: false }).limit(40)
   return (data ?? []).map((c) => String(c.title)).filter(Boolean)
+}
+
+// The AI sometimes regenerates an already-existing challenge despite the
+// avoid list. Exact-title match (per kind/level/stack/locale) reuses the
+// existing row instead of inserting a duplicate into the pool.
+async function findDuplicate(opts: {
+  kind: 'code' | 'design'
+  level: GenLevel
+  stack: string
+  locale: Locale
+  title: string
+}) {
+  const title = opts.title.trim().replace(/\s+/g, ' ')
+  if (!title) return null
+  let q = supabaseAdmin
+    .from('challenges')
+    .select('*')
+    .eq('kind', opts.kind)
+    .eq('level', opts.level)
+    .eq('locale', opts.locale)
+    // Escaped so ilike acts as case-insensitive equality, not a pattern.
+    .ilike('title', title.replace(/[\\%_]/g, (m) => `\\${m}`))
+  if (opts.kind === 'code') q = q.eq('stack', opts.stack)
+  const { data } = await q.limit(1).maybeSingle()
+  return data ?? null
 }
 
 function parseTopics(raw: unknown): string[] {
@@ -67,7 +94,9 @@ export async function generateChallenge(opts: {
     python: 'python',
   }
   const stack = stackMap[opts.stack ?? ''] ?? 'typescript'
-  const avoid = avoidLine(await existingTitles(opts.kind, opts.level, stack))
+  const avoid = avoidLine(
+    await existingTitles(opts.kind, opts.level, stack, locale),
+  )
   const userTheme = opts.userPrompt?.trim()
     ? `\n\nO ALUNO PEDIU especificamente um desafio sobre o seguinte tema (siga isto à risca, é o coração do pedido):\n"""\n${opts.userPrompt.trim().slice(0, 800)}\n"""`
     : ''
@@ -86,10 +115,19 @@ export async function generateChallenge(opts: {
       effort: 'medium',
     })
     const json = parseChallenge(raw, locale)
+    const title = String(json.title ?? 'Desafio de Design System')
+    const dup = await findDuplicate({
+      kind: 'design',
+      level: opts.level,
+      stack: 'design',
+      locale,
+      title,
+    })
+    if (dup) return { data: dup, error: null }
     return supabaseAdmin
       .from('challenges')
       .insert({
-        title: String(json.title ?? 'Desafio de Design System'),
+        title,
         description: String(json.description ?? ''),
         stack: 'design',
         level: opts.level,
@@ -97,6 +135,7 @@ export async function generateChallenge(opts: {
         intro: String(json.intro ?? ''),
         kind: 'design',
         topics: parseTopics(json.topics),
+        locale,
       })
       .select()
       .single()
@@ -109,10 +148,19 @@ export async function generateChallenge(opts: {
     effort: opts.level === 'advanced' ? 'high' : 'medium',
   })
   const json = parseChallenge(raw, locale)
+  const title = String(json.title ?? 'Desafio')
+  const dup = await findDuplicate({
+    kind: 'code',
+    level: opts.level,
+    stack,
+    locale,
+    title,
+  })
+  if (dup) return { data: dup, error: null }
   return supabaseAdmin
     .from('challenges')
     .insert({
-      title: String(json.title ?? 'Desafio'),
+      title,
       description: String(json.description ?? ''),
       stack,
       level: opts.level,
@@ -121,6 +169,7 @@ export async function generateChallenge(opts: {
       initial_code: String(json.initial_code ?? ''),
       tests_source: String(json.tests_source ?? ''),
       topics: parseTopics(json.topics),
+      locale,
     })
     .select()
     .single()
