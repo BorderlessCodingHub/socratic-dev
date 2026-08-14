@@ -8,6 +8,9 @@ import { useEffect, useState } from 'react'
 export function useUser() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  // Session check failed (e.g. transient error) — distinct from "confirmed
+  // logged out", so callers don't bounce an actual session to /login.
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -19,9 +22,12 @@ export function useUser() {
         setLoading(false)
       })
       .catch(() => {
-        if (mounted) setLoading(false)
+        if (!mounted) return
+        setError(true)
+        setLoading(false)
       })
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      setError(false)
       setUser(session?.user ?? null)
       setLoading(false)
       if (session?.user) {
@@ -36,7 +42,7 @@ export function useUser() {
     }
   }, [])
 
-  return { user, loading }
+  return { user, loading, error }
 }
 
 export async function signOut() {

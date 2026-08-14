@@ -14,7 +14,7 @@ const copy = {
       {
         h: '1. What we collect',
         body: [
-          'Account data: your email and password, used for authentication.',
+          'Account data: your email, used for authentication. Your password is checked against the Borderless Coding platform and is never sent to or stored by Socratic.dev.',
           'Preferences: your learning track, stack, level, language, and theme.',
           'Your work on challenges: the code you write, the diagrams you draw, and the messages you exchange with the tutor.',
           'Usage metrics: hints used, independence score, and time spent on challenges.',
@@ -78,7 +78,7 @@ const copy = {
       {
         h: '1. O que coletamos',
         body: [
-          'Dados de conta: seu email e senha, usados para autenticação.',
+          'Dados de conta: seu email, usado para autenticação. Sua senha é verificada diretamente pela plataforma Borderless Coding e nunca é enviada para o Socratic.dev nem armazenada por nós.',
           'Preferências: sua trilha de aprendizado, stack, nível, idioma e tema.',
           'Seu trabalho nos desafios: o código que você escreve, os diagramas que desenha e as mensagens que troca com o tutor.',
           'Métricas de uso: hints usados, score de independência e tempo gasto nos desafios.',
