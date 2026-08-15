@@ -62,6 +62,45 @@ async function findDuplicate(opts: {
   return data ?? null
 }
 
+// Titles of every challenge this user already has a session on (same
+// kind/level/stack/locale slice) — fed into the avoid list so the AI doesn't
+// regenerate something they already did.
+async function userSeenTitles(
+  userId: string,
+  kind: 'code' | 'design',
+  level: GenLevel,
+  stack: string,
+  locale: Locale,
+): Promise<string[]> {
+  let q = supabaseAdmin
+    .from('sessions')
+    .select('challenges!inner(title, kind, level, stack, locale)')
+    .eq('user_id', userId)
+    .eq('challenges.kind', kind)
+    .eq('challenges.level', level)
+    .eq('challenges.locale', locale)
+  if (kind === 'code') q = q.eq('challenges.stack', stack)
+  const { data } = await q.limit(60)
+  const rows = (data ?? []) as unknown as {
+    challenges: { title: string } | null
+  }[]
+  return [...new Set(rows.map((r) => r.challenges?.title ?? '').filter(Boolean))]
+}
+
+async function userHasSession(
+  userId: string,
+  challengeId: string,
+): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('sessions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('challenge_id', challengeId)
+    .limit(1)
+    .maybeSingle()
+  return Boolean(data)
+}
+
 function parseTopics(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -85,6 +124,7 @@ export async function generateChallenge(opts: {
   level: GenLevel
   userPrompt?: string
   locale?: Locale
+  userId?: string
 }) {
   const locale: Locale = opts.locale ?? 'en'
   const stackMap: Record<string, string> = {
@@ -94,9 +134,14 @@ export async function generateChallenge(opts: {
     python: 'python',
   }
   const stack = stackMap[opts.stack ?? ''] ?? 'typescript'
-  const avoid = avoidLine(
-    await existingTitles(opts.kind, opts.level, stack, locale),
-  )
+  const dupStack = opts.kind === 'design' ? 'design' : stack
+  const [poolTitles, seenTitles] = await Promise.all([
+    existingTitles(opts.kind, opts.level, stack, locale),
+    opts.userId
+      ? userSeenTitles(opts.userId, opts.kind, opts.level, dupStack, locale)
+      : Promise.resolve([]),
+  ])
+  const avoidTitles = [...new Set([...seenTitles, ...poolTitles])]
   const userTheme = opts.userPrompt?.trim()
     ? `\n\nO ALUNO PEDIU especificamente um desafio sobre o seguinte tema (siga isto à risca, é o coração do pedido):\n"""\n${opts.userPrompt.trim().slice(0, 800)}\n"""`
     : ''
@@ -107,70 +152,81 @@ export async function generateChallenge(opts: {
         ? '\n\nIMPORTANTE: tests_source deve ser "" (string vazia). initial_code deve ser Python 3 válido (def + pass, sem export). Sem runner automático no browser nesta versão.'
         : ''
 
-  if (opts.kind === 'design') {
-    const raw = await askClaude({
-      system: challengeSystem('design', locale),
-      user: `Gere um desafio de system design (arquitetura) novo. nível: ${opts.level}.\n\n${levelGuide('design', opts.level)}${userTheme}${avoid}`,
-      maxTokens: 2600,
-      effort: 'medium',
-    })
-    const json = parseChallenge(raw, locale)
-    const title = String(json.title ?? 'Desafio de Design System')
-    const dup = await findDuplicate({
-      kind: 'design',
-      level: opts.level,
-      stack: 'design',
-      locale,
-      title,
-    })
-    if (dup) return { data: dup, error: null }
-    return supabaseAdmin
-      .from('challenges')
-      .insert({
-        title,
-        description: String(json.description ?? ''),
-        stack: 'design',
-        level: opts.level,
-        client_briefing: String(json.client_briefing ?? ''),
-        intro: String(json.intro ?? ''),
-        kind: 'design',
-        topics: parseTopics(json.topics),
-        locale,
-      })
-      .select()
-      .single()
+  const generateOnce = async (avoid: string[]) => {
+    const raw =
+      opts.kind === 'design'
+        ? await askClaude({
+            system: challengeSystem('design', locale),
+            user: `Gere um desafio de system design (arquitetura) novo. nível: ${opts.level}.\n\n${levelGuide('design', opts.level)}${userTheme}${avoidLine(avoid)}`,
+            maxTokens: 2600,
+            effort: 'medium',
+          })
+        : await askClaude({
+            system: challengeSystem('code', locale),
+            user: `Gere um desafio novo. stack: ${stack}. nível: ${opts.level}.\n\n${levelGuide('code', opts.level)}${userTheme}${avoidLine(avoid)}${noTestsNote}`,
+            maxTokens: opts.level === 'advanced' ? 8000 : 4500,
+            effort: opts.level === 'advanced' ? 'high' : 'medium',
+          })
+    return parseChallenge(raw, locale)
   }
 
-  const raw = await askClaude({
-    system: challengeSystem('code', locale),
-    user: `Gere um desafio novo. stack: ${stack}. nível: ${opts.level}.\n\n${levelGuide('code', opts.level)}${userTheme}${avoid}${noTestsNote}`,
-    maxTokens: opts.level === 'advanced' ? 8000 : 4500,
-    effort: opts.level === 'advanced' ? 'high' : 'medium',
-  })
-  const json = parseChallenge(raw, locale)
-  const title = String(json.title ?? 'Desafio')
-  const dup = await findDuplicate({
-    kind: 'code',
-    level: opts.level,
-    stack,
-    locale,
-    title,
-  })
-  if (dup) return { data: dup, error: null }
-  return supabaseAdmin
-    .from('challenges')
-    .insert({
-      title,
-      description: String(json.description ?? ''),
-      stack,
+  const insertChallenge = (json: Record<string, unknown>, title: string) =>
+    supabaseAdmin
+      .from('challenges')
+      .insert(
+        opts.kind === 'design'
+          ? {
+              title,
+              description: String(json.description ?? ''),
+              stack: 'design',
+              level: opts.level,
+              client_briefing: String(json.client_briefing ?? ''),
+              intro: String(json.intro ?? ''),
+              kind: 'design',
+              topics: parseTopics(json.topics),
+              locale,
+            }
+          : {
+              title,
+              description: String(json.description ?? ''),
+              stack,
+              level: opts.level,
+              client_briefing: String(json.client_briefing ?? ''),
+              intro: String(json.intro ?? ''),
+              initial_code: String(json.initial_code ?? ''),
+              tests_source: String(json.tests_source ?? ''),
+              topics: parseTopics(json.topics),
+              locale,
+            },
+      )
+      .select()
+      .single()
+
+  const fallbackTitle =
+    opts.kind === 'design' ? 'Desafio de Design System' : 'Desafio'
+  let json: Record<string, unknown> = {}
+  let title = fallbackTitle
+
+  // Dedup reuse must never hand back a challenge the requesting user already
+  // has a session on — that's how "completed it, got the same one again"
+  // happens. One retry with the repeated title forced into the avoid list;
+  // if the AI insists, insert the fresh copy instead of re-serving.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    json = await generateOnce(avoidTitles)
+    title = String(json.title ?? fallbackTitle)
+    const dup = await findDuplicate({
+      kind: opts.kind,
       level: opts.level,
-      client_briefing: String(json.client_briefing ?? ''),
-      intro: String(json.intro ?? ''),
-      initial_code: String(json.initial_code ?? ''),
-      tests_source: String(json.tests_source ?? ''),
-      topics: parseTopics(json.topics),
+      stack: dupStack,
       locale,
+      title,
     })
-    .select()
-    .single()
+    if (!dup) return insertChallenge(json, title)
+    const alreadySeen = opts.userId
+      ? await userHasSession(opts.userId, (dup as { id: string }).id)
+      : false
+    if (!alreadySeen) return { data: dup, error: null }
+    avoidTitles.unshift(title)
+  }
+  return insertChallenge(json, title)
 }

@@ -277,6 +277,7 @@ async function doGenerate(input: {
   stack?: string
   level: GenLevel
   userPrompt?: string
+  userId?: string
 }): Promise<Challenge | { error: string }> {
   try {
     const { data, error } = await runGenerate({
@@ -285,6 +286,7 @@ async function doGenerate(input: {
       level: input.level,
       userPrompt: input.userPrompt,
       locale: await getLocale(),
+      userId: input.userId,
     })
     if (error) return { error: 'Não foi possível salvar o desafio. Tente de novo.' }
     updateTag('challenges')
@@ -307,7 +309,7 @@ export async function generateChallenge(input: {
   if (!(await rateLimit(`generate:${a.userId}`, 10, 60_000))) {
     return { error: 'Muitas requisições. Aguarde um momento.' }
   }
-  return doGenerate(input)
+  return doGenerate({ ...input, userId: a.userId })
 }
 
 // Generated once per challenge (first completer to ask pays the tokens),
@@ -447,5 +449,5 @@ export async function getNextChallenge(input: {
 
   if (picked) return picked as unknown as Challenge
 
-  return doGenerate({ kind, stack, level })
+  return doGenerate({ kind, stack, level, userId: a.userId })
 }
