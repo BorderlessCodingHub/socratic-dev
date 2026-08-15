@@ -6,7 +6,7 @@ import type { RunnerLanguage } from '@/domain/stacks'
 import { runCode } from '@/features/runner/run-code'
 import type { RunResult } from '@/features/runner/types'
 import { track } from '@/lib/analytics'
-import { apiFetch } from '@/lib/api/client'
+import { apiFetch, getAccessToken } from '@/lib/api/client'
 import { useLocale, useT } from '@/lib/i18n'
 import { useIsDark } from '@/lib/theme'
 import { supabase } from '@/lib/supabase/client'
@@ -16,6 +16,7 @@ import { CheckCircle2, PlayCircle, Terminal, XCircle } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
+import { getNextChallenge } from '../actions'
 import { useSocraticSession } from '../hooks/use-socratic-session'
 import type { Challenge } from '../types'
 import { challengeIntro, challengeLanguage, starterCode } from '../utils'
@@ -110,7 +111,7 @@ const copy = {
 
 const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
-export function CodeChallengeWorkspace({ user: _user }: { user: User }) {
+export function CodeChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
   const t = useT(copy)
   const { locale } = useLocale()
@@ -165,20 +166,45 @@ export function CodeChallengeWorkspace({ user: _user }: { user: User }) {
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('id')
           : null
-      const query = supabase.from('challenges').select('*')
-      const { data, error } = id
-        ? await query.eq('id', id).single()
-        : await query.order('created_at', { ascending: true }).limit(1).single()
+      if (id) {
+        const { data, error } = await supabase
+          .from('challenges')
+          .select('*')
+          .eq('id', id)
+          .single()
+        if (!active) return
+        if (error || !data) setLoadError(true)
+        else setChallenge(data as unknown as Challenge)
+        return
+      }
+      // No ?id=: pick the user's next unseen challenge instead of the oldest
+      // row in the table (which ignores level/locale and repeats forever).
+      const meta = user.user_metadata as
+        | { preferred_stack?: string; preferred_level?: string }
+        | undefined
+      if (!meta?.preferred_stack || !meta?.preferred_level) {
+        router.replace('/onboarding')
+        return
+      }
+      const next = await getNextChallenge({
+        kind: 'code',
+        stack: meta.preferred_stack,
+        level: meta.preferred_level as 'beginner' | 'intermediate' | 'advanced',
+        token: await getAccessToken(),
+      })
       if (!active) return
-      if (error || !data) setLoadError(true)
-      else setChallenge(data as unknown as Challenge)
+      if ('error' in next || !next?.id) setLoadError(true)
+      else {
+        window.history.replaceState(null, '', `?id=${next.id}`)
+        setChallenge(next as unknown as Challenge)
+      }
     })().catch(() => {
       if (active) setLoadError(true)
     })
     return () => {
       active = false
     }
-  }, [])
+  }, [router, user.user_metadata])
 
   async function sendTutorMessage(text: string) {
     if (!text.trim() || s.thinking || !challenge) return

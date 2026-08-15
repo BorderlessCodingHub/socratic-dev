@@ -7,6 +7,7 @@ import { ChallengeSkeleton } from '@/features/challenges/components/challenge-sk
 import { ChatPanel } from '@/features/challenges/components/chat-panel'
 import { ReviewModal } from '@/features/challenges/components/review-modal'
 import { WorkspaceHeader } from '@/features/challenges/components/workspace-header'
+import { getNextChallenge } from '@/features/challenges/actions'
 import { useSocraticSession } from '@/features/challenges/hooks/use-socratic-session'
 import type { Challenge } from '@/features/challenges/types'
 import {
@@ -16,7 +17,7 @@ import {
   type ExcalidrawApi,
 } from '@/features/design/utils/scene'
 import { track } from '@/lib/analytics'
-import { apiFetch } from '@/lib/api/client'
+import { apiFetch, getAccessToken } from '@/lib/api/client'
 import { useT } from '@/lib/i18n'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -78,7 +79,7 @@ const copy = {
   },
 }
 
-export function DesignChallengeWorkspace({ user: _user }: { user: User }) {
+export function DesignChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
   const t = useT(copy)
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
@@ -111,25 +112,43 @@ export function DesignChallengeWorkspace({ user: _user }: { user: User }) {
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('id')
           : null
-      const { data, error } = id
-        ? await supabase.from('challenges').select('*').eq('id', id).single()
-        : await supabase
-            .from('challenges')
-            .select('*')
-            .eq('kind', 'design')
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .single()
+      if (id) {
+        const { data, error } = await supabase
+          .from('challenges')
+          .select('*')
+          .eq('id', id)
+          .single()
+        if (!active) return
+        if (error || !data) setLoadError(true)
+        else setChallenge(data as unknown as Challenge)
+        return
+      }
+      // No ?id=: pick the user's next unseen design challenge instead of the
+      // oldest row (which ignores level/locale and repeats forever).
+      const meta = user.user_metadata as
+        | { preferred_level?: string }
+        | undefined
+      const next = await getNextChallenge({
+        kind: 'design',
+        level: (meta?.preferred_level ?? 'beginner') as
+          | 'beginner'
+          | 'intermediate'
+          | 'advanced',
+        token: await getAccessToken(),
+      })
       if (!active) return
-      if (error || !data) setLoadError(true)
-      else setChallenge(data as unknown as Challenge)
+      if ('error' in next || !next?.id) setLoadError(true)
+      else {
+        window.history.replaceState(null, '', `?id=${next.id}`)
+        setChallenge(next as unknown as Challenge)
+      }
     })().catch(() => {
       if (active) setLoadError(true)
     })
     return () => {
       active = false
     }
-  }, [])
+  }, [user.user_metadata])
 
   function currentElements(): readonly unknown[] {
     return apiRef.current?.getSceneElements() ?? s.work
