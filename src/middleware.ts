@@ -38,7 +38,9 @@ function tokenExpiry(request: NextRequest): number | null {
   }
 }
 
-export async function proxy(request: NextRequest) {
+// Deliberately the deprecated middleware.ts (edge) instead of proxy.ts (node):
+// OpenNext/Cloudflare only supports edge middleware.
+export async function middleware(request: NextRequest) {
   const exp = tokenExpiry(request)
   if (exp === null) return NextResponse.next({ request })
   if (exp * 1000 - Date.now() > REFRESH_MARGIN_MS) {

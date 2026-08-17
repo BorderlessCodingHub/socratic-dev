@@ -34,3 +34,6 @@ export default withSentryConfig(nextConfig, {
   disableLogger: true,
   tunnelRoute: '/monitoring',
 })
+
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
+initOpenNextCloudflareForDev()
