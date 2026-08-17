@@ -1,7 +1,13 @@
 import { withSentryConfig } from '@sentry/nextjs'
 import type { NextConfig } from 'next'
 
+const basePath = '/socratic-dev'
+
 const nextConfig: NextConfig = {
+  basePath,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
   reactCompiler: true,
   cacheComponents: true,
   skipTrailingSlashRedirect: true,

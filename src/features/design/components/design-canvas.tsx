@@ -38,7 +38,9 @@ const Excalidraw = dynamic(
 
 async function loadUserLibrary(api: ExcalidrawApi) {
   try {
-    const res = await fetch('/design-library.excalidrawlib')
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/design-library.excalidrawlib`,
+    )
     if (!res.ok) return
     const data = (await res.json()) as {
       library?: unknown[]

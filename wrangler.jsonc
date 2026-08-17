@@ -4,9 +4,16 @@
   "name": "socratic-dev",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "routes": [
+    {
+      "pattern": "labs.borderlesscoding.com/socratic-dev*",
+      "zone_name": "borderlesscoding.com"
+    }
+  ],
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
   "services": [
     {

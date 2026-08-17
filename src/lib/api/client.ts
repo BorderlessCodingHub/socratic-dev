@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase/client'
 
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 export async function getAccessToken(): Promise<string> {
   const {
     data: { session },
@@ -19,5 +21,6 @@ export async function apiFetch(
   if (session?.access_token) {
     headers.set('Authorization', `Bearer ${session.access_token}`)
   }
-  return fetch(input, { ...init, headers })
+  const url = input.startsWith('/') ? `${BASE_PATH}${input}` : input
+  return fetch(url, { ...init, headers })
 }
