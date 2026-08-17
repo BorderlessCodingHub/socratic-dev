@@ -1,7 +1,19 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { captureException } from '@/lib/report-error'
 
-export const anthropic = new Anthropic()
+let client: Anthropic | null = null
+
+function getClient(): Anthropic {
+  client ??= new Anthropic()
+  return client
+}
+
+export const anthropic = new Proxy({} as Anthropic, {
+  get(_target, prop) {
+    const c = getClient()
+    return Reflect.get(c, prop, c)
+  },
+})
 
 type Effort = 'low' | 'medium' | 'high'
 
