@@ -145,11 +145,11 @@ export async function generateChallenge(opts: {
   const userTheme = opts.userPrompt?.trim()
     ? `\n\nO ALUNO PEDIU especificamente um desafio sobre o seguinte tema (siga isto à risca, é o coração do pedido):\n"""\n${opts.userPrompt.trim().slice(0, 800)}\n"""`
     : ''
-  const noTestsNote =
+  const stackNote =
     stack === 'react'
       ? '\n\nIMPORTANTE: tests_source deve ser "" (string vazia). initial_code deve ser um componente TSX com "export default function App()". Sem testes automáticos — o aluno vê o resultado no preview visual.'
       : stack === 'python'
-        ? '\n\nIMPORTANTE: tests_source deve ser "" (string vazia). initial_code deve ser Python 3 válido (def + pass, sem export). Sem runner automático no browser nesta versão.'
+        ? '\n\nIMPORTANTE: para Python, tests_source usa sintaxe Python, não o formato JS descrito acima. Formato: test("nome descritivo", lambda: expect(NOME_DA_FUNCAO(args)).to_be(valor)). Chame a função do aluno DIRETAMENTE pelo nome, sem prefixo "exports." — ela já está no mesmo escopo dos testes. Métodos de expect: .to_be(valor) e .to_equal(valor) (comparam por igualdade — já funciona para listas e dicts) e .to_be_truthy(). Para um teste com mais de um passo, defina uma função antes do test() e passe pelo nome em vez de usar lambda. initial_code deve ser Python 3 válido (def + pass, sem export, sem imports de bibliotecas externas).'
         : ''
 
   const generateOnce = async (avoid: string[]) => {
@@ -163,7 +163,7 @@ export async function generateChallenge(opts: {
           })
         : await askClaude({
             system: challengeSystem('code', locale),
-            user: `Gere um desafio novo. stack: ${stack}. nível: ${opts.level}.\n\n${levelGuide('code', opts.level)}${userTheme}${avoidLine(avoid)}${noTestsNote}`,
+            user: `Gere um desafio novo. stack: ${stack}. nível: ${opts.level}.\n\n${levelGuide('code', opts.level)}${userTheme}${avoidLine(avoid)}${stackNote}`,
             maxTokens: opts.level === 'advanced' ? 8000 : 4500,
             effort: opts.level === 'advanced' ? 'high' : 'medium',
           })
