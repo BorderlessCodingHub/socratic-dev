@@ -1,10 +1,32 @@
 'use client'
 
 import { Spinner } from '@/components/ui/spinner'
-import type { RunResult } from '@/features/runner/types'
+import type { RunLog, RunResult } from '@/features/runner/types'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { CheckCircle2, Terminal, X, XCircle } from 'lucide-react'
+
+export function ConsoleLines({ logs }: { logs: RunLog[] }) {
+  return (
+    <>
+      {logs.map((l, i) => (
+        <div
+          key={i}
+          className={cn(
+            'whitespace-pre-wrap',
+            l.level === 'error'
+              ? 'text-ember'
+              : l.level === 'warn'
+                ? 'text-warning'
+                : 'text-white/70',
+          )}
+        >
+          {l.text}
+        </div>
+      ))}
+    </>
+  )
+}
 
 const copy = {
   en: {
@@ -114,21 +136,7 @@ export function RunTerminal({
                   {t.noOutputPost}
                 </p>
               )}
-            {result.logs.map((l, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'whitespace-pre-wrap',
-                  l.level === 'error'
-                    ? 'text-ember'
-                    : l.level === 'warn'
-                      ? 'text-warning'
-                      : 'text-white/70',
-                )}
-              >
-                {l.text}
-              </div>
-            ))}
+            <ConsoleLines logs={result.logs} />
             {result.error && (
               <div className='mt-1 whitespace-pre-wrap text-ember'>
                 ✕ {result.error}

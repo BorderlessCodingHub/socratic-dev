@@ -1,9 +1,11 @@
 'use client'
 
 import { useT } from '@/lib/i18n'
-import { Eye, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import type { RunLog } from '@/features/runner/types'
+import { Eye, Terminal, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { transform } from 'sucrase'
+import { ConsoleLines } from './run-terminal'
 
 const copy = {
   en: {
@@ -11,13 +13,31 @@ const copy = {
     importPost: '" is not supported in the preview',
     noExport: 'export a component (export default) to see the preview',
     closePreview: 'Close preview',
+    console: 'Console',
   },
   pt: {
     importPre: 'import de "',
     importPost: '" não suportado no preview',
     noExport: 'exporte um componente (export default) para ver o preview',
     closePreview: 'Fechar preview',
+    console: 'Console',
   },
+}
+
+const PREVIEW_LOG_SOURCE = 'socratic-preview-console'
+
+type PreviewLogMessage = {
+  source: typeof PREVIEW_LOG_SOURCE
+  level: RunLog['level']
+  text: string
+}
+
+function isPreviewLogMessage(data: unknown): data is PreviewLogMessage {
+  return (
+    !!data &&
+    typeof data === 'object' &&
+    (data as { source?: unknown }).source === PREVIEW_LOG_SOURCE
+  )
 }
 
 type Copy = (typeof copy)['en' | 'pt']
@@ -36,6 +56,18 @@ function buildSrcDoc(compiled: string, msgs: Copy): string {
 <div id="root"></div>
 <pre id="err"></pre>
 <script type="module">
+  const PREVIEW_LOG_SOURCE = ${JSON.stringify(PREVIEW_LOG_SOURCE)};
+  for (const level of ['log', 'info', 'warn', 'error']) {
+    const original = console[level].bind(console);
+    console[level] = (...args) => {
+      original(...args);
+      const text = args.map((a) => {
+        if (typeof a === 'string') return a;
+        try { return JSON.stringify(a); } catch { return String(a); }
+      }).join(' ');
+      parent.postMessage({ source: PREVIEW_LOG_SOURCE, level, text }, '*');
+    };
+  }
   import React from 'https://esm.sh/react@19';
   import * as JSXRuntime from 'https://esm.sh/react@19/jsx-runtime';
   import { createRoot } from 'https://esm.sh/react-dom@19/client';
@@ -72,6 +104,8 @@ export function ReactPreview({
   const t = useT(copy)
   const [srcDoc, setSrcDoc] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [logs, setLogs] = useState<RunLog[]>([])
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     try {
@@ -80,10 +114,21 @@ export function ReactPreview({
       }).code
       setSrcDoc(buildSrcDoc(compiled, t))
       setError(null)
+      setLogs([])
     } catch (e) {
       setError((e as Error).message)
     }
   }, [code, t])
+
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.source !== iframeRef.current?.contentWindow) return
+      if (!isPreviewLogMessage(e.data)) return
+      setLogs((prev) => [...prev, { level: e.data.level, text: e.data.text }])
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
 
   return (
     <div className='flex h-[55%] min-h-[200px] shrink-0 flex-col border-t border-white/10 bg-terminal'>
@@ -108,11 +153,22 @@ export function ReactPreview({
         </div>
       ) : (
         <iframe
+          ref={iframeRef}
           title='preview'
           sandbox='allow-scripts'
           srcDoc={srcDoc}
           className='min-h-0 flex-1 bg-white'
         />
+      )}
+      {!error && logs.length > 0 && (
+        <div className='flex max-h-[35%] shrink-0 flex-col border-t border-white/10'>
+          <div className='flex h-7 shrink-0 items-center gap-1.5 border-b border-white/10 px-4 font-mono text-[10px] tracking-wider text-white/50 uppercase'>
+            <Terminal className='size-3' strokeWidth={1.5} /> {t.console}
+          </div>
+          <div className='min-h-0 overflow-y-auto px-4 py-2 font-mono text-[12px] leading-relaxed'>
+            <ConsoleLines logs={logs} />
+          </div>
+        </div>
       )}
     </div>
   )

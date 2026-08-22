@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import type { RunnerLanguage } from '@/domain/stacks'
 import { runCode } from '@/features/runner/run-code'
-import type { RunResult } from '@/features/runner/types'
+import type { RunResult, TestResult } from '@/features/runner/types'
 import { track } from '@/lib/analytics'
 import { apiFetch, getAccessToken } from '@/lib/api/client'
 import { useLocale, useT } from '@/lib/i18n'
@@ -140,6 +140,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   const [submitTests, setSubmitTests] = React.useState<{
     passed: number
     total: number
+    results: TestResult[]
   } | null>(null)
   const [outcome, setOutcome] = React.useState<'pass' | 'fail'>('pass')
   const [pendingSolution, setPendingSolution] = React.useState<string | null>(
@@ -447,17 +448,19 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
 
     let passed = 0
     let total = 0
+    let results: TestResult[] = []
     if (challenge.tests_source && language !== 'react' && language !== 'py') {
       const r = await runCode(
         { code, language, testsSource: challenge.tests_source },
         { timeoutMs: 5000 },
       )
+      results = r.tests
       total = r.tests.length
       passed = r.tests.filter((t) => t.passed).length
       setResult(r)
       if (passed < total) setShowPanel(true)
     }
-    setSubmitTests({ passed, total })
+    setSubmitTests({ passed, total, results })
     const solved = total === 0 || passed === total
     setOutcome(solved ? 'pass' : 'fail')
     s.complete(s.elapsed, solved ? 'completed' : 'abandoned')

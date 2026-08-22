@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Halftone, glyph } from '@/features/landing/components/halftone'
+import type { TestResult } from '@/features/runner/types'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
@@ -121,7 +122,7 @@ export function ReviewModal({
   independence: number
   hintsUsed: number
   elapsed: number
-  tests: { passed: number; total: number } | null
+  tests: { passed: number; total: number; results?: TestResult[] } | null
   outcome?: ReviewOutcome
   sessionId?: string | null
   solutionsHref?: string | null
@@ -261,7 +262,13 @@ export function ReviewModal({
           </aside>
 
           <div className='min-h-0 overflow-y-auto p-7'>
-            {tests && <TestBanner passed={tests.passed} total={tests.total} />}
+            {tests && (
+              <TestBanner
+                passed={tests.passed}
+                total={tests.total}
+                results={tests.results}
+              />
+            )}
             <h3 className='type-h4 mb-3'>{t.reviewTitle}</h3>
             {reviewing || !review ? (
               <div className='bg-muted relative overflow-hidden rounded-lg px-6 py-14'>
@@ -442,7 +449,15 @@ function Celebration({
   )
 }
 
-function TestBanner({ passed, total }: { passed: number; total: number }) {
+function TestBanner({
+  passed,
+  total,
+  results,
+}: {
+  passed: number
+  total: number
+  results?: TestResult[]
+}) {
   const t = useT(copy)
   if (total === 0) {
     return (
@@ -453,22 +468,53 @@ function TestBanner({ passed, total }: { passed: number; total: number }) {
   }
   const solved = passed === total
   return (
-    <div
-      className={cn(
-        'mb-6 flex items-center gap-2.5 rounded-lg px-4 py-3 text-[13px] font-medium',
-        solved
-          ? 'bg-lime text-ink dark:text-background'
-          : 'bg-warning/10 text-warning-foreground',
+    <div className='mb-6'>
+      <div
+        className={cn(
+          'flex items-center gap-2.5 rounded-lg px-4 py-3 text-[13px] font-medium',
+          solved
+            ? 'bg-lime text-ink dark:text-background'
+            : 'bg-warning/10 text-warning-foreground',
+          results?.length && !solved && 'rounded-b-none',
+        )}
+      >
+        {solved ? (
+          <CheckCircle2 className='size-4 shrink-0' strokeWidth={1.5} />
+        ) : (
+          <XCircle className='size-4 shrink-0' strokeWidth={1.5} />
+        )}
+        {solved
+          ? t.testsSolved(passed, total)
+          : t.testsNotSolved(passed, total)}
+      </div>
+      {!solved && results && results.length > 0 && (
+        <div className='space-y-1.5 rounded-b-lg border border-t-0 border-warning/20 px-4 py-3'>
+          {results.map((test, i) => (
+            <div
+              key={i}
+              className={cn(
+                'flex items-start gap-2 text-[13px]',
+                test.passed ? 'text-mint' : 'text-warning-foreground',
+              )}
+            >
+              {test.passed ? (
+                <CheckCircle2 className='mt-0.5 size-3.5 shrink-0' />
+              ) : (
+                <XCircle className='mt-0.5 size-3.5 shrink-0' />
+              )}
+              <span>
+                {test.name}
+                {!test.passed && test.message ? (
+                  <span className='text-muted-foreground'>
+                    {' '}
+                    — {test.message}
+                  </span>
+                ) : null}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
-    >
-      {solved ? (
-        <CheckCircle2 className='size-4 shrink-0' strokeWidth={1.5} />
-      ) : (
-        <XCircle className='size-4 shrink-0' strokeWidth={1.5} />
-      )}
-      {solved
-        ? t.testsSolved(passed, total)
-        : t.testsNotSolved(passed, total)}
     </div>
   )
 }
