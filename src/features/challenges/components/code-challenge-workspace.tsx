@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import type { RunnerLanguage } from '@/domain/stacks'
+import { createPythonRunner } from '@/features/runner/python-runner'
 import { runCode } from '@/features/runner/run-code'
 import type { RunResult, TestResult } from '@/features/runner/types'
 import { track } from '@/lib/analytics'
@@ -59,8 +60,6 @@ const copy = {
     noSolutionYet:
       "You haven't written a solution yet. Implement something in the editor and submit again.",
     reviewFallback: "Couldn't generate the review.",
-    pythonNote:
-      'Python is evaluated by the AI on submit. Click "Submit" to get Socratic feedback.',
     run: 'Run',
     statusRunning: 'running',
     statusPassed: (n: number, total: number) => `${n}/${total} passed`,
@@ -92,8 +91,6 @@ const copy = {
     noSolutionYet:
       'Você ainda não escreveu uma solução. Implemente algo no editor e submeta de novo.',
     reviewFallback: 'Não foi possível gerar o review.',
-    pythonNote:
-      'Python é avaliado pela IA ao submeter. Clique em "Submeter" para receber o feedback socrático.',
     run: 'Rodar',
     statusRunning: 'rodando',
     statusPassed: (n: number, total: number) => `${n}/${total} passaram`,
@@ -153,6 +150,13 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   const editorRef = React.useRef<EditorInstance | null>(null)
   const monacoRef = React.useRef<MonacoInstance | null>(null)
   const askSelectionRef = React.useRef<() => void>(() => {})
+  const pythonRunnerRef = React.useRef<ReturnType<typeof createPythonRunner> | null>(null)
+  function getPythonRunner() {
+    return (pythonRunnerRef.current ??= createPythonRunner())
+  }
+  React.useEffect(() => {
+    return () => pythonRunnerRef.current?.dispose()
+  }, [])
   const [cursorPos, setCursorPos] = React.useState({ line: 1, col: 1 })
   const [problems, setProblems] = React.useState(0)
 
@@ -449,11 +453,17 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     let passed = 0
     let total = 0
     let results: TestResult[] = []
-    if (challenge.tests_source && language !== 'react' && language !== 'py') {
-      const r = await runCode(
-        { code, language, testsSource: challenge.tests_source },
-        { timeoutMs: 5000 },
-      )
+    if (challenge.tests_source && language !== 'react') {
+      const r =
+        language === 'py'
+          ? await getPythonRunner().run(
+              { code, language, testsSource: challenge.tests_source },
+              { timeoutMs: 15000 },
+            )
+          : await runCode(
+              { code, language, testsSource: challenge.tests_source },
+              { timeoutMs: 5000 },
+            )
       results = r.tests
       total = r.tests.length
       passed = r.tests.filter((t) => t.passed).length
@@ -491,21 +501,18 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     if (running || !challenge) return
     setShowPanel(true)
     if (language === 'react') return
-    if (language === 'py') {
-      setResult({
-        logs: [{ level: 'info', text: t.pythonNote }],
-        tests: [],
-        ok: false,
-        durationMs: 0,
-      })
-      return
-    }
     setRunning(true)
     setResult(null)
-    const r = await runCode(
-      { code: s.work, language, testsSource: challenge.tests_source },
-      { timeoutMs: 5000 },
-    )
+    const r =
+      language === 'py'
+        ? await getPythonRunner().run(
+            { code: s.work, language, testsSource: challenge.tests_source },
+            { timeoutMs: 15000 },
+          )
+        : await runCode(
+            { code: s.work, language, testsSource: challenge.tests_source },
+            { timeoutMs: 5000 },
+          )
     setResult(r)
     setRunning(false)
     if (!r.ok) setShowPanel(true)
