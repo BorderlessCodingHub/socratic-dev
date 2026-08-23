@@ -264,6 +264,7 @@ export async function getTrainingRecommendation(input: {
       maxTokens: 300,
       effort: 'low',
       model: MODELS.fast,
+      meta: { route: 'recommendation', userId: a.userId },
     })
     if (!text.trim()) return { error: 'Sem recomendação.' }
     return { text: text.trim() }
@@ -364,6 +365,7 @@ export async function getEditorial(
       ].join('\n'),
       maxTokens: 900,
       effort: 'low',
+      meta: { route: 'editorial', userId: a.userId },
     })
     if (!text.trim()) return { error: 'Não foi possível gerar o editorial.' }
     // Only fill if still empty — a concurrent generation wins, we re-read.
