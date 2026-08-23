@@ -6,7 +6,7 @@ import { SOLVE_COST } from '@/features/hints/constants'
 import type { ChatMsg } from '@/lib/ai/types'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { Lightbulb, Send, Sparkles, Wand2 } from 'lucide-react'
+import { ArrowRight, Lightbulb, Send, Sparkles, Wand2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { FormattedText } from './formatted-text'
 
@@ -77,6 +77,7 @@ export function ChatPanel({
   buying,
   buyError,
   bought,
+  stepPrompt,
 }: {
   messages: ChatMsg[]
   scrollRef: React.RefObject<HTMLDivElement | null>
@@ -92,6 +93,9 @@ export function ChatPanel({
   buying?: boolean
   buyError?: string | null
   bought?: boolean
+  // Set while a solved walkthrough is revealing one step at a time — renders
+  // a "Continue" chip after the last message instead of dumping everything.
+  stepPrompt?: { label: string; onContinue: () => void } | null
 }) {
   const t = useT(copy)
   const noHints = hintsRemaining !== null && hintsRemaining <= 0
@@ -163,6 +167,23 @@ export function ChatPanel({
               <span className='size-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.15s]' />
               <span className='size-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.3s]' />
             </div>
+          </motion.div>
+        )}
+
+        {stepPrompt && !thinking && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className='flex justify-start pl-7'
+          >
+            <button
+              type='button'
+              onClick={stepPrompt.onContinue}
+              className='flex cursor-pointer items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3.5 py-2 font-mono text-[11px] text-primary transition-colors duration-200 hover:bg-primary/10'
+            >
+              {stepPrompt.label}
+              <ArrowRight className='size-3' />
+            </button>
           </motion.div>
         )}
       </div>

@@ -675,6 +675,42 @@ export async function buildSceneElements(
   return converted
 }
 
+export function elementsForNodes(
+  elements: readonly unknown[],
+  nodeIds: Iterable<string>,
+): readonly unknown[] {
+  const revealed = new Set(nodeIds)
+  const arrows: SceneEl[] = []
+  const rest: SceneEl[] = []
+  for (const el of elements as SceneEl[]) {
+    if (el.type === 'arrow') arrows.push(el)
+    else rest.push(el)
+  }
+
+  const includedArrowIds = new Set<string>()
+  const keptArrows = arrows.filter((el) => {
+    const a = el.startBinding?.elementId
+    const b = el.endBinding?.elementId
+    const ok = !!a && !!b && revealed.has(a) && revealed.has(b)
+    if (ok && typeof el.id === 'string') includedArrowIds.add(el.id)
+    return ok
+  })
+
+  const keptRest = rest.filter((el) => {
+    const gid = el.groupIds?.[0]
+    if (gid?.startsWith('g-')) return revealed.has(gid.slice(2))
+    if (typeof el.id === 'string' && revealed.has(el.id)) return true
+    if (typeof el.containerId === 'string') {
+      return (
+        revealed.has(el.containerId) || includedArrowIds.has(el.containerId)
+      )
+    }
+    return false
+  })
+
+  return [...keptRest, ...keptArrows]
+}
+
 export function summarizeElements(elements: readonly unknown[]): string {
   const els = (elements as SceneEl[]).filter((e) => !e.isDeleted)
   if (els.length === 0) return 'O canvas está vazio — nada desenhado ainda.'

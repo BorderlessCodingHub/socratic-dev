@@ -12,6 +12,7 @@ import { useSocraticSession } from '@/features/challenges/hooks/use-socratic-ses
 import type { Challenge } from '@/features/challenges/types'
 import {
   buildSceneElements,
+  elementsForNodes,
   exportScenePng,
   summarizeElements,
   type ExcalidrawApi,
@@ -30,6 +31,19 @@ import { DesignCanvas } from './design-canvas'
 
 const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
+type SolveStep = { nodeId: string; label: string; why: string }
+// Drives the "solve it for me" walkthrough: the full diagram/explanation
+// arrives in one API call, but is revealed one component at a time so the
+// canvas builds up alongside the chat instead of dumping everything at once.
+type SolveProgress = {
+  elements: readonly unknown[]
+  order: string[]
+  steps: SolveStep[]
+  revealed: number
+  flow?: string
+  questions?: string[]
+}
+
 const copy = {
   en: {
     intro:
@@ -37,10 +51,8 @@ const copy = {
     replyFallback: "Couldn't respond right now.",
     analyzeFallback: "Couldn't analyze right now.",
     hintUnavailable: 'Hint unavailable.',
-    solutionDrawn:
-      'I drew the architecture on the canvas. Study the flow and why each piece is there.',
-    teachWhy: 'Why each piece is here:',
     teachThink: 'Now you, before moving on:',
+    continueStep: (i: number, total: number) => `Continue (${i}/${total})`,
     solveFallback: "Couldn't solve it right now.",
     nothingDrawn:
       "You haven't drawn anything yet. Start the diagram and submit again.",
@@ -60,10 +72,8 @@ const copy = {
     replyFallback: 'Não consegui responder agora.',
     analyzeFallback: 'Não consegui analisar agora.',
     hintUnavailable: 'Hint indisponível.',
-    solutionDrawn:
-      'Desenhei a arquitetura no canvas. Estude o fluxo e por que cada peça está ali.',
-    teachWhy: 'Por que cada peça está aqui:',
     teachThink: 'Agora você, antes de seguir:',
+    continueStep: (i: number, total: number) => `Continuar (${i}/${total})`,
     solveFallback: 'Não consegui resolver agora.',
     nothingDrawn:
       'Você ainda não desenhou nada. Comece o diagrama e submeta de novo.',
@@ -172,6 +182,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
   const [outcome, setOutcome] = React.useState<'pass' | 'fail'>('pass')
   const [review, setReview] = React.useState<string | null>(null)
   const [reviewing, setReviewing] = React.useState(false)
+  const [solve, setSolve] = React.useState<SolveProgress | null>(null)
 
   function currentElements(): readonly unknown[] {
     return apiRef.current?.getSceneElements() ?? s.work
@@ -269,8 +280,41 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
     }
   }
 
+  function revealSolveStep(progress: SolveProgress, index: number) {
+    const revealedIds = progress.order.slice(0, index + 1)
+    const visible = elementsForNodes(progress.elements, revealedIds)
+    apiRef.current?.updateScene({ elements: visible })
+    apiRef.current?.scrollToContent(visible, {
+      fitToContent: true,
+      animate: true,
+    })
+    s.setWork(visible)
+
+    const step = progress.steps[index]
+    const isLast = index === progress.steps.length - 1
+    const parts = [
+      step.why ? `**${step.label}** — ${step.why}` : `**${step.label}**`,
+    ]
+    if (isLast) {
+      if (progress.flow) parts.push('', progress.flow)
+      if (progress.questions?.length) {
+        parts.push('', `**${t.teachThink}**`)
+        for (const q of progress.questions) parts.push(`- ${q}`)
+      }
+    }
+    s.pushMessage({ role: 'ai', text: parts.join('\n') })
+    setSolve({ ...progress, revealed: index + 1 })
+  }
+
+  function continueSolve() {
+    if (!solve || solve.revealed >= solve.steps.length) return
+    revealSolveStep(solve, solve.revealed)
+  }
+
   async function askSolve() {
-    if (s.thinking) return
+    // Mid-walkthrough: don't let a re-click spend hints on a fresh solve —
+    // "Continue" is how the user advances the one already in progress.
+    if (s.thinking || (solve && solve.revealed < solve.steps.length)) return
     s.setThinking(true)
     s.spendSolve()
     try {
@@ -288,12 +332,6 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
       s.syncRemaining(data.remaining)
       if (Array.isArray(data.nodes) && data.nodes.length > 0) {
         const elements = await buildSceneElements(data.nodes, data.edges ?? [])
-        apiRef.current?.updateScene({ elements })
-        apiRef.current?.scrollToContent(elements, {
-          fitToContent: true,
-          animate: true,
-        })
-        s.setWork(elements)
         const teach = data.teach as
           | {
               flow?: string
@@ -307,22 +345,30 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
             n.label ?? n.id,
           ]),
         )
-        const parts: string[] = []
-        if (teach?.flow) parts.push(teach.flow)
-        if (teach?.components?.length) {
-          parts.push('', `**${t.teachWhy}**`)
-          for (const c of teach.components) {
-            parts.push(`- **${labelOf.get(c.id) ?? c.id}**: ${c.why}`)
-          }
+        // Reveal order follows the tutor's narrated flow (teach.components is
+        // already client → ... → storage); any node it skipped is appended
+        // last so nothing silently fails to draw.
+        const fromTeach = (teach?.components ?? [])
+          .map((c) => c.id)
+          .filter((id, i, arr) => labelOf.has(id) && arr.indexOf(id) === i)
+        const order = [
+          ...fromTeach,
+          ...[...labelOf.keys()].filter((id) => !fromTeach.includes(id)),
+        ]
+        const steps: SolveStep[] = order.map((id) => ({
+          nodeId: id,
+          label: labelOf.get(id) ?? id,
+          why: teach?.components?.find((c) => c.id === id)?.why ?? '',
+        }))
+        const progress: SolveProgress = {
+          elements,
+          order,
+          steps,
+          revealed: 0,
+          flow: teach?.flow,
+          questions: teach?.questions,
         }
-        if (teach?.questions?.length) {
-          parts.push('', `**${t.teachThink}**`)
-          for (const q of teach.questions) parts.push(`- ${q}`)
-        }
-        s.pushMessage({
-          role: 'ai',
-          text: parts.length ? parts.join('\n') : t.solutionDrawn,
-        })
+        revealSolveStep(progress, 0)
       } else {
         s.pushMessage({
           role: 'ai',
@@ -490,6 +536,14 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
             buying={s.buying}
             buyError={s.buyError}
             bought={s.bought}
+            stepPrompt={
+              solve && solve.revealed < solve.steps.length
+                ? {
+                    label: t.continueStep(solve.revealed, solve.steps.length),
+                    onContinue: continueSolve,
+                  }
+                : null
+            }
           />
         </aside>
       </div>
