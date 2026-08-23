@@ -160,12 +160,22 @@ export async function generateChallenge(opts: {
             user: `Gere um desafio de system design (arquitetura) novo. nível: ${opts.level}.\n\n${levelGuide('design', opts.level)}${userTheme}${avoidLine(avoid)}`,
             maxTokens: 2600,
             effort: 'medium',
+            meta: {
+              route: 'generate-challenge',
+              mode: 'design',
+              userId: opts.userId,
+            },
           })
         : await askClaude({
             system: challengeSystem('code', locale),
             user: `Gere um desafio novo. stack: ${stack}. nível: ${opts.level}.\n\n${levelGuide('code', opts.level)}${userTheme}${avoidLine(avoid)}${stackNote}`,
             maxTokens: opts.level === 'advanced' ? 8000 : 4500,
             effort: opts.level === 'advanced' ? 'high' : 'medium',
+            meta: {
+              route: 'generate-challenge',
+              mode: stack,
+              userId: opts.userId,
+            },
           })
     return parseChallenge(raw, locale)
   }
