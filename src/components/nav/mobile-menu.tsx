@@ -6,7 +6,6 @@ import { Code2, Lightbulb, Network } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
 import { copy } from './copy'
-import { LangToggle } from './lang-toggle'
 import type { Hints } from './status-cluster'
 
 function MobileLink({
@@ -98,37 +97,34 @@ export function MobileMenu({
         ) : (
           <MobileLink href='/login' label={t.signIn} onClick={onClose} />
         )}
-        <div className='border-border mt-3 flex items-center justify-between gap-3 border-t pt-4'>
-          <LangToggle />
-          {loggedIn && hints.remaining !== null && (
-            <div className='flex items-center gap-3'>
+        {loggedIn && hints.remaining !== null && (
+          <div className='border-border mt-3 flex items-center justify-end gap-3 border-t pt-4'>
+            <span
+              title={t.hintsAvailable}
+              className='flex items-center gap-1.5'
+            >
+              <Lightbulb className='text-primary size-4' strokeWidth={1.5} />
               <span
-                title={t.hintsAvailable}
-                className='flex items-center gap-1.5'
+                className={cn(
+                  'font-mono text-[12px]',
+                  hints.remaining <= 0
+                    ? 'text-destructive'
+                    : 'text-muted-foreground',
+                )}
               >
-                <Lightbulb className='text-primary size-4' strokeWidth={1.5} />
-                <span
-                  className={cn(
-                    'font-mono text-[12px]',
-                    hints.remaining <= 0
-                      ? 'text-destructive'
-                      : 'text-muted-foreground',
-                  )}
-                >
-                  {hints.remaining}
-                </span>
+                {hints.remaining}
               </span>
-              <button
-                type='button'
-                onClick={hints.buy}
-                disabled={hints.buying}
-                className='border-border text-primary hover:bg-primary/10 grid h-10 cursor-pointer place-items-center rounded-full border px-4 font-mono text-[11px] uppercase transition-colors duration-200 disabled:opacity-50'
-              >
-                {t.buyHints}
-              </button>
-            </div>
-          )}
-        </div>
+            </span>
+            <button
+              type='button'
+              onClick={hints.buy}
+              disabled={hints.buying}
+              className='border-border text-primary hover:bg-primary/10 grid h-10 cursor-pointer place-items-center rounded-full border px-4 font-mono text-[11px] uppercase transition-colors duration-200 disabled:opacity-50'
+            >
+              {t.buyHints}
+            </button>
+          </div>
+        )}
       </nav>
     </motion.div>
   )

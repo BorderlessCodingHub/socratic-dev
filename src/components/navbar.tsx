@@ -15,7 +15,6 @@ import Link from 'next/link'
 import * as React from 'react'
 import { Logo } from './logo'
 import { copy } from './nav/copy'
-import { LangToggle } from './nav/lang-toggle'
 import { CommunityMenu, NavMenuGroup, TrainMenu } from './nav/menus'
 import { MobileMenu } from './nav/mobile-menu'
 import {
@@ -105,7 +104,6 @@ export function Navbar() {
             </div>
 
             <div className='flex items-center gap-2'>
-              <LangToggle className='hidden sm:flex' />
               {!loading && user ? (
                 <>
                   <NavLink href='/dashboard' label={t.dashboard} />
