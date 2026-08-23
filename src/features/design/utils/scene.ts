@@ -215,7 +215,7 @@ function nodeSkeleton(n: PlacedNode, b: Box): Record<string, unknown>[] {
       ]
     case 'cache':
       return [
-        { type: 'diamond', id: n.id, x, y, width: w, height: h, backgroundColor: fill, roundness: { type: 2 }, label, ...base },
+        { type: 'diamond', id: n.id, x, y, width: w, height: h, backgroundColor: fill, roundness: { type: 2 }, label, groupIds: g, ...base },
       ]
     case 'gateway':
     case 'lb':
@@ -247,7 +247,7 @@ function nodeSkeleton(n: PlacedNode, b: Box): Record<string, unknown>[] {
       ]
     case 'worker':
       return [
-        { type: 'rectangle', id: n.id, x, y, width: w, height: h, backgroundColor: fill, roundness: { type: 3 }, label, ...base, strokeStyle: 'dashed' },
+        { type: 'rectangle', id: n.id, x, y, width: w, height: h, backgroundColor: fill, roundness: { type: 3 }, label, groupIds: g, ...base, strokeStyle: 'dashed' },
       ]
     default:
       return [
@@ -675,14 +675,32 @@ export async function buildSceneElements(
   return converted
 }
 
+// convertToExcalidrawElements regenerates every element's `id` (safe to
+// disable only if every skeleton element already carries a unique id, which
+// most decorative sub-shapes here don't — see nodeSkeleton/stampSkeleton).
+// So arrow bindings and label containerIds end up pointing at *regenerated*
+// ids, not the node ids buildSceneElements was called with. The one thing
+// that does survive untouched is `groupIds` — every node's shapes share
+// "g-<nodeId>" — so that's the channel used here to recover the original
+// node id for any regenerated element id.
 export function elementsForNodes(
   elements: readonly unknown[],
   nodeIds: Iterable<string>,
 ): readonly unknown[] {
   const revealed = new Set(nodeIds)
+  const els = elements as SceneEl[]
+
+  const nodeIdOfElementId = new Map<string, string>()
+  for (const el of els) {
+    const gid = el.groupIds?.[0]
+    if (gid?.startsWith('g-') && typeof el.id === 'string') {
+      nodeIdOfElementId.set(el.id, gid.slice(2))
+    }
+  }
+
   const arrows: SceneEl[] = []
   const rest: SceneEl[] = []
-  for (const el of elements as SceneEl[]) {
+  for (const el of els) {
     if (el.type === 'arrow') arrows.push(el)
     else rest.push(el)
   }
@@ -690,7 +708,11 @@ export function elementsForNodes(
   const includedArrowIds = new Set<string>()
   const keptArrows = arrows.filter((el) => {
     const a = el.startBinding?.elementId
+      ? nodeIdOfElementId.get(el.startBinding.elementId)
+      : undefined
     const b = el.endBinding?.elementId
+      ? nodeIdOfElementId.get(el.endBinding.elementId)
+      : undefined
     const ok = !!a && !!b && revealed.has(a) && revealed.has(b)
     if (ok && typeof el.id === 'string') includedArrowIds.add(el.id)
     return ok
@@ -699,10 +721,11 @@ export function elementsForNodes(
   const keptRest = rest.filter((el) => {
     const gid = el.groupIds?.[0]
     if (gid?.startsWith('g-')) return revealed.has(gid.slice(2))
-    if (typeof el.id === 'string' && revealed.has(el.id)) return true
     if (typeof el.containerId === 'string') {
+      const containerNode = nodeIdOfElementId.get(el.containerId)
       return (
-        revealed.has(el.containerId) || includedArrowIds.has(el.containerId)
+        (!!containerNode && revealed.has(containerNode)) ||
+        includedArrowIds.has(el.containerId)
       )
     }
     return false
