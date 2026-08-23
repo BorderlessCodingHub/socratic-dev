@@ -49,12 +49,19 @@ export async function POST(req: Request) {
           imageBase64,
           maxTokens: 1024,
           effort: 'low',
+          meta: {
+            route: 'design-review',
+            mode: 'vision',
+            userId,
+            sessionId,
+          },
         })
       : await askClaude({
           system,
           user: userText,
           maxTokens: 1024,
           effort: 'low',
+          meta: { route: 'design-review', mode: 'text', userId, sessionId },
         })
   } catch (e) {
     aiError = e
