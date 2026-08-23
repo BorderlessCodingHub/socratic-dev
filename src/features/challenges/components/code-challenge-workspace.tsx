@@ -113,21 +113,82 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   const searchParams = useSearchParams()
   const idParam = searchParams.get('id')
   const t = useT(copy)
-  const { locale } = useLocale()
-  const isDark = useIsDark()
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
   const [loadError, setLoadError] = React.useState(false)
+
+  React.useEffect(() => {
+    let active = true
+    setChallenge(null)
+    setLoadError(false)
+    ;(async () => {
+      if (idParam) {
+        const { data, error } = await supabase
+          .from('challenges')
+          .select('*')
+          .eq('id', idParam)
+          .single()
+        if (!active) return
+        if (error || !data) setLoadError(true)
+        else setChallenge(data as unknown as Challenge)
+        return
+      }
+      const meta = user.user_metadata as
+        | { preferred_stack?: string; preferred_level?: string }
+        | undefined
+      if (!meta?.preferred_stack || !meta?.preferred_level) {
+        router.replace('/onboarding')
+        return
+      }
+      const next = await getNextChallenge({
+        kind: 'code',
+        stack: meta.preferred_stack,
+        level: meta.preferred_level as 'beginner' | 'intermediate' | 'advanced',
+        token: await getAccessToken(),
+      })
+      if (!active) return
+      if ('error' in next || !next?.id) setLoadError(true)
+      else {
+        router.replace(`?id=${next.id}`, { scroll: false })
+        setChallenge(next as unknown as Challenge)
+      }
+    })().catch(() => {
+      if (active) setLoadError(true)
+    })
+    return () => {
+      active = false
+    }
+  }, [router, user.user_metadata, idParam])
+
+  if (loadError)
+    return (
+      <div className='flex h-dvh flex-col items-center justify-center gap-4 bg-background'>
+        <span className='font-mono text-4xl text-muted-foreground'>∅</span>
+        <h1 className='text-xl font-light'>{t.notFound}</h1>
+        <Button variant='outline' onClick={() => router.push('/dashboard')}>
+          {t.backToDashboard}
+        </Button>
+      </div>
+    )
+
+  if (!challenge) return <ChallengeSkeleton />
+
+  return <CodeChallengeSession key={challenge.id} challenge={challenge} />
+}
+
+function CodeChallengeSession({ challenge }: { challenge: Challenge }) {
+  const router = useRouter()
+  const t = useT(copy)
+  const { locale } = useLocale()
+  const isDark = useIsDark()
   const [activePanel, setActivePanel] = React.useState<
     'brief' | 'work' | 'chat'
   >('brief')
   const [reviewOpen, setReviewOpen] = React.useState(false)
 
   const s = useSocraticSession<string>({
-    challenge: challenge ? { id: challenge.id } : null,
-    initialWork: challenge ? starterCode(challenge, locale) : '',
-    initialMessages: challenge
-      ? [{ role: 'ai', text: challengeIntro(challenge, locale) }]
-      : [],
+    challenge: { id: challenge.id },
+    initialWork: starterCode(challenge, locale),
+    initialMessages: [{ role: 'ai', text: challengeIntro(challenge, locale) }],
     paused: reviewOpen,
   })
 
@@ -162,61 +223,10 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   const [cursorPos, setCursorPos] = React.useState({ line: 1, col: 1 })
   const [problems, setProblems] = React.useState(0)
 
-  const language: RunnerLanguage = challenge
-    ? challengeLanguage(challenge.stack)
-    : 'ts'
-
-  React.useEffect(() => {
-    let active = true
-    // A nav click to the plain /challenge URL re-runs this (idParam goes back
-    // to null) without unmounting the workspace, so drop the stale challenge —
-    // otherwise a just-finished challenge stays on screen instead of the next one.
-    setChallenge(null)
-    setLoadError(false)
-    ;(async () => {
-      const id = idParam
-      if (id) {
-        const { data, error } = await supabase
-          .from('challenges')
-          .select('*')
-          .eq('id', id)
-          .single()
-        if (!active) return
-        if (error || !data) setLoadError(true)
-        else setChallenge(data as unknown as Challenge)
-        return
-      }
-      // No ?id=: pick the user's next unseen challenge instead of the oldest
-      // row in the table (which ignores level/locale and repeats forever).
-      const meta = user.user_metadata as
-        | { preferred_stack?: string; preferred_level?: string }
-        | undefined
-      if (!meta?.preferred_stack || !meta?.preferred_level) {
-        router.replace('/onboarding')
-        return
-      }
-      const next = await getNextChallenge({
-        kind: 'code',
-        stack: meta.preferred_stack,
-        level: meta.preferred_level as 'beginner' | 'intermediate' | 'advanced',
-        token: await getAccessToken(),
-      })
-      if (!active) return
-      if ('error' in next || !next?.id) setLoadError(true)
-      else {
-        window.history.replaceState(null, '', `?id=${next.id}`)
-        setChallenge(next as unknown as Challenge)
-      }
-    })().catch(() => {
-      if (active) setLoadError(true)
-    })
-    return () => {
-      active = false
-    }
-  }, [router, user.user_metadata, idParam])
+  const language: RunnerLanguage = challengeLanguage(challenge.stack)
 
   async function sendTutorMessage(text: string) {
-    if (!text.trim() || s.thinking || !challenge) return
+    if (!text.trim() || s.thinking) return
     const next = [...s.messages, { role: 'user' as const, text: text.trim() }]
     s.setMessages(next)
     s.setThinking(true)
@@ -259,7 +269,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     const text = model.getValueInRange(sel)
     if (!text.trim()) return
     setSelAction(null)
-    track('selection_asked', { challenge_id: challenge?.id })
+    track('selection_asked', { challenge_id: challenge.id })
     void sendTutorMessage(
       t.selectionMsg(sel.startLineNumber, sel.endLineNumber, text),
     )
@@ -339,7 +349,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function askHint(level: 1 | 2 | 3) {
-    if (s.thinking || !challenge) return
+    if (s.thinking) return
     s.setThinking(true)
     try {
       const res = await apiFetch('/api/tutor', {
@@ -378,7 +388,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function askSolve() {
-    if (s.thinking || !challenge) return
+    if (s.thinking) return
     s.setThinking(true)
     s.spendSolve()
     try {
@@ -435,7 +445,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function submitReview() {
-    if (!challenge || reviewing) return
+    if (reviewing) return
     track('challenge_submitted', { challenge_id: challenge.id, kind: 'code' })
     setReviewOpen(true)
     setReviewing(true)
@@ -502,7 +512,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function run() {
-    if (running || !challenge) return
+    if (running) return
     setShowPanel(true)
     if (language === 'react') return
     setRunning(true)
@@ -521,19 +531,6 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     setRunning(false)
     if (!r.ok) setShowPanel(true)
   }
-
-  if (loadError)
-    return (
-      <div className='flex h-dvh flex-col items-center justify-center gap-4 bg-background'>
-        <span className='font-mono text-4xl text-muted-foreground'>∅</span>
-        <h1 className='text-xl font-light'>{t.notFound}</h1>
-        <Button variant='outline' onClick={() => router.push('/dashboard')}>
-          {t.backToDashboard}
-        </Button>
-      </div>
-    )
-
-  if (!challenge) return <ChallengeSkeleton />
 
   return (
     <div className='relative flex h-dvh flex-col overflow-hidden'>
@@ -731,7 +728,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
             tests={submitTests}
             outcome={outcome}
             sessionId={s.sessionId}
-            solutionsHref={challenge ? `/solutions/${challenge.id}` : null}
+            solutionsHref={`/solutions/${challenge.id}`}
             onClose={() => setReviewOpen(false)}
             onComplete={() => router.push('/dashboard')}
           />

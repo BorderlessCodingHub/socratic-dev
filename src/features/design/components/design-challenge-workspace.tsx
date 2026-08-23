@@ -86,26 +86,6 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   const t = useT(copy)
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
   const [loadError, setLoadError] = React.useState(false)
-  const [activePanel, setActivePanel] = React.useState<
-    'brief' | 'work' | 'chat'
-  >('brief')
-  const apiRef = React.useRef<ExcalidrawApi | null>(null)
-  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const intro = challenge?.intro || t.intro
-
-  const [reviewOpen, setReviewOpen] = React.useState(false)
-
-  const s = useSocraticSession<readonly unknown[]>({
-    challenge: challenge ? { id: challenge.id } : null,
-    initialWork: [],
-    initialMessages: [{ role: 'ai', text: intro }],
-    paused: reviewOpen,
-  })
-
-  const [outcome, setOutcome] = React.useState<'pass' | 'fail'>('pass')
-  const [review, setReview] = React.useState<string | null>(null)
-  const [reviewing, setReviewing] = React.useState(false)
 
   React.useEffect(() => {
     let active = true
@@ -142,7 +122,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
       if (!active) return
       if ('error' in next || !next?.id) setLoadError(true)
       else {
-        window.history.replaceState(null, '', `?id=${next.id}`)
+        router.replace(`?id=${next.id}`, { scroll: false })
         setChallenge(next as unknown as Challenge)
       }
     })().catch(() => {
@@ -151,7 +131,47 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     return () => {
       active = false
     }
-  }, [user.user_metadata, idParam])
+  }, [user.user_metadata, idParam, router])
+
+  if (loadError)
+    return (
+      <div className='flex h-dvh flex-col items-center justify-center gap-4 bg-background'>
+        <span className='font-mono text-4xl text-muted-foreground'>∅</span>
+        <h1 className='text-xl font-light'>{t.notFound}</h1>
+        <Button variant='outline' onClick={() => router.push('/dashboard')}>
+          {t.backToDashboard}
+        </Button>
+      </div>
+    )
+
+  if (!challenge) return <ChallengeSkeleton />
+
+  return <DesignChallengeSession key={challenge.id} challenge={challenge} />
+}
+
+function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
+  const router = useRouter()
+  const t = useT(copy)
+  const [activePanel, setActivePanel] = React.useState<
+    'brief' | 'work' | 'chat'
+  >('brief')
+  const apiRef = React.useRef<ExcalidrawApi | null>(null)
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const intro = challenge.intro || t.intro
+
+  const [reviewOpen, setReviewOpen] = React.useState(false)
+
+  const s = useSocraticSession<readonly unknown[]>({
+    challenge: { id: challenge.id },
+    initialWork: [],
+    initialMessages: [{ role: 'ai', text: intro }],
+    paused: reviewOpen,
+  })
+
+  const [outcome, setOutcome] = React.useState<'pass' | 'fail'>('pass')
+  const [review, setReview] = React.useState<string | null>(null)
+  const [reviewing, setReviewing] = React.useState(false)
 
   function currentElements(): readonly unknown[] {
     return apiRef.current?.getSceneElements() ?? s.work
@@ -160,15 +180,15 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   function tutorBody(extra: Record<string, unknown>) {
     return JSON.stringify({
       domain: 'design',
-      title: challenge?.title ?? '',
-      briefing: challenge?.client_briefing ?? '',
+      title: challenge.title,
+      briefing: challenge.client_briefing,
       code: summarizeElements(currentElements()),
       ...extra,
     })
   }
 
   async function sendUser() {
-    if (!s.input.trim() || s.thinking || !challenge) return
+    if (!s.input.trim() || s.thinking) return
     const text = s.input.trim()
     const next = [...s.messages, { role: 'user' as const, text }]
     s.setMessages(next)
@@ -193,7 +213,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function askAnalysis() {
-    if (s.thinking || !challenge) return
+    if (s.thinking) return
     s.setThinking(true)
     try {
       const res = await apiFetch('/api/tutor', {
@@ -214,7 +234,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function askHint(level: 1 | 2 | 3) {
-    if (s.thinking || !challenge) return
+    if (s.thinking) return
     s.setThinking(true)
     try {
       const res = await apiFetch('/api/tutor', {
@@ -250,7 +270,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function askSolve() {
-    if (s.thinking || !challenge) return
+    if (s.thinking) return
     s.setThinking(true)
     s.spendSolve()
     try {
@@ -317,7 +337,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
   }
 
   async function submitDesign() {
-    if (!challenge || reviewing) return
+    if (reviewing) return
     track('challenge_submitted', { challenge_id: challenge.id, kind: 'design' })
     setReviewOpen(true)
     setReviewing(true)
@@ -368,19 +388,6 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => s.setWork(elements), 500)
   }
-
-  if (loadError)
-    return (
-      <div className='flex h-dvh flex-col items-center justify-center gap-4 bg-background'>
-        <span className='font-mono text-4xl text-muted-foreground'>∅</span>
-        <h1 className='text-xl font-light'>{t.notFound}</h1>
-        <Button variant='outline' onClick={() => router.push('/dashboard')}>
-          {t.backToDashboard}
-        </Button>
-      </div>
-    )
-
-  if (!challenge) return <ChallengeSkeleton />
 
   return (
     <div className='relative flex h-dvh flex-col overflow-hidden bg-background'>
