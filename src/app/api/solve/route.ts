@@ -218,6 +218,7 @@ export async function POST(req: Request) {
         user,
         maxTokens: 4000,
         effort: 'medium',
+        meta: { route: 'solve', mode: 'design', userId, sessionId },
       })
       const diagramError =
         locale === 'pt'
@@ -246,6 +247,7 @@ export async function POST(req: Request) {
       user,
       maxTokens: 3200,
       effort: 'medium',
+      meta: { route: 'solve', mode: 'code', userId, sessionId },
     })
     const [codePart, teachPart] = raw.split(/^={2,}\s*TEACH\s*={2,}\s*$/im)
     const code = stripFences(codePart ?? raw)
