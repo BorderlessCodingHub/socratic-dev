@@ -132,6 +132,59 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          cache_read_tokens: number
+          cache_write_tokens: number
+          created_at: string
+          id: string
+          input_tokens: number
+          latency_ms: number | null
+          mode: string | null
+          model: string
+          output_tokens: number
+          route: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cache_read_tokens?: number
+          cache_write_tokens?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          latency_ms?: number | null
+          mode?: string | null
+          model: string
+          output_tokens?: number
+          route: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cache_read_tokens?: number
+          cache_write_tokens?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          latency_ms?: number | null
+          mode?: string | null
+          model?: string
+          output_tokens?: number
+          route?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       league_members: {
         Row: {
           cohort: number
