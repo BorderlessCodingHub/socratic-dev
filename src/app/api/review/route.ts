@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       user,
       maxTokens: 1024,
       effort: 'low',
+      meta: { route: 'review', userId, sessionId },
     })
   } catch (e) {
     aiError = e
