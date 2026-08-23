@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
 import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { copy } from './copy'
 import { GeneratingChallenge } from './generating-challenge'
@@ -22,6 +22,8 @@ type Step = 0 | 1 | 2
 
 export function OnboardingFlow({ user }: { user: User }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redo = searchParams.get('redo') === '1'
   const t = useT(copy)
   const [step, setStep] = React.useState<Step>(0)
   const [track, setTrack] = React.useState<string | null>(null)
@@ -42,7 +44,9 @@ export function OnboardingFlow({ user }: { user: User }) {
     const onboarded =
       !!meta?.preferred_level &&
       (meta?.preferred_track === 'design' || !!meta?.preferred_stack)
-    if (onboarded) {
+    // `redo=1` marks an explicit "redo setup" visit (from the profile page),
+    // which must not bounce an already-onboarded user straight to /dashboard.
+    if (onboarded && !redo) {
       router.replace('/dashboard')
       return
     }
@@ -57,7 +61,7 @@ export function OnboardingFlow({ user }: { user: User }) {
       : undefined
     if (restoredLevel) setLevel(restoredLevel)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, redo])
 
   const canNext =
     (step === 0 && track && (track === 'design' || stack)) ||

@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
 import { Wand2 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { DesignCanvas } from './design-canvas'
 
@@ -81,6 +81,8 @@ const copy = {
 
 export function DesignChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const idParam = searchParams.get('id')
   const t = useT(copy)
   const [challenge, setChallenge] = React.useState<Challenge | null>(null)
   const [loadError, setLoadError] = React.useState(false)
@@ -107,16 +109,17 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
 
   React.useEffect(() => {
     let active = true
+    // A nav click to the plain /design URL re-runs this (idParam goes back to
+    // null) without unmounting the workspace, so drop the stale challenge —
+    // otherwise a just-finished design stays on screen instead of the next one.
+    setChallenge(null)
+    setLoadError(false)
     ;(async () => {
-      const id =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('id')
-          : null
-      if (id) {
+      if (idParam) {
         const { data, error } = await supabase
           .from('challenges')
           .select('*')
-          .eq('id', id)
+          .eq('id', idParam)
           .single()
         if (!active) return
         if (error || !data) setLoadError(true)
@@ -148,7 +151,7 @@ export function DesignChallengeWorkspace({ user }: { user: User }) {
     return () => {
       active = false
     }
-  }, [user.user_metadata])
+  }, [user.user_metadata, idParam])
 
   function currentElements(): readonly unknown[] {
     return apiRef.current?.getSceneElements() ?? s.work

@@ -313,7 +313,7 @@ export function ProfileView({ user }: { user: User }) {
 
               <div className='mt-10 flex flex-col-reverse gap-5 sm:flex-row sm:items-center sm:justify-between'>
                 <Link
-                  href='/onboarding'
+                  href='/onboarding?redo=1'
                   className='group/link inline-flex items-center gap-1.5 text-sm font-medium text-ink'
                 >
                   <span className='link-underline'>{t.redoSetup}</span>

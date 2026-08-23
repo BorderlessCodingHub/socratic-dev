@@ -46,7 +46,10 @@ export function useSocraticSession<TWork>(opts: {
   const pausedAtRef = React.useRef<number | null>(null)
   const buyingRef = React.useRef(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
-  const initRef = React.useRef(false)
+  // Tracks the id of the challenge this session was initialized for, so
+  // switching to a different challenge (without unmounting the hook) re-runs
+  // init instead of leaving the previous challenge's work/messages in place.
+  const initRef = React.useRef<string | null>(null)
 
   const elapsedNow = React.useCallback(
     () =>
@@ -57,8 +60,9 @@ export function useSocraticSession<TWork>(opts: {
   )
 
   React.useEffect(() => {
-    if (!challenge || !user || initRef.current) return
-    initRef.current = true
+    if (!challenge || !user || initRef.current === challenge.id) return
+    initRef.current = challenge.id
+    setReady(false)
 
     const draft = loadDraft<TWork>(challenge.id)
     if (draft) {

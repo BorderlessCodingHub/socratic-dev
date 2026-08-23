@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
 import { CheckCircle2, PlayCircle, Terminal, XCircle } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { getNextChallenge } from '../actions'
 import { useSocraticSession } from '../hooks/use-socratic-session'
@@ -110,6 +110,8 @@ const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
 export function CodeChallengeWorkspace({ user }: { user: User }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const idParam = searchParams.get('id')
   const t = useT(copy)
   const { locale } = useLocale()
   const isDark = useIsDark()
@@ -166,11 +168,13 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
 
   React.useEffect(() => {
     let active = true
+    // A nav click to the plain /challenge URL re-runs this (idParam goes back
+    // to null) without unmounting the workspace, so drop the stale challenge —
+    // otherwise a just-finished challenge stays on screen instead of the next one.
+    setChallenge(null)
+    setLoadError(false)
     ;(async () => {
-      const id =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('id')
-          : null
+      const id = idParam
       if (id) {
         const { data, error } = await supabase
           .from('challenges')
@@ -209,7 +213,7 @@ export function CodeChallengeWorkspace({ user }: { user: User }) {
     return () => {
       active = false
     }
-  }, [router, user.user_metadata])
+  }, [router, user.user_metadata, idParam])
 
   async function sendTutorMessage(text: string) {
     if (!text.trim() || s.thinking || !challenge) return
