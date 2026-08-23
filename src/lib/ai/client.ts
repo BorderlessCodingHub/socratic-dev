@@ -1,5 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { captureException } from '@/lib/report-error'
+import { recordAiUsage, type UsageMeta } from '@/lib/ai/usage'
+
+export type { UsageMeta }
 
 let client: Anthropic | null = null
 
@@ -55,6 +58,9 @@ type AskOpts = {
   maxTokens?: number
   effort?: Effort
   model?: string
+  // Passing meta is what puts the call in the ai_usage ledger. Omit it only
+  // for calls that cost nothing.
+  meta?: UsageMeta
 }
 
 function textParams(opts: AskOpts) {
@@ -69,14 +75,38 @@ function textParams(opts: AskOpts) {
 }
 
 export async function askClaude(opts: AskOpts): Promise<string> {
+  const started = Date.now()
   const res = await anthropic.messages
     .stream(textParams(opts) as never)
     .finalMessage()
+  await recordAiUsage(
+    opts.meta,
+    opts.model ?? MODELS.default,
+    res,
+    Date.now() - started,
+  )
   return extractText(res)
 }
 
 export function askClaudeStream(opts: AskOpts) {
-  return anthropic.messages.stream(textParams(opts) as never)
+  const started = Date.now()
+  const stream = anthropic.messages.stream(textParams(opts) as never)
+  // Token counts only exist on the final message, and the caller is busy
+  // piping this same stream to the student. finalMessage() resolves once the
+  // stream ends, so the ledger is written then — fire and forget, because a
+  // telemetry failure must never surface as a broken answer.
+  void stream
+    .finalMessage()
+    .then((res: unknown) =>
+      recordAiUsage(
+        opts.meta,
+        opts.model ?? MODELS.default,
+        res,
+        Date.now() - started,
+      ),
+    )
+    .catch(() => {})
+  return stream
 }
 
 export async function askClaudeVision(opts: {
@@ -87,7 +117,9 @@ export async function askClaudeVision(opts: {
   maxTokens?: number
   effort?: Effort
   model?: string
+  meta?: UsageMeta
 }): Promise<string> {
+  const started = Date.now()
   const model = opts.model ?? MODELS.default
   const params = {
     model,
@@ -112,6 +144,7 @@ export async function askClaudeVision(opts: {
     ...modelParams(model, opts.effort ?? 'medium'),
   }
   const res = await anthropic.messages.stream(params as never).finalMessage()
+  await recordAiUsage(opts.meta, model, res, Date.now() - started)
   return extractText(res)
 }
 
