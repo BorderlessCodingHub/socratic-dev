@@ -125,6 +125,7 @@ export async function POST(req: Request) {
       messages: [...history, { role: 'user', content: finalUser }],
       maxTokens: mode === 'solve' ? 2600 : 1024,
       effort: 'medium',
+      meta: { route: 'tutor', mode, userId, sessionId },
     })
 
     const iterator = stream[Symbol.asyncIterator]()
