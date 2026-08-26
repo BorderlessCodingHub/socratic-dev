@@ -75,6 +75,13 @@ function textParams(opts: AskOpts) {
 }
 
 export async function askClaude(opts: AskOpts): Promise<string> {
+  const { text } = await askClaudeChecked(opts)
+  return text
+}
+
+export async function askClaudeChecked(
+  opts: AskOpts,
+): Promise<{ text: string; truncated: boolean }> {
   const started = Date.now()
   const res = await anthropic.messages
     .stream(textParams(opts) as never)
@@ -85,7 +92,10 @@ export async function askClaude(opts: AskOpts): Promise<string> {
     res,
     Date.now() - started,
   )
-  return extractText(res)
+  return {
+    text: extractText(res),
+    truncated: (res as { stop_reason?: string }).stop_reason === 'max_tokens',
+  }
 }
 
 export function askClaudeStream(opts: AskOpts) {

@@ -1,5 +1,5 @@
 import type { ChallengeKind } from '@/domain/challenge-kinds'
-import { aiErrorResponse, askClaude } from '@/lib/ai/client'
+import { aiErrorResponse, askClaudeChecked } from '@/lib/ai/client'
 import { parseAiJson } from '@/lib/ai/parse-json'
 import { solvePasteSystem } from '@/lib/ai/prompts/solve-paste'
 import {
@@ -211,15 +211,20 @@ export async function POST(req: Request) {
         : codeParts.join('\n')
 
     const locale = await getLocale()
+    const truncatedError =
+      locale === 'pt'
+        ? 'A resposta foi cortada por limite de tamanho. Tente de novo.'
+        : 'The response was cut off by the length limit. Try again.'
 
     if (kind === 'design') {
-      const raw = await askClaude({
+      const { text: raw, truncated } = await askClaudeChecked({
         system: solvePasteSystem('design', locale),
         user,
-        maxTokens: 4000,
+        maxTokens: 6000,
         effort: 'medium',
         meta: { route: 'solve', mode: 'design', userId, sessionId },
       })
+      if (truncated) return jsonError(truncatedError, 502)
       const diagramError =
         locale === 'pt'
           ? 'Não consegui montar o diagrama. Tente de novo.'
@@ -242,13 +247,14 @@ export async function POST(req: Request) {
       return Response.json({ nodes, edges, teach, remaining })
     }
 
-    const raw = await askClaude({
+    const { text: raw, truncated } = await askClaudeChecked({
       system: solvePasteSystem('code', locale),
       user,
-      maxTokens: 3200,
+      maxTokens: 6000,
       effort: 'medium',
       meta: { route: 'solve', mode: 'code', userId, sessionId },
     })
+    if (truncated) return jsonError(truncatedError, 502)
     const [codePart, teachPart] = raw.split(/^={2,}\s*TEACH\s*={2,}\s*$/im)
     const code = stripFences(codePart ?? raw)
     let teach: CodeTeach | undefined

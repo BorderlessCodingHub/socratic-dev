@@ -62,6 +62,7 @@ export async function getCommunitySolutions(
     )
     .eq('sessions.challenge_id', challengeId)
     .eq('sessions.status', 'completed')
+    .gt('sessions.independence', 0)
     .order('submitted_at', { ascending: false })
     .limit(300)
 
