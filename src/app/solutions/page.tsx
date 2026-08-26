@@ -11,6 +11,7 @@ import {
 import { getAccessToken } from '@/lib/api/client'
 import { useT } from '@/lib/i18n'
 import { ArrowRight, Users } from 'lucide-react'
+import { motion } from 'motion/react'
 import Link from 'next/link'
 import * as React from 'react'
 
@@ -75,7 +76,7 @@ function SolutionsIndexContent() {
     <div className='relative flex min-h-screen flex-1 flex-col bg-background'>
       <Navbar />
       <main className='flex-1 pt-[88px] pb-20 md:pt-24'>
-        <div className='container-main w-full max-w-3xl'>
+        <div className='container-main max-w-6xl'>
           <p className='eyebrow'>{t.eyebrow}</p>
           <h1 className='type-h2 mt-4'>{t.title}</h1>
           <p className='type-body mt-3 max-w-lg text-muted-foreground'>
@@ -83,10 +84,10 @@ function SolutionsIndexContent() {
           </p>
 
           {entries === null ? (
-            <div className='mt-10 flex flex-col gap-3'>
-              <Skeleton className='h-16 w-full rounded-lg' />
-              <Skeleton className='h-16 w-full rounded-lg' />
-              <Skeleton className='h-16 w-full rounded-lg' />
+            <div className='mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+              <Skeleton className='h-32 w-full rounded-lg' />
+              <Skeleton className='h-32 w-full rounded-lg' />
+              <Skeleton className='h-32 w-full rounded-lg' />
             </div>
           ) : entries.length === 0 ? (
             <div className='mt-10 flex flex-col items-start gap-5 rounded-lg border border-border bg-card px-6 py-10'>
@@ -97,26 +98,34 @@ function SolutionsIndexContent() {
               </Button>
             </div>
           ) : (
-            <div className='mt-10 flex flex-col gap-3'>
-              {entries.map((e) => (
-                <Link
+            <div className='mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+              {entries.map((e, i) => (
+                <motion.div
                   key={e.challengeId}
-                  href={`/solutions/${e.challengeId}`}
-                  className='group flex items-center gap-4 rounded-lg border border-border bg-card px-5 py-4 transition-colors duration-200 hover:bg-secondary'
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: Math.min(i, 8) * 0.04,
+                    duration: 0.4,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
                 >
-                  <span className='min-w-0 flex-1 truncate text-sm font-medium text-ink'>
-                    {e.title}
-                  </span>
-                  {e.stack && (
-                    <span className='hidden font-mono text-[11px] uppercase text-muted-foreground sm:block'>
-                      {e.stack}
+                  <Link
+                    href={`/solutions/${e.challengeId}`}
+                    className='shadow-soft hover:shadow-soft-lg group flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5'
+                  >
+                    {e.stack && (
+                      <span className='mb-3 w-fit rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase'>
+                        {e.stack}
+                      </span>
+                    )}
+                    <h3 className='type-h4 line-clamp-2'>{e.title}</h3>
+                    <span className='mt-auto inline-flex items-center gap-1.5 pt-4 text-[13px] font-medium text-primary'>
+                      <span className='link-underline'>{t.open}</span>
+                      <ArrowRight className='size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
                     </span>
-                  )}
-                  <span className='flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-primary'>
-                    {t.open}
-                    <ArrowRight className='size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
-                  </span>
-                </Link>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           )}
