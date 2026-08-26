@@ -55,7 +55,7 @@ function buildSrcDoc(compiled: string, msgs: Copy): string {
 <body>
 <div id="root"></div>
 <pre id="err"></pre>
-<script type="module">
+<script>
   const PREVIEW_LOG_SOURCE = ${JSON.stringify(PREVIEW_LOG_SOURCE)};
   for (const level of ['log', 'info', 'warn', 'error']) {
     const original = console[level].bind(console);
@@ -68,27 +68,36 @@ function buildSrcDoc(compiled: string, msgs: Copy): string {
       parent.postMessage({ source: PREVIEW_LOG_SOURCE, level, text }, '*');
     };
   }
-  import React from 'https://esm.sh/react@19';
-  import * as JSXRuntime from 'https://esm.sh/react@19/jsx-runtime';
-  import { createRoot } from 'https://esm.sh/react-dom@19/client';
-  const mods = { 'react': React, 'react/jsx-runtime': JSXRuntime, 'react/jsx-dev-runtime': JSXRuntime };
-  const require = (m) => {
-    if (m in mods) return mods[m];
-    throw new Error(${JSON.stringify(msgs.importPre)} + m + ${JSON.stringify(msgs.importPost)});
-  };
-  try {
-    const exports = {};
-    const module = { exports };
-    (function (exports, module, require) {
+  (async () => {
+    try {
+      // A static "import ... from" inside <script type="module"> silently
+      // fails to fetch cross-origin modules in a sandbox="allow-scripts"
+      // iframe (opaque origin) — adding allow-same-origin would fix that,
+      // but that grants this (student/AI-written) code the parent page's
+      // origin, i.e. socratic.dev's own cookies/session. A dynamic import()
+      // from a classic script isn't subject to that restriction, so the
+      // sandbox can stay tight.
+      const React = (await import('https://esm.sh/react@19')).default;
+      const JSXRuntime = await import('https://esm.sh/react@19/jsx-runtime');
+      const { createRoot } = await import('https://esm.sh/react-dom@19/client');
+      const mods = { 'react': React, 'react/jsx-runtime': JSXRuntime, 'react/jsx-dev-runtime': JSXRuntime };
+      const require = (m) => {
+        if (m in mods) return mods[m];
+        throw new Error(${JSON.stringify(msgs.importPre)} + m + ${JSON.stringify(msgs.importPost)});
+      };
+      const exports = {};
+      const module = { exports };
+      (function (exports, module, require) {
 ${compiled}
-    })(exports, module, require);
-    const Comp = module.exports.default || module.exports.App ||
-      Object.values(module.exports).find((v) => typeof v === 'function');
-    if (!Comp) throw new Error(${JSON.stringify(msgs.noExport)});
-    createRoot(document.getElementById('root')).render(React.createElement(Comp));
-  } catch (e) {
-    document.getElementById('err').textContent = '✕ ' + (e && e.message ? e.message : String(e));
-  }
+      })(exports, module, require);
+      const Comp = module.exports.default || module.exports.App ||
+        Object.values(module.exports).find((v) => typeof v === 'function');
+      if (!Comp) throw new Error(${JSON.stringify(msgs.noExport)});
+      createRoot(document.getElementById('root')).render(React.createElement(Comp));
+    } catch (e) {
+      document.getElementById('err').textContent = '✕ ' + (e && e.message ? e.message : String(e));
+    }
+  })();
 </script>
 </body>
 </html>`
