@@ -13,7 +13,7 @@ Regras:
 - intro: a primeira fala do tutor socrático — uma pergunta que faça o aluno pensar. NUNCA a resposta.
 - topics: 2 a 4 tags técnicas curtas em kebab-case minúsculo (ex.: "arrays", "two-pointers", "hash-map", "async", "estado-react").
 - initial_code: a(s) assinatura(s) da(s) função(ões) com "export", corpo vazio e comentários. SEM a solução. Código válido na linguagem da stack.
-- tests_source: testes no formato test('nome', () => { expect(exports.NOME(args)).toBe(valor) }). Use exports.<funcao> para acessar a solução do aluno. Cubra os edge cases adequados ao nível.
+- tests_source: testes no formato test('nome', () => { expect(exports.NOME(args)).toBe(valor) }). Use exports.<funcao> para acessar a solução do aluno. Testes assíncronos são suportados: test('nome', async () => { expect(await exports.NOME(args)).toEqual(valor) }). Cubra os edge cases adequados ao nível.
 - A DIFICULDADE deve seguir estritamente o nível pedido.`
 
 const DESIGN_SYSTEM = `Você gera desafios de SYSTEM DESIGN (arquitetura de software) para uma plataforma de tutoria socrática, onde o aluno DESENHA a arquitetura num canvas — serviços, bancos de dados, filas, caches, APIs e como os dados fluem e são distribuídos. NÃO é design de UI/Figma e NÃO se escreve código.

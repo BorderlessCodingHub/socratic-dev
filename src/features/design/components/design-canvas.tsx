@@ -26,7 +26,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useInternalNode,
-  useNodesInitialized,
   useReactFlow,
   useStore,
   type Connection,
@@ -530,38 +529,41 @@ function CanvasInner({
   const [nodes, setNodes] = React.useState<CanvasNode[]>(initial.nodes)
   const [edges, setEdges] = React.useState<CanvasEdge[]>(initial.edges)
 
-  const nodesInitialized = useNodesInitialized()
   const [fitQueued, setFitQueued] = React.useState<
     false | { focus?: string }
   >(false)
   React.useEffect(() => {
     if (!fitQueued) return
-    const ready =
-      nodesInitialized && flow.getNodes().every((n) => n.measured?.width)
-    if (!ready) return
     const focus = fitQueued.focus
-    setFitQueued(false)
-    const id = window.requestAnimationFrame(() => {
-      const node = focus
-        ? flow.getNodes().find((n) => n.id === focus)
-        : undefined
+    let frames = 0
+    let raf = 0
+    const attempt = () => {
+      const allNodes = flow.getNodes()
+      const ready =
+        allNodes.length > 0 && allNodes.every((n) => n.measured?.width)
+      if (!ready && frames++ < 90) {
+        raf = window.requestAnimationFrame(attempt)
+        return
+      }
+      setFitQueued(false)
+      if (!ready) return
+      const node = focus ? allNodes.find((n) => n.id === focus) : undefined
       if (node) {
         // Camera-follow for the walkthrough: center on the component this
-        // step explains, at a readable zoom (fitView's `nodes` filter proved
-        // unreliable here, so center manually).
+        // step explains, at a readable zoom.
         const w = node.measured?.width ?? 200
         const h = node.measured?.height ?? 90
-        void flow.setCenter(
-          node.position.x + w / 2,
-          node.position.y + h / 2,
-          { zoom: 0.95, duration: 350 },
-        )
+        void flow.setCenter(node.position.x + w / 2, node.position.y + h / 2, {
+          zoom: 1,
+          duration: 350,
+        })
       } else {
         void flow.fitView({ padding: 0.18, duration: 350 })
       }
-    })
-    return () => window.cancelAnimationFrame(id)
-  }, [fitQueued, nodesInitialized, flow])
+    }
+    raf = window.requestAnimationFrame(attempt)
+    return () => window.cancelAnimationFrame(raf)
+  }, [fitQueued, flow])
 
   const onNodesChange = React.useCallback(
     (changes: NodeChange<CanvasNode>[]) =>

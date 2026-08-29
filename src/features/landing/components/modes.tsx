@@ -37,7 +37,7 @@ const copy = {
         desc: 'Sketch the architecture on a canvas: services, databases, queues, and how the data flows. The AI sees your diagram and interrogates every decision.',
         cta: 'Design architecture',
         points: [
-          'Built-in Excalidraw canvas',
+          'Built-in architecture canvas',
           'Vision AI reads your architecture',
           'Data distribution, scale, and trade-offs',
         ],
@@ -71,7 +71,7 @@ const copy = {
         desc: 'Desenhe a arquitetura num canvas: serviços, bancos, filas e o fluxo dos dados. A IA enxerga seu diagrama e interroga cada decisão.',
         cta: 'Desenhar arquitetura',
         points: [
-          'Canvas Excalidraw integrado',
+          'Canvas de arquitetura integrado',
           'IA com visão analisa a arquitetura',
           'Distribuição de dados, escala e trade-offs',
         ],

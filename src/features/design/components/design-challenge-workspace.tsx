@@ -53,6 +53,8 @@ const copy = {
     hintUnavailable: 'Hint unavailable.',
     teachThink: 'Now you, before moving on:',
     continueStep: (i: number, total: number) => `Continue (${i}/${total})`,
+    solveBuilding:
+      'Building the full solution — this takes ~30 seconds. Then I will walk you through it piece by piece.',
     solveFallback: "Couldn't solve it right now.",
     nothingDrawn:
       "You haven't drawn anything yet. Start the diagram and submit again.",
@@ -74,6 +76,8 @@ const copy = {
     hintUnavailable: 'Hint indisponível.',
     teachThink: 'Agora você, antes de seguir:',
     continueStep: (i: number, total: number) => `Continuar (${i}/${total})`,
+    solveBuilding:
+      'Montando a solução completa — leva uns 30 segundos. Depois vou te guiar peça por peça.',
     solveFallback: 'Não consegui resolver agora.',
     nothingDrawn:
       'Você ainda não desenhou nada. Comece o diagrama e submeta de novo.',
@@ -322,6 +326,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
     if (s.thinking || (solve && solve.revealed < solve.steps.length)) return
     s.setThinking(true)
     s.spendSolve()
+    s.pushMessage({ role: 'ai', text: t.solveBuilding })
     try {
       const res = await apiFetch('/api/solve', {
         ...POST,
