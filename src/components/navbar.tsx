@@ -111,6 +111,7 @@ export function Navbar() {
                     position={rank}
                     hints={hints}
                     streak={streak}
+                    loggedIn
                   />
                   <Link
                     href='/profile'
