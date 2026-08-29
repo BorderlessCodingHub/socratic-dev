@@ -38,9 +38,18 @@ function tokenExpiry(request: NextRequest): number | null {
   }
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 // Deliberately the deprecated middleware.ts (edge) instead of proxy.ts (node):
 // OpenNext/Cloudflare only supports edge middleware.
 export async function middleware(request: NextRequest) {
+  if (BASE_PATH) {
+    const { pathname } = new URL(request.url)
+    if (pathname === `${BASE_PATH}/`) {
+      return NextResponse.redirect(new URL(BASE_PATH, request.url), 308)
+    }
+  }
+
   const exp = tokenExpiry(request)
   if (exp === null) return NextResponse.next({ request })
   if (exp * 1000 - Date.now() > REFRESH_MARGIN_MS) {
@@ -78,6 +87,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     // Everything except static assets, images and the AI/stripe endpoints
     // (those authenticate via Bearer token / signature, not cookies).
     '/((?!_next/static|_next/image|favicon.ico|monitoring|ingest|api/).*)',

@@ -36,6 +36,10 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 ctx.onmessage = (e: MessageEvent<RunRequest>) => {
+  void run(e)
+}
+
+async function run(e: MessageEvent<RunRequest>): Promise<void> {
   const { code, language, testsSource } = e.data
   const started = performance.now()
   const logs: RunLog[] = []
@@ -73,16 +77,16 @@ ctx.onmessage = (e: MessageEvent<RunRequest>) => {
     },
   })
 
+  let chain: Promise<void> = Promise.resolve()
   const test = (name: string, fn: () => unknown) => {
-    try {
-      const r = fn()
-      if (r && typeof (r as Promise<unknown>).then === 'function') {
-        throw new Error('testes assíncronos não são suportados nesta versão')
+    chain = chain.then(async () => {
+      try {
+        await fn()
+        tests.push({ name, passed: true })
+      } catch (err) {
+        tests.push({ name, passed: false, message: (err as Error).message })
       }
-      tests.push({ name, passed: true })
-    } catch (err) {
-      tests.push({ name, passed: false, message: (err as Error).message })
-    }
+    })
   }
 
   try {
@@ -116,6 +120,7 @@ ctx.onmessage = (e: MessageEvent<RunRequest>) => {
         testsSource,
       )
       testFn(moduleObj.exports, test, expect, sandboxConsole)
+      await chain
     }
   } catch (err) {
     error = (err as Error).message || String(err)

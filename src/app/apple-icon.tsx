@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og'
 export const size = { width: 180, height: 180 }
 export const contentType = 'image/png'
 
+// Matches icon.svg: lime brand square, bold ink lowercase "s".
 export default function AppleIcon() {
   return new ImageResponse(
     (
@@ -13,16 +14,16 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#1b1916',
+          background: '#a6e40e',
         }}
       >
         <span
           style={{
-            fontFamily: 'serif',
-            fontStyle: 'italic',
-            fontSize: 128,
-            color: '#a6e40e',
+            fontSize: 132,
+            fontWeight: 800,
+            color: '#1b1916',
             lineHeight: 1,
+            marginTop: -14,
           }}
         >
           s

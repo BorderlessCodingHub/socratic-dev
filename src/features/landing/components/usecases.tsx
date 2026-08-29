@@ -42,7 +42,7 @@ const copy = {
       design: {
         eyebrow: 'Architecture · Trade-offs · Scale',
         title: 'System design on canvas',
-        desc: 'Sketch the architecture in Excalidraw. The AI sees your diagram and interrogates every scaling decision.',
+        desc: 'Sketch the architecture on the canvas. The AI sees your diagram and interrogates every scaling decision.',
       },
     },
   },
@@ -76,7 +76,7 @@ const copy = {
       design: {
         eyebrow: 'Arquitetura · Trade-offs · Escala',
         title: 'System design no canvas',
-        desc: 'Desenhe a arquitetura no Excalidraw. A IA enxerga seu diagrama e interroga cada decisão de escala.',
+        desc: 'Desenhe a arquitetura no canvas. A IA enxerga seu diagrama e interroga cada decisão de escala.',
       },
     },
   },
