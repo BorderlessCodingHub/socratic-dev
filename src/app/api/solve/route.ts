@@ -221,7 +221,7 @@ export async function POST(req: Request) {
         system: solvePasteSystem('design', locale),
         user,
         maxTokens: 6000,
-        effort: 'medium',
+        effort: 'low',
         meta: { route: 'solve', mode: 'design', userId, sessionId },
       })
       if (truncated) return jsonError(truncatedError, 502)
