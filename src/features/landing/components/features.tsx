@@ -17,7 +17,7 @@ const copy = {
       {
         num: '02',
         title: 'A real editor and canvas',
-        desc: 'Full Monaco (the engine behind VS Code) for code and an Excalidraw canvas for system design. No fake input fields.',
+        desc: 'Full Monaco (the engine behind VS Code) for code and an interactive architecture canvas for system design. No fake input fields.',
       },
       {
         num: '03',
@@ -54,7 +54,7 @@ const copy = {
       {
         num: '02',
         title: 'Editor e canvas reais',
-        desc: 'Monaco completo (o motor do VS Code) para código e um canvas Excalidraw para design system. Nada de campo fake.',
+        desc: 'Monaco completo (o motor do VS Code) para código e um canvas de arquitetura interativo para design system. Nada de campo fake.',
       },
       {
         num: '03',

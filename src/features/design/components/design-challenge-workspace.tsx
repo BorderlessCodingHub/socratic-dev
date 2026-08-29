@@ -10,13 +10,13 @@ import { WorkspaceHeader } from '@/features/challenges/components/workspace-head
 import { getNextChallenge } from '@/features/challenges/actions'
 import { useSocraticSession } from '@/features/challenges/hooks/use-socratic-session'
 import type { Challenge } from '@/features/challenges/types'
+import { layoutAiGraph } from '@/features/design/graph/layout'
+import { summarizeGraph } from '@/features/design/graph/summarize'
 import {
-  buildSceneElements,
-  elementsForNodes,
-  exportScenePng,
-  summarizeElements,
-  type ExcalidrawApi,
-} from '@/features/design/utils/scene'
+  coerceGraph,
+  EMPTY_GRAPH,
+  type DesignGraph,
+} from '@/features/design/graph/types'
 import { track } from '@/lib/analytics'
 import { apiFetch, getAccessToken } from '@/lib/api/client'
 import { useT } from '@/lib/i18n'
@@ -27,7 +27,7 @@ import { Wand2 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import * as React from 'react'
-import { DesignCanvas } from './design-canvas'
+import { DesignCanvas, type DesignCanvasApi } from './design-canvas'
 
 const POST = { method: 'POST', headers: { 'content-type': 'application/json' } }
 
@@ -36,7 +36,7 @@ type SolveStep = { nodeId: string; label: string; why: string }
 // arrives in one API call, but is revealed one component at a time so the
 // canvas builds up alongside the chat instead of dumping everything at once.
 type SolveProgress = {
-  elements: readonly unknown[]
+  graph: DesignGraph
   order: string[]
   steps: SolveStep[]
   revealed: number
@@ -165,16 +165,16 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
   const [activePanel, setActivePanel] = React.useState<
     'brief' | 'work' | 'chat'
   >('brief')
-  const apiRef = React.useRef<ExcalidrawApi | null>(null)
+  const apiRef = React.useRef<DesignCanvasApi | null>(null)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const intro = challenge.intro || t.intro
 
   const [reviewOpen, setReviewOpen] = React.useState(false)
 
-  const s = useSocraticSession<readonly unknown[]>({
+  const s = useSocraticSession<DesignGraph>({
     challenge: { id: challenge.id },
-    initialWork: [],
+    initialWork: EMPTY_GRAPH,
     initialMessages: [{ role: 'ai', text: intro }],
     paused: reviewOpen,
   })
@@ -184,8 +184,10 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
   const [reviewing, setReviewing] = React.useState(false)
   const [solve, setSolve] = React.useState<SolveProgress | null>(null)
 
-  function currentElements(): readonly unknown[] {
-    return apiRef.current?.getSceneElements() ?? s.work
+  // coerceGraph also absorbs drafts saved by the previous (Excalidraw)
+  // canvas, which stored an element array — those come back empty.
+  function currentGraph(): DesignGraph {
+    return apiRef.current?.getGraph() ?? coerceGraph(s.work)
   }
 
   function tutorBody(extra: Record<string, unknown>) {
@@ -193,7 +195,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
       domain: 'design',
       title: challenge.title,
       briefing: challenge.client_briefing,
-      code: summarizeElements(currentElements()),
+      code: summarizeGraph(currentGraph()),
       ...extra,
     })
   }
@@ -281,13 +283,16 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
   }
 
   function revealSolveStep(progress: SolveProgress, index: number) {
-    const revealedIds = progress.order.slice(0, index + 1)
-    const visible = elementsForNodes(progress.elements, revealedIds)
-    apiRef.current?.updateScene({ elements: visible })
-    apiRef.current?.scrollToContent(visible, {
-      fitToContent: true,
-      animate: true,
-    })
+    const revealed = new Set(progress.order.slice(0, index + 1))
+    const visible: DesignGraph = {
+      nodes: progress.graph.nodes.filter((n) => revealed.has(n.id)),
+      edges: progress.graph.edges.filter(
+        (e) => revealed.has(e.source) && revealed.has(e.target),
+      ),
+    }
+    // The camera follows each step: zoom onto the component this step is
+    // explaining instead of refitting the whole diagram every time.
+    apiRef.current?.setGraph(visible, { focus: progress.order[index] })
     s.setWork(visible)
 
     const step = progress.steps[index]
@@ -324,14 +329,14 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
           kind: 'design',
           title: challenge.title,
           briefing: challenge.client_briefing,
-          work: summarizeElements(currentElements()),
+          work: summarizeGraph(currentGraph()),
           session_id: s.sessionId,
         }),
       })
       const data = await res.json()
       s.syncRemaining(data.remaining)
       if (Array.isArray(data.nodes) && data.nodes.length > 0) {
-        const elements = await buildSceneElements(data.nodes, data.edges ?? [])
+        const graph = layoutAiGraph(data.nodes, data.edges ?? [])
         const teach = data.teach as
           | {
               flow?: string
@@ -339,12 +344,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
               questions?: string[]
             }
           | undefined
-        const labelOf = new Map(
-          (data.nodes as { id: string; label?: string }[]).map((n) => [
-            n.id,
-            n.label ?? n.id,
-          ]),
-        )
+        const labelOf = new Map(graph.nodes.map((n) => [n.id, n.label]))
         // Reveal order follows the tutor's narrated flow (teach.components is
         // already client → ... → storage); any node it skipped is appended
         // last so nothing silently fails to draw.
@@ -361,7 +361,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
           why: teach?.components?.find((c) => c.id === id)?.why ?? '',
         }))
         const progress: SolveProgress = {
-          elements,
+          graph,
           order,
           steps,
           revealed: 0,
@@ -389,8 +389,8 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
     setReviewing(true)
     setReview(null)
 
-    const elements = currentElements()
-    if (elements.length === 0) {
+    const graph = currentGraph()
+    if (graph.nodes.length === 0) {
       setOutcome('fail')
       setReview(t.nothingDrawn)
       s.complete(s.elapsed, 'abandoned')
@@ -400,10 +400,10 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
     setOutcome('pass')
     s.complete(s.elapsed, 'completed')
 
-    const summary = summarizeElements(elements)
+    const summary = summarizeGraph(graph)
     let imageBase64: string | null
     try {
-      imageBase64 = apiRef.current ? await exportScenePng(apiRef.current) : null
+      imageBase64 = (await apiRef.current?.exportPng()) ?? null
     } catch {
       imageBase64 = null
     }
@@ -416,7 +416,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
           brief: challenge.client_briefing,
           summary,
           imageBase64,
-          scene: JSON.stringify(elements),
+          scene: JSON.stringify(graph),
           session_id: s.sessionId,
         }),
       })
@@ -430,9 +430,9 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
     }
   }
 
-  function onCanvasChange(elements: readonly unknown[]) {
+  function onCanvasChange(graph: DesignGraph) {
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => s.setWork(elements), 500)
+    saveTimer.current = setTimeout(() => s.setWork(graph), 500)
   }
 
   return (
@@ -501,7 +501,7 @@ function DesignChallengeSession({ challenge }: { challenge: Challenge }) {
           <div className='relative min-h-0 flex-1'>
             {s.ready ? (
               <DesignCanvas
-                initialElements={s.work}
+                initialGraph={coerceGraph(s.work)}
                 onApi={(api) => {
                   apiRef.current = api
                 }}
